@@ -1,0 +1,68 @@
+// MELEK'CE GÜZELLİK — Beauty & Nail Suite — Datenmodell
+// White-Label-Template: Leistungen, Kundinnen, Buchungen, Galerie
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Leistungen (Nägel, Beauty, Wimpern) ────────────────────────────────────
+model Service {
+  id          String    @id @default(cuid())
+  name        String    // z.B. «Gel-Verlängerung»
+  category    String    // naegel | beauty | wimpern
+  description String?   // Kurzbeschreibung für Landing-Page
+  durationMin Int       // Behandlungsdauer in Minuten
+  priceChf    Float     // Preis in CHF
+  popular     Boolean   @default(false) // «Beliebt»-Badge auf Landing-Page
+  active      Boolean   @default(true)
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+
+  bookings Booking[]
+}
+
+// ─── Kundinnen ───────────────────────────────────────────────────────────────
+model SalonCustomer {
+  id        String    @id @default(cuid())
+  name      String
+  email     String    @unique
+  phone     String?
+  notes     String?   // interne Notizen (Allergien, Vorlieben)
+  createdAt DateTime  @default(now())
+
+  bookings Booking[]
+}
+
+// ─── Buchungen / Termine ─────────────────────────────────────────────────────
+model Booking {
+  id          String       @id @default(cuid())
+  customerId  String
+  customer    SalonCustomer @relation(fields: [customerId], references: [id])
+  serviceId   String
+  service     Service      @relation(fields: [serviceId], references: [id])
+  startAt     DateTime     // Terminbeginn
+  durationMin Int          // denormalisiert von Service (Snapshot)
+  priceChf    Float        // denormalisiert von Service (Snapshot)
+  status      String       @default("angefragt") // angefragt | bestaetigt | abgeschlossen | storniert
+  notes       String?      // Kundenwunsch (z.B. «French mit Gold-Glitzer»)
+  createdAt   DateTime     @default(now())
+
+  @@index([startAt])
+  @@index([customerId])
+}
+
+// ─── Galerie (Arbeiten-Showcase für die Landing-Page) ───────────────────────
+model GalleryItem {
+  id        String   @id @default(cuid())
+  title     String   // z.B. «Gold Baroque»
+  category  String   // naegel | beauty | wimpern | studio
+  imagePath String   // /gallery/nails-gold.png
+  sortOrder Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
