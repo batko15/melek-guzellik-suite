@@ -46,6 +46,10 @@ export interface ModuleConfig {
 export const BRANDING = {
   // ─── Sürüm (her yerde görünür şekilde işaretlenir) ───────────────────────
   version: "5.6.0",
+  versionFull: "5.6.0",
+  versionDate: "2026-09-13",
+  versionCodename: "Melek Edition",
+  lastUpdate: "Telefonnummer +905365726610",
 
   // ─── Marka ────────────────────────────────────────────────────────────────
   // nameParts: 1. kısım normal, 2. kısım altın (vurgu rengi) yazılır.

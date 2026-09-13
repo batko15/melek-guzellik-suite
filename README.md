@@ -13,7 +13,7 @@
 - ⭐ **V5 CLOUD**: Komplett Vercel- + Supabase-fähig — PostgreSQL-Unterstützung mit **vollautomatischem Datenbank-Setup** (Tabellen + Grunddaten beim ersten Aufruf, ohne CLI/Migrationen)
 - ⭐ **V5.2 Serverless-Härtung**: Supabase-**Transaction-Pooler** wird automatisch genutzt (Port 6543, `pgbouncer=true`, 1 Verbindung pro Funktion) — kein «max clients reached» mehr; Vercel-Funktionen in **Dublin (dub1)** neben der Datenbank (eu-west-1) für minimale Latenz; `maxDuration 60 s` für den Erste-Aufruf-Bootstrap
 - ⭐ **V5.2 SEO**: `robots.txt` + `sitemap.xml` automatisch generiert
-- ⭐ **V5 ECHT-DATEN**: echte Adresse (Hoca Hamza Mah. 1023. Sk No: 2, Gelibolu), echte Telefon-/WhatsApp-Nummer in `branding.ts` gepflegt — **bewusst nicht als Klartext auf der Webseite sichtbar** (V5.5.1), Kontakt läuft über Buttons (Anruf/WhatsApp), exakte Karten-Koordinaten + Google-Maps-Ortslink
+- ⭐ **V5 ECHT-DATEN**: echte Adresse (Hoca Hamza Mah. 1023. Sk No: 2, Gelibolu), echte Telefon-/WhatsApp-Nummer (+90 536 572 66 10 in `branding.ts`), Kontakt läuft über Buttons (Anruf/WhatsApp), exakte Karten-Koordinaten + Google-Maps-Ortslink
 - ⭐ **V5 GALERIE**: 22 echte Instagram-Fotos des Studios (die 6 neuesten Arbeiten direkt von @melekce_guzellik17 übernommen)
 - Leistungen & Preise im **Menü-Stil** (punktierte Preisführung), **Galerie mit Kategorie-Filter** (Tırnak / Güzellik / Kirpik / Stüdyo)
 - ⭐ **V5.6 Nail Art**: Eigene, teilbare **Tırnak-Sanatı-Galerie** unter `/nailart` — alle 14 Nagel-Designs groß im **Lightbox-Modus** (Pfeiltasten/ESC), pro Design **«Bu tasarımı WhatsApp'tan iste»** (Design-Name automatisch in der Nachricht), Preisliste der 8 Nageldienste, Teilen-Button (Web-Share/Panoya kopyala); verlinkt aus Navigation, Galerie-Sektion, mobiler Alt-Navigation und PWA-Shortcut
@@ -262,7 +262,7 @@ public/gallery/real/          # echte Studio-Fotos
 ### V5.0.0 CLOUD — «Kunden-Lieferung»
 - ⭐ **Vercel + Supabase ready**: dual Prisma-Schema (SQLite lokal / PostgreSQL Cloud) mit automatischer Auswahl; `postinstall` + Build-Hook generieren den passenden Client
 - ⭐ **Auto-Datenbank-Setup**: beim ersten API-Aufruf werden Tabellen (idempotente DDL) UND Grunddaten (17 Leistungen, 22 Galerie-Fotos, Ekip) automatisch in Supabase angelegt — keine Migrationen, kein CLI, kein Setup für die Kundin
-- ⭐ **Echte Betriebsdaten**: korrekte Adresse (Hoca Hamza Mah. 1023. Sk No: 2, Villa Tunçaydın, 17500 Gelibolu/Çanakkale), echte Telefon-/WhatsApp-Nummer (in `branding.ts`, Klartext-Ausblendung V5.5.1), exakte Koordinaten (40.430461, 26.690142) + Google-Maps-Ortslink, SSL- und Pool-Parameternormalisierung für Supabase
+- ⭐ **Echte Betriebsdaten**: korrekte Adresse (Hoca Hamza Mah. 1023. Sk No: 2, Villa Tunçaydın, 17500 Gelibolu/Çanakkale), echte Telefon-/WhatsApp-Nummer **+90 536 572 66 10**, exakte Koordinaten (40.430461, 26.690142) + Google-Maps-Ortslink, SSL- und Pool-Parameternormalisierung für Supabase
 - ⭐ **Zugangsdaten entfernt**: Login-Screen ohne Demo-Hinweise, keine Demo-Telefonnummer im Buchungsfluss, neue starke Passwörter (nur der Inhaberin bekannt), README bereinigt
 - ⭐ **Instagram-Fotos**: 6 neueste Arbeiten von @melekce_guzellik17 (9.947 Follower) in die Galerie übernommen — jetzt 22 echte Fotos
 - ⭐ **Mesaj Merkezi** (Müşteriler): Kunden direkt anschreiben — WhatsApp/SMS/E-Mail mit vorausgefüllten türkischen Vorlagen (Kampagne, Erinnerung, Geburtstag, Dank) + Instagram-DM-Kanal mit Kopier-Hilfe; jeder Versand wird protokolliert
