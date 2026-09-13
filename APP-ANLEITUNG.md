@@ -220,6 +220,33 @@ zu konfigurieren. Der Diagnose-Endpunkt `/api/v1/diag` zeigt ergänzend
 
 ---
 
+## 5️⃣f NEU V5.6 — Tırnak Sanatı Galerisi (`/nailart`) 💅
+
+Es gibt jetzt eine **eigene, teilbare Seite nur für Nageldesigns** — perfekt
+zum Weitergeben:
+
+**👉 Live-Link: `https://melek-guzellik-suite.vercel.app/nailart`**
+
+- **Alle 14 Nageldesigns** groß in der Galerie — antippen öffnet den
+  **Vollbild-Modus** (mit Pfeiltasten oder Vor/Zurück-Buttons blättern,
+  ESC schließt)
+- **«Bu tasarımı WhatsApp'tan iste»**: Die Kundin tippt ein Design an,
+  dann auf den grünen Button — die WhatsApp-Nachricht enthält bereits
+  den **Design-Namen** (z. B. «Bordo Kedi Gözü»); sie muss nur noch
+  senden. Du siehst sofort, welches Design gemeint ist
+- **Preisliste gleich darunter**: alle 8 Nageldienste mit Dauer und
+  «Randevu Al»-Button — von der Bewunderung direkt zum Termin
+- **«Galeriyi paylaş»**: teilt den Galerie-Link (Web-Share, sonst
+  Kopieren) — ideal für Instagram-Story oder WhatsApp-Status
+- Die Nummer bleibt **unsichtbar** (nur in den Links enthalten) —
+  V5.5.1-Regel gilt weiter
+
+**Wo Kundinnen die Seite finden:** Navigation oben («Nail Art ✨»),
+Gold-Button unter der Galerie auf der Startseite, 4. Tab in der mobilen
+Navigation, PWA-Shortcut «Nail Art» und direkt über den Live-Link.
+
+---
+
 ## 6️⃣ Zugänge & Sicherheit
 
 | Was | Wo |
