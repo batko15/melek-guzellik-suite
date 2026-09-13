@@ -60,8 +60,8 @@ const DEFAULT_ACCOUNTS: StaffAccount[] = [
     name: "Melek",
     roleLabel: "İşletme Sahibi",
     initials: "MK",
-    salt: "a180d1e8fec515477c73d2498e96baec",
-    hash: "014028779ecbf5a93d406a41d73d635409f8149cdc80f82b7e25c53b610bd3b6c7e791eb10a389bda5b0d7564b64cf93ee693ccdd1ff6196a1cd0c3550dfccba",
+    salt: "0a8c7d9e0d126de2fe8065766d09baec",
+    hash: "959644b09e4c4ab9e185dc0a8dc5a74253aafbfc87751d1b95f7e605c30f2bc08c850a127f4c3b146ee704fa3e21f6c3587905dd27e05468d5309c1c99415f56",
   },
   {
     username: "admin",
