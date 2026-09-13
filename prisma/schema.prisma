@@ -1,5 +1,6 @@
-// MELEK'CE GÜZELLİK — Beauty & Nail Suite — Datenmodell
-// White-Label-Template: Leistungen, Kundinnen, Buchungen, Galerie
+// MELEK'ÇE GÜZELLİK — Güzellik & Tırnak Stüdyosu — Veri Modeli V2
+// White-Label şablon: Hizmetler, Müşteriler, Randevular, Yorumlar, Galeri
+// V2: Misafir randevusu (telefon ile, giriş gerekmez) + herkese açık değerlendirme
 
 generator client {
   provider = "prisma-client-js"
@@ -10,57 +11,73 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ─── Leistungen (Nägel, Beauty, Wimpern) ────────────────────────────────────
+// ─── Hizmetler (Tırnak, Güzellik, Kirpik) ───────────────────────────────────
 model Service {
   id          String    @id @default(cuid())
-  name        String    // z.B. «Gel-Verlängerung»
-  category    String    // naegel | beauty | wimpern
-  description String?   // Kurzbeschreibung für Landing-Page
-  durationMin Int       // Behandlungsdauer in Minuten
-  priceChf    Float     // Preis in CHF
-  popular     Boolean   @default(false) // «Beliebt»-Badge auf Landing-Page
+  name        String    // örn. «Jel Uzatma»
+  category    String    // tirnak | guzellik | kirpik
+  description String?   // açılış sayfası için kısa açıklama
+  durationMin Int       // uygulama süresi (dakika)
+  priceChf    Float     // fiyat (CHF)
+  popular     Boolean   @default(false) // «Popüler» rozeti
   active      Boolean   @default(true)
   sortOrder   Int       @default(0)
   createdAt   DateTime  @default(now())
 
   bookings Booking[]
+  reviews  Review[]
 }
 
-// ─── Kundinnen ───────────────────────────────────────────────────────────────
+// ─── Müşteriler (girişsiz randevu: telefon ile otomatik oluşturulur) ─────────
 model SalonCustomer {
   id        String    @id @default(cuid())
   name      String
-  email     String    @unique
-  phone     String?
-  notes     String?   // interne Notizen (Allergien, Vorlieben)
+  phone     String    @unique // misafir randevularının anahtarı
+  email     String?
+  notes     String?   // iç notlar (alerjiler, tercihler)
   createdAt DateTime  @default(now())
 
   bookings Booking[]
 }
 
-// ─── Buchungen / Termine ─────────────────────────────────────────────────────
+// ─── Randevular ─────────────────────────────────────────────────────────────
 model Booking {
-  id          String       @id @default(cuid())
+  id          String        @id @default(cuid())
   customerId  String
   customer    SalonCustomer @relation(fields: [customerId], references: [id])
   serviceId   String
-  service     Service      @relation(fields: [serviceId], references: [id])
-  startAt     DateTime     // Terminbeginn
-  durationMin Int          // denormalisiert von Service (Snapshot)
-  priceChf    Float        // denormalisiert von Service (Snapshot)
-  status      String       @default("angefragt") // angefragt | bestaetigt | abgeschlossen | storniert
-  notes       String?      // Kundenwunsch (z.B. «French mit Gold-Glitzer»)
-  createdAt   DateTime     @default(now())
+  service     Service       @relation(fields: [serviceId], references: [id])
+  startAt     DateTime      // randevu başlangıcı
+  durationMin Int           // hizmetten kopyalanır (anlık görüntü)
+  priceChf    Float         // hizmetten kopyalanır (anlık görüntü)
+  status      String        @default("bekliyor") // bekliyor | onaylandi | tamamlandi | iptal
+  notes       String?       // müşteri isteği (örn. «Fransız + altın parıltı»)
+  createdAt   DateTime      @default(now())
 
   @@index([startAt])
   @@index([customerId])
 }
 
-// ─── Galerie (Arbeiten-Showcase für die Landing-Page) ───────────────────────
+// ─── Değerlendirmeler (herkese açık, moderasyonlu) ──────────────────────────
+model Review {
+  id          String   @id @default(cuid())
+  authorName  String   // değerlendirmeyi yazan kişinin adı
+  rating      Int      // 1–5 yıldız
+  comment     String   // yorum metni
+  serviceId   String?  // isteğe bağlı: hangi hizmetle ilgili
+  service     Service? @relation(fields: [serviceId], references: [id])
+  status      String   @default("bekliyor") // bekliyor | onaylandi | reddedildi
+  createdAt   DateTime @default(now())
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ─── Galeri (açılış sayfası için çalışmalar) ────────────────────────────────
 model GalleryItem {
   id        String   @id @default(cuid())
-  title     String   // z.B. «Gold Baroque»
-  category  String   // naegel | beauty | wimpern | studio
+  title     String   // örn. «Altın Barok»
+  category  String   // tirnak | guzellik | kirpik | studyo
   imagePath String   // /gallery/nails-gold.png
   sortOrder Int      @default(0)
   active    Boolean  @default(true)

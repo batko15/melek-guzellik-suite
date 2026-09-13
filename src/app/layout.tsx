@@ -8,7 +8,7 @@ const brandName = `${BRAND_DISPLAY.part1} ${BRAND_DISPLAY.part2}`;
 export const metadata: Metadata = {
   title: `${brandName} — ${BRANDING.brand.tagline}`,
   description: `${BRANDING.landing.heroDescription}`,
-  keywords: [BRAND_DISPLAY.part2, "Nail Art", "Nagelstudio", "Beauty", "Wimpern", BRANDING.company.city, "Termin buchen", BRANDING.locale.currency],
+  keywords: [BRAND_DISPLAY.part2, "Tırnak Sanatı", "Güzellik Stüdyosu", "Manikür", "Kirpik", BRANDING.company.city, "Randevu Al", BRANDING.locale.currency],
   authors: [{ name: BRANDING.company.legalName }],
   openGraph: {
     title: `${brandName} — ${BRANDING.brand.tagline}`,
@@ -31,7 +31,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="de" className="dark" suppressHydrationWarning>
+    <html lang="tr" className="dark" suppressHydrationWarning>
       <body className="antialiased bg-background text-foreground min-h-screen">
         {children}
         <Toaster />

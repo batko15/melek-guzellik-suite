@@ -1,113 +1,80 @@
-# TEMPLATE-GUIDE — Diese Suite für andere Projekte verwenden
+# TEMPLATE-GUIDE — Bu suite'i diğer projeler için kullanmak
 
-**Die Melek'ce Güzellik Suite ist bewusst als wiederverwendbare Vorlage gebaut:
-Neues Projekt = 2 Dateien anpassen + Datenbank neu befüllen. Fertig.**
+**Melek'çe Güzellik Suite bilinçli olarak yeniden kullanılabilir bir şablon
+olarak kuruldu: Yeni proje = 2 dosya ayarla + veritabanını yeniden doldur.
+Bitti.**
 
-Die Schwester-Suite (AutoFaszination Performance & B2B Sales Suite) läuft mit
-demselben Bauplan in einer völlig anderen Branche — Beweis, dass die Architektur
-branchenneutral funktioniert.
+Kardeş suite (AutoFaszination Performance & B2B Sales Suite) aynı yapı planıyla
+tamamen farklı bir sektörde çalışıyor — mimarinin sektörden bağımsız
+çalıştığının kanıtı.
 
 ---
 
-## 1. Das White-Label-Prinzip
+## 1. White-Label ilkesi
 
-| Ebene | Wo? | Was? |
+| Katman | Nerede | Ne yapılır |
 |---|---|---|
-| **Inhalte** | `src/config/branding.ts` | Marke, Tagline, Adresse, Öffnungszeiten, Team, Landing-Texte, Modul-Liste |
-| **Farbe** | `src/app/globals.css` → `--brand` | EIN Wert steuert Buttons, Charts, Badges, Glow, aktive Navigation |
-| **Daten** | `prisma/schema.prisma` + Seed | Domain-Objekte (hier: Service/Booking/Kunde) — branchenspezifisch |
-| **Views** | `src/components/**` | Modulare Views, die über die Modul-Registry eingebunden werden |
+| **İçerik & Marka** | `src/config/branding.ts` | Marka adı, slogan, stüdyo bilgileri, hava durumu şehri, açılış metinleri, çalışma saatleri, ekip girişleri, modüller (aç/kapat) — **tek dosya** |
+| **Vurgu rengi** | `src/app/globals.css` → `:root { --brand: … }` | Altın → dilediğiniz renk. Butonlar, grafikler, rozetler, parlama efektleri otomatik uyum sağlar |
+| **Veriler** | `scripts/seed-beauty.ts` + `bun run scripts/seed-beauty.ts` | Hizmetleri/fiyatları kendi işletmenize göre değiştirin, yeniden seed edin |
+| **Görseller** | `public/gallery/` | Kendi fotoğraflarınızı koyun (aynı dosya adlarıyla değiştirin ya da seed'de yolları güncelleyin) |
 
-## 2. Rebrand in 15 Minuten — Schritt für Schritt
-
-### Schritt 1 — Marke & Studio: `src/config/branding.ts`
-
-```ts
-brand: {
-  nameParts: ["Frisör", "Luna"],        // Teil 2 erscheint in Gold
-  tagline: "Hair & Style Studio",
-  slogan: "Ihr Haar, unsere Leidenschaft",
-},
-company: {
-  legalName: "Luna Hair GmbH",
-  street: "Hauptstrasse 5",
-  city: "6004 Luzern",
-  phone: "+41 41 000 00 00",
-  instagram: "luna_hair",
-},
-```
-
-→ Landing-Page, Login, Sidebar, Footer und Browser-Titel folgen automatisch.
-
-### Schritt 2 — Öffnungszeiten (steuern die Buchungsslots!)
-
-```ts
-openingHours: [
-  { day: "Montag", hours: "Geschlossen", closed: true },
-  { day: "Dienstag", hours: "09:00 – 18:00", closed: false },
-  // …
-],
-```
-
-Das Kundinnen-Portal berechnet freie Zeitfenster (30-Min.-Raster) automatisch
-aus diesen Zeiten — keine weitere Konfiguration nötig.
-
-### Schritt 3 — Akzentfarbe: `src/app/globals.css`
-
-```css
-:root {
-  --brand: oklch(0.72 0.12 15);   /* z. B. Rosé statt Gold */
-}
-```
-
-Umrechnung Hex→OKLCH: https://oklch.com — die gesamte Suite folgt diesem einen
-Token (primär, Ring, Charts, Glow, Selektion).
-
-### Schritt 4 — Leistungen & Preise: `scripts/seed-beauty.ts`
-
-```ts
-const SERVICES = [
-  { name: "Damenschnitt", category: "hair", description: "…", durationMin: 45, priceChf: 85, sortOrder: 1 },
-  // …
-]
-```
-
-Kategorien (`naegel | beauty | wimpern`) in `src/lib/salon.ts` → `CATEGORY_META`
-umbenennen/erweitern. Danach Datenbank neu aufsetzen:
+## 2. 15 dakikalık yeniden markalama (örnek: «Esra'ca Saç Stüdyosu»)
 
 ```bash
-rm db/custom.db
-npx prisma db push
-npx tsx scripts/seed-beauty.ts
+# 1) branding.ts'i aç ve şunları değiştir:
+#    brand.nameParts:      ["Esra'ca", "Saç Stüdyosu"]
+#    brand.tagline:        "Saç Tasarım & Bakım Stüdyosu"
+#    company.*:            gerçek adres / telefon / Instagram
+#    weather.cityName + koordinatlar:  şehrin
+#    openingHours:         kendi çalışma saatlerin
+#    users:                kendi ekip girişlerin (güvenlik!)
+#    landing.*:            Hero başlığı, açıklama, istatistikler
+
+# 2) Vurgu rengi (örnek: gül kırmızısı):
+#    globals.css → --brand: oklch(0.62 0.19 15)
+
+# 3) Hizmetleri değiştir (seed-beauty.ts → SERVICES) ve yeniden yükle:
+rm -f db/custom.db && bun run db:push && bun run scripts/seed-beauty.ts
+
+# 4) Fotoğrafları public/gallery/ klasörüne kopyala → bitti
 ```
 
-### Schritt 5 — Team-Zugänge & Demo-Kundinnen: `branding.ts`
+## 3. Veri modeli (Prisma / SQLite)
 
-```ts
-users: [{ username: "luna", password: "luna123", name: "Luna", role: "Inhaberin", initials: "LU" }],
-customerPortal: { demoCustomers: [{ name: "Muster Kundin", email: "…" }] },
-```
+| Model | Alanlar | Not |
+|---|---|---|
+| `Service` | name, category, description, durationMin, priceChf, popular, active, sortOrder | Kategoriler: `tirnak` / `guzellik` / `kirpik` (etiketler `src/lib/salon.ts → CATEGORY_META` içinde) |
+| `SalonCustomer` | name, **phone (benzersiz)**, email?, notes | **Girişsiz randevu** için anahtar: telefon. İlk randevuda otomatik oluşur |
+| `Booking` | customerId, serviceId, startAt, durationMin, priceChf, status, notes | Durum zinciri: `bekliyor → onaylandi → tamamlandi` / `iptal`. Süre ve fiyat hizmetten anlık görüntü olarak kopyalanır |
+| `Review` | authorName, rating (1–5), comment, serviceId?, status | Durum: `bekliyor → onaylandi / reddedildi` — herkese açık, moderasyonlu |
+| `GalleryItem` | title, category, imagePath, sortOrder, active | Açılış sayfası galerisi |
 
-### Schritt 6 — Bilder: `public/gallery/`
+## 4. API yüzeyi (değiştirmeden kullanılabilir)
 
-Eigene Fotos ablegen, Pfade im Seed-Skript (`GALLERY`-Array) bzw. in der
-Tabelle `GalleryItem` eintragen.
+- `GET /api/v1/salon/services` — aktif hizmetler
+- `GET /api/v1/salon/availability?date=YYYY-MM-DD` — günün dolu blokları (müşteri verisi yok)
+- `GET|POST|PATCH /api/v1/salon/bookings` — telefonla sorgulama · **herkes** randevu oluşturma · durum / self-iptal
+- `GET|POST|PATCH|DELETE /api/v1/salon/reviews` — onaylılar + özet · yorum yazma · moderasyon
+- `GET /api/v1/weather` — canlı hava durumu (Open-Meteo, Türkçe, 10 dk önbellek)
+- `GET /api/v1/salon/customers` · `/stats` · `/gallery` — CRM, KPI'lar, galeri
 
-### Schritt 7 — Module anpassen (Team-Portal): `branding.ts → modules[]`
+## 5. Bilinmesi gerekenler
 
-Jedes Modul hat `enabled: true/false` — deaktivierte Module verschwinden aus
-Sidebar und Navigation. Neue Views: Komponente in `src/components/staff/`
-erstellen, in `src/lib/module-registry.ts` registrieren, Modul-Eintrag in
-`branding.ts` ergänzen.
-
-## 3. Ehrliche Grenzen
-
-- **Domain-Logik:** Buchungs-Kollisionsprüfung, Slots, Statistiken sind auf
-  Salon-Abläufe ausgelegt (30-Min.-Raster, eine Behandlerin). Für mehrere
-  Mitarbeiter parallel die Modelle um ein `staffId`-Feld erweitern.
-- **Authentifizierung:** Demo-Modus (siehe README, Abschnitt 6).
-- **Zahlungen:** Es gibt keine Zahlungs-Integration — die Suite verwaltet
-  Termine und Umsatz-Statistiken, kassiert aber nichts online.
-
-*Stand: V1.0.0 — White-Label-Basis (zentrale Branding-Datei, --brand-Farb-Token,
-Öffnungszeiten-gesteuerte Slot-Berechnung, Modul-Registry).*
+- **Ekip girişleri** demo amaçlı `branding.ts → users` içinde. Gerçek kullanım
+  için NextAuth/Auth.js bağlayın (giriş katmanı `src/components/auth/` içinde
+  tek dosyadır).
+- **Hava durumu** Open-Meteo ile anahtarsız çalışır; `branding.ts → weather`
+  içinde şehir, koordinat ve saat dilimi ayarlanır (`enabled: false` ile tamamen
+  kapatılabilir).
+- **Randevu aralıkları** çalışma saatlerinden üretilir (30 dakikalık adımlar);
+  `branding.ts → openingHours` değişince otomatik uyar.
+- **Mobil alt gezinme** (Ana Sayfa / Randevu / Yorumlar) `app-shell.tsx`
+  içindeki `PUBLIC_NAV` listesinden gelir; herkese açık görünümler
+  `landing | randevu | yorumlar` hash'leriyle derin bağlanabilir
+  (örn. `site.com/#randevu`).
+- **Ekip modülleri** `branding.ts → modules` içinde `enabled` bayrağıyla
+  açılıp kapanır; yeni modül = yeni görünüm dosyası + `module-registry.ts`
+  kaydı.
+- SQLite dosyası `db/custom.db`; üretimde (Vercel vb.) düzenli yedekleyin veya
+  Postgres'e geçin (Prisma ile kolay taşınır).

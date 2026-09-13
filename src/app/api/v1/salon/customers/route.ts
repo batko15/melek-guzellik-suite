@@ -1,4 +1,4 @@
-// GET /api/v1/salon/customers — Kundinnen mit Statistik (Team-Portal)
+// GET /api/v1/salon/customers — Müşteriler ve istatistikleri (Ekip portalı)
 import { db } from "@/lib/db"
 
 export async function GET() {
@@ -14,8 +14,8 @@ export async function GET() {
 
   const now = new Date()
   const rows = customers.map((c) => {
-    const completed = c.bookings.filter((b) => b.status === "abgeschlossen")
-    const upcoming = c.bookings.filter((b) => new Date(b.startAt) >= now && b.status !== "storniert")
+    const completed = c.bookings.filter((b) => b.status === "tamamlandi")
+    const upcoming = c.bookings.filter((b) => new Date(b.startAt) >= now && b.status !== "iptal")
     const volume = completed.reduce((sum, b) => sum + b.priceChf, 0)
     return {
       id: c.id,

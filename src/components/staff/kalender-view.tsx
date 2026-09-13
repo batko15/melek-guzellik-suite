@@ -1,12 +1,11 @@
-// Team-Portal — Terminkalender: 2-Wochen-Grid (Montag–Sonntag) mit Heute-Highlight
+// Ekip Portalı — Randevu Takvimi: 2 haftalık ızgara (pazartesi–pazar), bugün vurgulu
 
 "use client"
 
 import { useMemo, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { ChevronLeft, ChevronRight, CalendarDays, Sparkles } from "lucide-react"
+import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -31,10 +30,7 @@ export function KalenderView() {
   }, [weekOffset])
 
   const days = useMemo(
-    () => Array.from({ length: 14 }, (_, i) => {
-      const d = new Date(weekStart.getTime() + i * DAY_MS)
-      return d
-    }),
+    () => Array.from({ length: 14 }, (_, i) => new Date(weekStart.getTime() + i * DAY_MS)),
     [weekStart],
   )
 
@@ -58,40 +54,40 @@ export function KalenderView() {
 
   const today = new Date()
   const isToday = (d: Date) => d.toDateString() === today.toDateString()
-  const totalRevenue = bookings.filter((b) => b.status !== "storniert").reduce((s, b) => s + b.priceChf, 0)
-  const weekLabel = `${weekStart.toLocaleDateString("de-CH", { day: "2-digit", month: "short" })} – ${new Date(weekStart.getTime() + 13 * DAY_MS).toLocaleDateString("de-CH", { day: "2-digit", month: "short" })}`
+  const totalRevenue = bookings.filter((b) => b.status !== "iptal").reduce((s, b) => s + b.priceChf, 0)
+  const weekLabel = `${weekStart.toLocaleDateString("tr-TR", { day: "numeric", month: "short" })} – ${new Date(weekStart.getTime() + 13 * DAY_MS).toLocaleDateString("tr-TR", { day: "numeric", month: "short" })}`
 
   return (
     <div className="mk-velvet">
       <section className="border-b border-border/60">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
           <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-xs font-semibold text-brand-text">
-            <CalendarDays className="h-3.5 w-3.5" /> Wochenansicht
+            <CalendarDays className="h-3.5 w-3.5" /> Haftalık görünüm
           </div>
           <h1 className="mk-display text-2xl font-bold tracking-tight sm:text-3xl">
-            Terminkalender — <span className="mk-gold-text">{weekLabel}</span>
+            Randevu takvimi — <span className="mk-gold-text">{weekLabel}</span>
           </h1>
           <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-            {bookings.length} Termine in den nächsten 2 Wochen · Wert CHF {chf(totalRevenue)}
+            Önümüzdeki 2 haftada {bookings.length} randevu · toplam değeri CHF {chf(totalRevenue)}
           </p>
         </div>
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
-        {/* Wochen-Navigation */}
+        {/* Hafta gezinme */}
         <div className="mb-5 flex items-center justify-between">
           <Button variant="outline" size="sm" onClick={() => setWeekOffset((w) => w - 1)} className="rounded-full">
-            <ChevronLeft className="mr-1 h-4 w-4" /> Zurück
+            <ChevronLeft className="mr-1 h-4 w-4" /> Geri
           </Button>
           <span className="text-xs font-semibold text-muted-foreground">
-            {weekOffset === 0 ? "Aktuelle 2 Wochen" : weekOffset > 0 ? `+${weekOffset} Woche(n)` : `${Math.abs(weekOffset)} Woche(n) zurück`}
+            {weekOffset === 0 ? "Şu anki 2 hafta" : weekOffset > 0 ? `+${weekOffset} hafta ileri` : `${Math.abs(weekOffset)} hafta geri`}
           </span>
           <Button variant="outline" size="sm" onClick={() => setWeekOffset((w) => w + 1)} className="rounded-full">
-            Weiter <ChevronRight className="ml-1 h-4 w-4" />
+            İleri <ChevronRight className="ml-1 h-4 w-4" />
           </Button>
         </div>
 
-        {/* Kalender-Grid */}
+        {/* Takvim ızgarası */}
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-7">
           {days.map((d, i) => {
             const dayBookings = byDay(d)
@@ -108,11 +104,11 @@ export function KalenderView() {
                 <div className="mb-2 flex items-baseline justify-between border-b border-border/50 pb-2">
                   <div>
                     <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                      {d.toLocaleDateString("de-CH", { weekday: "short" })}
+                      {d.toLocaleDateString("tr-TR", { weekday: "short" })}
                     </div>
                     <div className={cn("mk-display text-lg font-bold", todayCls ? "text-brand-text" : "text-foreground")}>
-                      {d.getDate()}.{d.getMonth() + 1}.
-                      {todayCls && <span className="ml-1.5 text-[9px] font-bold uppercase text-brand-text">Heute</span>}
+                      {d.getDate()}.{d.getMonth() + 1}
+                      {todayCls && <span className="ml-1.5 text-[9px] font-bold uppercase text-brand-text">Bugün</span>}
                     </div>
                   </div>
                   {dayBookings.length > 0 && (
@@ -122,28 +118,28 @@ export function KalenderView() {
                 {isLoading && <Skeleton className="h-16 w-full rounded-md" />}
                 <div className="space-y-1.5">
                   {dayBookings.length === 0 && !isLoading && (
-                    <div className="py-3 text-center text-[11px] text-muted-foreground/60">frei</div>
+                    <div className="py-3 text-center text-[11px] text-muted-foreground/60">boş</div>
                   )}
                   {dayBookings.map((b) => (
                     <div
                       key={b.id}
                       className={cn(
                         "rounded-md border p-2 text-xs",
-                        b.status === "storniert"
+                        b.status === "iptal"
                           ? "border-red-900/40 bg-red-950/20 opacity-60"
-                          : b.status === "angefragt"
+                          : b.status === "bekliyor"
                             ? "border-amber-800/40 bg-amber-950/15"
                             : "border-border/60 bg-secondary/40",
                       )}
                     >
                       <div className="flex items-center justify-between">
                         <span className="font-mono font-bold text-brand-text">{timeStr(b.startAt)}</span>
-                        <span className="text-[9px] text-muted-foreground">{minutesLabel(b.durationMin).replace(" Std.", "h").replace(" Min.", "m")}</span>
+                        <span className="text-[9px] text-muted-foreground">{minutesLabel(b.durationMin)}</span>
                       </div>
                       <div className="mt-0.5 truncate font-semibold text-foreground">{b.customer.name}</div>
                       <div className="truncate text-[10px] text-muted-foreground">{b.service.name}</div>
-                      {b.status === "angefragt" && (
-                        <div className="mt-1 text-[9px] font-bold uppercase tracking-wide text-amber-400">Anfrage</div>
+                      {b.status === "bekliyor" && (
+                        <div className="mt-1 text-[9px] font-bold uppercase tracking-wide text-amber-400">Talep</div>
                       )}
                     </div>
                   ))}

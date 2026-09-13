@@ -1,17 +1,18 @@
-// Team-Portal — Studio-Übersicht: Heute-Termine, KPIs, Top-Leistungen
+// Ekip Portalı — Stüdyo Genel Bakış: bugünkü randevular, KPI'lar, hava durumu, yorumlar
 
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
 import {
-  CalendarCheck, Clock, TrendingUp, Users, Sparkles, ChevronRight, CircleDot,
+  CalendarCheck, TrendingUp, Users, Sparkles, Star, CircleDot,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { BRANDING } from "@/config/branding"
-import { type SalonStats, BOOKING_STATUS, CATEGORY_META, chf, timeStr, minutesLabel } from "@/lib/salon"
+import { type SalonStats, BOOKING_STATUS, CATEGORY_META, chf, timeStr, minutesLabel, Stars } from "@/lib/salon"
+import { WeatherWidget } from "@/components/weather-widget"
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar,
 } from "recharts"
@@ -27,33 +28,33 @@ export function DashboardView() {
   })
 
   const kpis = [
-    { label: "Termine heute", value: stats ? String(stats.today.count) : "…", icon: CalendarCheck, tone: "text-brand-text" },
-    { label: "Offene Anfragen", value: stats ? String(stats.pending) : "…", icon: CircleDot, tone: stats && stats.pending > 0 ? "text-amber-400" : "text-muted-foreground" },
-    { label: "Auslastung Woche", value: stats ? `${stats.week.utilization} %` : "…", icon: TrendingUp, tone: "text-brand-text" },
-    { label: "Kundinnen total", value: stats ? String(stats.total.customers) : "…", icon: Users, tone: "text-foreground" },
+    { label: "Bugünkü randevu", value: stats ? String(stats.today.count) : "…", icon: CalendarCheck, tone: "text-brand-text" },
+    { label: "Bekleyen talep", value: stats ? String(stats.pending) : "…", icon: CircleDot, tone: stats && stats.pending > 0 ? "text-amber-400" : "text-muted-foreground" },
+    { label: "Haftalık doluluk", value: stats ? `%${stats.week.utilization}` : "…", icon: TrendingUp, tone: "text-brand-text" },
+    { label: "Toplam müşteri", value: stats ? String(stats.total.customers) : "…", icon: Users, tone: "text-foreground" },
   ]
 
   const maxTop = stats?.topServices[0]?.count ?? 1
 
   return (
     <div className="mk-velvet">
-      {/* Header */}
+      {/* Başlık */}
       <section className="border-b border-border/60">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
           <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-xs font-semibold text-brand-text">
-            <Sparkles className="h-3.5 w-3.5" /> Studio-Übersicht · V{BRANDING.version}
+            <Sparkles className="h-3.5 w-3.5" /> Stüdyo Genel Bakış · V{BRANDING.version}
           </div>
           <h1 className="mk-display text-2xl font-bold tracking-tight sm:text-3xl">
-            Guten Tag — <span className="mk-gold-text">hier ist Ihr Studio im Blick</span>
+            Hoş geldiniz — <span className="mk-gold-text">stüdyonuz tek bakışta</span>
           </h1>
           <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-            Heutige Termine, offene Buchungs-Anfragen, Auslastung und Umsatz auf einen Blick.
+            Bugünkü randevular, bekleyen talepler, doluluk, ciro, misafir değerlendirmeleri ve canlı hava durumu.
           </p>
         </div>
       </section>
 
       <section className="mx-auto max-w-7xl space-y-5 px-4 py-6 sm:px-6">
-        {/* KPI-Leiste */}
+        {/* KPI şeridi */}
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {kpis.map((kpi, i) => (
             <div key={kpi.label} className={cn("mk-card mk-kpi mk-anim-up relative overflow-hidden rounded-xl p-5", `mk-delay-${i + 1}`)}>
@@ -66,12 +67,12 @@ export function DashboardView() {
           ))}
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-2">
-          {/* ─── Termine heute ─── */}
-          <Card className="mk-card border-border">
+        <div className="grid gap-4 lg:grid-cols-3">
+          {/* ─── Bugünkü randevular ─── */}
+          <Card className="mk-card border-border lg:col-span-2">
             <CardHeader className="pb-2 pt-4">
               <CardTitle className="flex items-center gap-2 text-sm font-bold">
-                <CalendarCheck className="h-4 w-4 text-brand-text" /> Termine heute
+                <CalendarCheck className="h-4 w-4 text-brand-text" /> Bugünkü randevular
                 {stats && stats.today.count > 0 && (
                   <Badge className="border-primary/40 bg-primary/10 text-[10px] text-brand-text">{stats.today.count}</Badge>
                 )}
@@ -81,14 +82,14 @@ export function DashboardView() {
               {isLoading && [1, 2, 3].map((i) => <Skeleton key={i} className="h-14 w-full rounded-lg" />)}
               {stats && stats.today.bookings.length === 0 && (
                 <div className="rounded-lg border border-dashed border-border/60 p-6 text-center text-sm text-muted-foreground">
-                  Heute sind keine Termine gebucht — Zeit für Instagram-Postings? ✨
+                  Bugün için randevu yok — Instagram gönderisi için mükemmel bir gün! ✨
                 </div>
               )}
               {stats?.today.bookings.map((b) => (
                 <div key={b.id} className="flex items-center gap-3 rounded-lg border border-border/60 bg-secondary/30 p-3">
                   <div className="mk-display w-14 shrink-0 text-center">
                     <div className="text-sm font-bold text-brand-text">{timeStr(b.startAt)}</div>
-                    <div className="text-[9px] text-muted-foreground">{minutesLabel(b.durationMin).replace(" Std.", "h").replace(" Min.", "m")}</div>
+                    <div className="text-[9px] text-muted-foreground">{minutesLabel(b.durationMin)}</div>
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-semibold">{b.customerName}</div>
@@ -102,12 +103,46 @@ export function DashboardView() {
             </CardContent>
           </Card>
 
-          {/* ─── Wochen-Umsatz ─── */}
+          {/* ─── Canlı hava durumu ─── */}
+          <div className="space-y-4">
+            <WeatherWidget variant="panel" />
+
+            {/* ─── Değerlendirme özeti ─── */}
+            <Card className="mk-card border-border">
+              <CardHeader className="pb-0 pt-4">
+                <CardTitle className="flex items-center gap-2 text-sm font-bold">
+                  <Star className="h-4 w-4 text-brand-text" /> Misafir değerlendirmeleri
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4">
+                {stats && (
+                  <>
+                    <div className="flex items-center gap-3">
+                      <div className="mk-display text-3xl font-bold text-brand-text">{stats.reviews.average.toFixed(1)}</div>
+                      <div className="leading-tight">
+                        <Stars value={stats.reviews.average} />
+                        <div className="mt-1 text-[11px] text-muted-foreground">{stats.reviews.approved} yayınlanmış yorum</div>
+                      </div>
+                    </div>
+                    {stats.reviews.pending > 0 && (
+                      <div className="mt-3 rounded-lg border border-amber-800/50 bg-amber-950/40 px-3 py-2.5 text-xs font-medium text-amber-300">
+                        {stats.reviews.pending} yorum inceleme bekliyor — «Yorumlar» modülünden onaylayın.
+                      </div>
+                    )}
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-2">
+          {/* ─── Ciro gelişimi ─── */}
           <Card className="mk-card border-border">
             <CardHeader className="pb-0 pt-4">
               <CardTitle className="flex items-center gap-2 text-sm font-bold">
-                <TrendingUp className="h-4 w-4 text-brand-text" /> Umsatz-Entwicklung (8 Wochen)
-                {stats && <span className="ml-auto text-xs font-normal text-muted-foreground">CHF {chf(stats.total.revenueChf)} total</span>}
+                <TrendingUp className="h-4 w-4 text-brand-text" /> Ciro gelişimi (8 hafta)
+                {stats && <span className="ml-auto text-xs font-normal text-muted-foreground">toplam CHF {chf(stats.total.revenueChf)}</span>}
               </CardTitle>
             </CardHeader>
             <CardContent className="h-56 pt-4">
@@ -125,7 +160,7 @@ export function DashboardView() {
                     <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
                     <Tooltip
                       contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 10, color: "var(--popover-foreground)", fontSize: 12 }}
-                      formatter={(v: number) => [`CHF ${chf(v)}`, "Umsatz"]}
+                      formatter={(v: number) => [`CHF ${chf(v)}`, "Ciro"]}
                     />
                     <Area type="monotone" dataKey="volume" stroke="var(--chart-1)" strokeWidth={2.5} fill="url(#goldGrad)" />
                   </AreaChart>
@@ -133,14 +168,12 @@ export function DashboardView() {
               )}
             </CardContent>
           </Card>
-        </div>
 
-        <div className="grid gap-4 lg:grid-cols-2">
-          {/* ─── Top-Leistungen ─── */}
+          {/* ─── Popüler hizmetler ─── */}
           <Card className="mk-card border-border">
             <CardHeader className="pb-0 pt-4">
               <CardTitle className="flex items-center gap-2 text-sm font-bold">
-                <Sparkles className="h-4 w-4 text-brand-text" /> Top-Leistungen nach Buchungen
+                <Sparkles className="h-4 w-4 text-brand-text" /> En çok tercih edilen hizmetler
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2.5 pt-4">
@@ -165,48 +198,49 @@ export function DashboardView() {
               ))}
             </CardContent>
           </Card>
+        </div>
 
-          {/* ─── Kategorie-Verteilung + Wochen-Info ─── */}
-          <div className="space-y-4">
-            <Card className="mk-card border-border">
-              <CardHeader className="pb-0 pt-4">
-                <CardTitle className="flex items-center gap-2 text-sm font-bold">
-                  <Users className="h-4 w-4 text-brand-text" /> Kategorie-Verteilung
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="h-40 pt-3">
-                {stats && (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={stats.categories.map((c) => ({ ...c, label: CATEGORY_META[c.name]?.label ?? c.name }))} layout="vertical" margin={{ top: 0, right: 12, left: 0, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
-                      <XAxis type="number" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
-                      <YAxis type="category" dataKey="label" stroke="var(--muted-foreground)" fontSize={11} width={70} tickLine={false} axisLine={false} />
-                      <Tooltip
-                        contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 10, color: "var(--popover-foreground)", fontSize: 12 }}
-                        formatter={(v: number) => [`${v} Buchungen`, "Anzahl"]}
-                      />
-                      <Bar dataKey="count" radius={[0, 6, 6, 0]} maxBarSize={20} fill="var(--chart-1)" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                )}
-              </CardContent>
-            </Card>
+        <div className="grid gap-4 lg:grid-cols-2">
+          {/* ─── Kategori dağılımı ─── */}
+          <Card className="mk-card border-border">
+            <CardHeader className="pb-0 pt-4">
+              <CardTitle className="flex items-center gap-2 text-sm font-bold">
+                <Users className="h-4 w-4 text-brand-text" /> Kategori dağılımı
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="h-40 pt-3">
+              {stats && (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={stats.categories.map((c) => ({ ...c, label: CATEGORY_META[c.name]?.label ?? c.name }))} layout="vertical" margin={{ top: 0, right: 12, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
+                    <XAxis type="number" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
+                    <YAxis type="category" dataKey="label" stroke="var(--muted-foreground)" fontSize={11} width={70} tickLine={false} axisLine={false} />
+                    <Tooltip
+                      contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 10, color: "var(--popover-foreground)", fontSize: 12 }}
+                      formatter={(v: number) => [`${v} randevu`, "Adet"]}
+                    />
+                    <Bar dataKey="count" radius={[0, 6, 6, 0]} maxBarSize={20} fill="var(--chart-1)" />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
 
-            <Card className="mk-card border-border">
-              <CardContent className="grid grid-cols-3 divide-x divide-border/60 p-0 text-center">
-                {[
-                  { label: "Buchungen (Woche)", value: stats ? String(stats.week.bookings) : "…" },
-                  { label: "Umsatz (Woche)", value: stats ? `CHF ${chf(stats.week.revenueChf)}` : "…" },
-                  { label: "Erledigt total", value: stats ? String(stats.total.completed) : "…" },
-                ].map((s) => (
-                  <div key={s.label} className="px-3 py-4">
-                    <div className="mk-display text-lg font-bold tabular-nums text-foreground">{s.value}</div>
-                    <div className="mt-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{s.label}</div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          </div>
+          {/* ─── Hafta özeti ─── */}
+          <Card className="mk-card border-border">
+            <CardContent className="grid grid-cols-3 divide-x divide-border/60 p-0 text-center">
+              {[
+                { label: "Haftalık randevu", value: stats ? String(stats.week.bookings) : "…" },
+                { label: "Haftalık ciro", value: stats ? `CHF ${chf(stats.week.revenueChf)}` : "…" },
+                { label: "Tamamlanan toplam", value: stats ? String(stats.total.completed) : "…" },
+              ].map((s) => (
+                <div key={s.label} className="px-3 py-4">
+                  <div className="mk-display text-lg font-bold tabular-nums text-foreground">{s.value}</div>
+                  <div className="mt-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{s.label}</div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
         </div>
       </section>
     </div>

@@ -1,17 +1,15 @@
-// Team-Portal — Leistungen & Preise: Preisliste nach Kategorien
+// Ekip Portalı — Hizmetler & Fiyatlar: kategorilere göre fiyat listesi
 
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
 import { Sparkles, Clock, Crown, Info } from "lucide-react"
-import { cn } from "@/lib/utils"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { BRANDING } from "@/config/branding"
 import { type SalonService, CATEGORY_META, chf, minutesLabel } from "@/lib/salon"
 
-export function LeistungenView() {
+export function HizmetlerView() {
   const { data, isLoading } = useQuery({
     queryKey: ["salon-services"],
     queryFn: async () => {
@@ -30,13 +28,13 @@ export function LeistungenView() {
       <section className="border-b border-border/60">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
           <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-xs font-semibold text-brand-text">
-            <Sparkles className="h-3.5 w-3.5" /> Preisliste
+            <Sparkles className="h-3.5 w-3.5" /> Fiyat listesi
           </div>
           <h1 className="mk-display text-2xl font-bold tracking-tight sm:text-3xl">
-            Leistungen & <span className="mk-gold-text">Preise</span>
+            Hizmetler & <span className="mk-gold-text">Fiyatlar</span>
           </h1>
           <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-            {services.length} Behandlungen · Ø Preis CHF {chf(avgPrice)} · Ø Dauer {minutesLabel(avgDur)}
+            {services.length} uygulama · ortalama fiyat CHF {chf(avgPrice)} · ortalama süre {minutesLabel(avgDur)}
           </p>
         </div>
       </section>
@@ -45,12 +43,12 @@ export function LeistungenView() {
         <div className="mk-card flex items-start gap-3 rounded-xl border-primary/25 p-4">
           <Info className="mt-0.5 h-4 w-4 shrink-0 text-brand-text" />
           <p className="text-xs leading-relaxed text-muted-foreground">
-            Preise ändern sich mit der nächsten Buchung automatisch mit (die Buchung speichert den Preis zum Buchungszeitpunkt).
-            Neue Leistungen und Preisanpassungen erfolgen über die Datenbank bzw. das White-Label-Setup — siehe <span className="font-semibold text-foreground">Einstellungen → Template-Info</span>.
+            Fiyatlar bir sonraki randevudan itibaren otomatik geçerli olur (randevu, alındığı andaki fiyatı saklar).
+            Yeni hizmetler ve fiyat güncellemeleri veritabanı ya da white-label kurulum üzerinden yapılır — bkz. <span className="font-semibold text-foreground">Ayarlar → Şablon bilgisi</span>.
           </p>
         </div>
 
-        {["naegel", "beauty", "wimpern"].map((cat) => {
+        {["tirnak", "guzellik", "kirpik"].map((cat) => {
           const catServices = services.filter((s) => s.category === cat)
           if (catServices.length === 0) return null
           const catAvg = catServices.reduce((s, x) => s + x.priceChf, 0) / catServices.length
@@ -62,7 +60,7 @@ export function LeistungenView() {
                     <span className="text-lg">{CATEGORY_META[cat]?.emoji}</span>
                     <span className="mk-display text-base font-bold">{CATEGORY_META[cat]?.label ?? cat}</span>
                   </div>
-                  <span className="text-xs text-muted-foreground">Ø CHF {chf(Math.round(catAvg))} · {catServices.length} Leistungen</span>
+                  <span className="text-xs text-muted-foreground">ort. CHF {chf(Math.round(catAvg))} · {catServices.length} hizmet</span>
                 </div>
                 <div className="divide-y divide-border/40">
                   {isLoading && [1, 2, 3].map((i) => (
@@ -75,7 +73,7 @@ export function LeistungenView() {
                           <span className="mk-display text-sm font-bold">{s.name}</span>
                           {s.popular && (
                             <Badge className="border-primary/40 bg-primary/10 text-[9px] font-bold uppercase text-brand-text">
-                              <Crown className="mr-0.5 h-2.5 w-2.5" /> Beliebt
+                              <Crown className="mr-0.5 h-2.5 w-2.5" /> Popüler
                             </Badge>
                           )}
                         </div>

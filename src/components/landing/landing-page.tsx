@@ -1,25 +1,32 @@
-// Öffentliche Landing-Page für Melek'ce Güzellik
-// Hero · Leistungen & Preise · Galerie · Über uns · Öffnungszeiten · Kontakt
-// Kundinnen können hier alles sehen OHNE Login — Buchung via Login-Button.
+// Herkese açık açılış sayfası — Melek'çe Güzellik (V2, tamamen Türkçe)
+// Hero + Canlı hava durumu · Hizmetler & Fiyatlar · Galeri · Değerlendirmeler ·
+// Hakkımızda · Çalışma Saatleri · İletişim
+// Randevu almak ve değerlendirme yazmak için giriş GEREKMEZ.
 
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
-import { Sparkles, Heart, Crown, Flower2, Instagram, MapPin, Phone, Clock, CalendarCheck, ChevronRight, Star } from "lucide-react"
+import { Sparkles, Heart, Crown, Flower2, Instagram, MapPin, Phone, Clock, CalendarCheck, ChevronRight, Star, MessageSquareHeart, ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { BRANDING, BRAND_DISPLAY } from "@/config/branding"
-import { type SalonService, type GalleryEntry, CATEGORY_META, chf, minutesLabel } from "@/lib/salon"
+import { type SalonService, type GalleryEntry, type ReviewRow, type ReviewSummary, CATEGORY_META, chf, minutesLabel, Stars } from "@/lib/salon"
+import { WeatherWidget } from "@/components/weather-widget"
 
 const BRAND_ICONS: Record<string, React.ElementType> = { sparkles: Sparkles, heart: Heart, crown: Crown, flower: Flower2 }
 const BrandIcon = BRAND_ICONS[BRANDING.brand.icon] ?? Sparkles
 
-export function LandingPage({ onLogin }: { onLogin: (mode: "customer" | "staff") => void }) {
+export function LandingPage({
+  onBook, onReviews, onStaffLogin,
+}: {
+  onBook: () => void
+  onReviews: () => void
+  onStaffLogin: () => void
+}) {
   const { company, landing } = BRANDING
   const instagramUrl = `https://www.instagram.com/${company.instagram}`
 
-  // Leistungen & Galerie laden
   const { data: servicesData } = useQuery({
     queryKey: ["salon-services-landing"],
     queryFn: async () => {
@@ -36,15 +43,25 @@ export function LandingPage({ onLogin }: { onLogin: (mode: "customer" | "staff")
       return (await res.json()) as { items: GalleryEntry[] }
     },
   })
+  const { data: reviewsData } = useQuery({
+    queryKey: ["salon-reviews-landing"],
+    queryFn: async () => {
+      const res = await fetch("/api/v1/salon/reviews")
+      if (!res.ok) return { reviews: [] as ReviewRow[], summary: { count: 0, average: 0, distribution: [], pending: 0 } as ReviewSummary }
+      return (await res.json()) as { reviews: ReviewRow[]; summary: ReviewSummary }
+    },
+  })
 
   const services = servicesData?.services ?? []
   const gallery = galleryData?.items ?? []
-  const categories = ["naegel", "beauty", "wimpern"].filter((c) => services.some((s) => s.category === c))
+  const reviews = (reviewsData?.reviews ?? []).slice(0, 3)
+  const summary = reviewsData?.summary
+  const categories = ["tirnak", "guzellik", "kirpik"].filter((c) => services.some((s) => s.category === c))
   const todayIdx = (new Date().getDay() + 6) % 7
 
   return (
     <div className="mk-velvet min-h-screen bg-background">
-      {/* ═══ Navbar ═══ */}
+      {/* ═══ Navbar (masaüstü) ═══ */}
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4 sm:px-6">
           <div className="flex min-w-0 items-center gap-3">
@@ -62,26 +79,26 @@ export function LandingPage({ onLogin }: { onLogin: (mode: "customer" | "staff")
             </div>
           </div>
           <nav className="ml-auto hidden items-center gap-6 text-sm text-muted-foreground md:flex">
-            <a href="#leistungen" className="mk-focus rounded transition-colors hover:text-foreground">Leistungen</a>
-            <a href="#galerie" className="mk-focus rounded transition-colors hover:text-foreground">Galerie</a>
-            <a href="#ueber" className="mk-focus rounded transition-colors hover:text-foreground">Über uns</a>
-            <a href="#kontakt" className="mk-focus rounded transition-colors hover:text-foreground">Kontakt</a>
+            <a href="#hizmetler" className="mk-focus rounded transition-colors hover:text-foreground">Hizmetler</a>
+            <a href="#galeri" className="mk-focus rounded transition-colors hover:text-foreground">Galeri</a>
+            <a href="#yorumlar" className="mk-focus rounded transition-colors hover:text-foreground">Yorumlar</a>
+            <a href="#iletisim" className="mk-focus rounded transition-colors hover:text-foreground">İletişim</a>
           </nav>
           <div className="ml-auto flex items-center gap-2 md:ml-0">
             <Button
-              onClick={() => onLogin("customer")}
+              onClick={onBook}
               className="mk-gold-glow h-10 rounded-full bg-primary px-5 text-sm font-bold text-primary-foreground hover:bg-primary/90"
             >
               <CalendarCheck className="mr-1.5 h-4 w-4" />
-              Termin buchen
+              Randevu Al
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onLogin("staff")}
+              onClick={onStaffLogin}
               className="h-10 rounded-full border-border/70 px-4 text-xs font-semibold text-muted-foreground hover:border-primary/50 hover:text-foreground"
             >
-              Team
+              Ekip
             </Button>
           </div>
         </div>
@@ -106,16 +123,26 @@ export function LandingPage({ onLogin }: { onLogin: (mode: "customer" | "staff")
 
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Button
-                onClick={() => onLogin("customer")}
+                onClick={onBook}
                 className="mk-gold-glow h-12 rounded-full bg-primary px-7 text-base font-bold text-primary-foreground hover:bg-primary/90"
               >
                 {landing.ctaButton}
                 <ChevronRight className="ml-1 h-5 w-5" />
               </Button>
-              <span className="text-xs text-muted-foreground">{landing.ctaHint}</span>
+              <Button
+                variant="outline"
+                onClick={onReviews}
+                className="mk-focus h-12 rounded-full border-border/70 px-6 text-sm font-semibold text-muted-foreground hover:border-primary/50 hover:text-foreground"
+              >
+                <MessageSquareHeart className="mr-1.5 h-4 w-4 text-brand-text" />
+                Değerlendirme Yap
+              </Button>
             </div>
+            <p className="mt-3 text-xs text-muted-foreground">
+              <span className="font-semibold text-brand-text">{landing.guestNote}</span> · {landing.ctaHint}
+            </p>
 
-            {/* Statistiken */}
+            {/* İstatistikler */}
             <div className="mt-10 grid max-w-md grid-cols-3 gap-3">
               {landing.stats.map((s, i) => (
                 <div key={s.label} className={cn("mk-card mk-anim-up rounded-xl px-4 py-4", `mk-delay-${i + 1}`)}>
@@ -125,40 +152,42 @@ export function LandingPage({ onLogin }: { onLogin: (mode: "customer" | "staff")
               ))}
             </div>
 
-            <p className="mt-8 text-xs italic text-muted-foreground">
-              {BRANDING.brand.slogan} — <span className="not-italic">{BRANDING.brand.sloganDe}</span>
-            </p>
+            <p className="mt-8 text-xs italic text-muted-foreground">«{BRANDING.brand.slogan}»</p>
           </div>
 
-          {/* Hero-Bild */}
+          {/* Hero görseli + hava durumu */}
           <div className="mk-anim-up relative mx-auto w-full max-w-md lg:max-w-none">
             <div className="mk-gold-glow-soft relative overflow-hidden rounded-3xl border border-primary/25">
-              { }
               <img
                 src="/gallery/hero.png"
-                alt="Elegante Gold-Gel-Nägel auf schwarzer Seide — Nail-Art von Melek'ce Güzellik"
+                alt="Siyah ipek üzerinde zarif altın jel tırnaklar — Melek'çe Güzellik tırnak sanatı"
                 className="aspect-[4/3] w-full object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-transparent" />
               <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between rounded-2xl border border-border/60 bg-background/80 px-4 py-3 backdrop-blur-md">
-                <div className="text-xs font-semibold text-foreground">Champagner-Gold Design</div>
-                <Badge className="border-primary/40 bg-primary/10 text-[10px] text-brand-text">Nail Art</Badge>
+                <div className="text-xs font-semibold text-foreground">Şampanya Altını Tasarım</div>
+                <Badge className="border-primary/40 bg-primary/10 text-[10px] text-brand-text">Tırnak Sanatı</Badge>
               </div>
+            </div>
+
+            {/* Canlı hava durumu */}
+            <div className="mt-4">
+              <WeatherWidget variant="hero" />
             </div>
           </div>
         </div>
       </section>
 
-      {/* ═══ Leistungen & Preise ═══ */}
-      <section id="leistungen" className="border-t border-border/60 py-14 lg:py-20">
+      {/* ═══ Hizmetler & Fiyatlar ═══ */}
+      <section id="hizmetler" className="border-t border-border/60 py-14 lg:py-20">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="mb-10 text-center">
-            <div className="text-[11px] font-bold uppercase tracking-[0.3em] text-brand-text">Leistungen & Preise</div>
+            <div className="text-[11px] font-bold uppercase tracking-[0.3em] text-brand-text">Hizmetler & Fiyatlar</div>
             <h2 className="mk-display mt-3 text-3xl font-bold sm:text-4xl">
-              Verwöhnprogramme für <span className="mk-gold-text">jede Frau</span>
+              Her kadın için <span className="mk-gold-text">bakım programları</span>
             </h2>
             <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground">
-              Hochwertige Produkte, präzise Technik und Zeit für Ihre Wünsche — von klassischer Maniküre bis zum kompletten Wimpern-Wow.
+              Yüksek kaliteli ürünler, hassas teknik ve isteklerinize ayrılan zaman — klasik manikürden etkileyici kirpiklere kadar.
             </p>
           </div>
 
@@ -181,7 +210,7 @@ export function LandingPage({ onLogin }: { onLogin: (mode: "customer" | "staff")
                   >
                     {s.popular && (
                       <Badge className="absolute -top-2 right-4 border-primary/50 bg-primary/15 text-[9px] font-bold uppercase tracking-wider text-brand-text">
-                        Beliebt
+                        Popüler
                       </Badge>
                     )}
                     <div className="flex items-baseline justify-between gap-3">
@@ -191,9 +220,17 @@ export function LandingPage({ onLogin }: { onLogin: (mode: "customer" | "staff")
                     {s.description && (
                       <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{s.description}</p>
                     )}
-                    <div className="mt-3 flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
-                      <Clock className="h-3 w-3 text-brand-text/70" />
-                      {minutesLabel(s.durationMin)}
+                    <div className="mt-3 flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+                        <Clock className="h-3 w-3 text-brand-text/70" />
+                        {minutesLabel(s.durationMin)}
+                      </div>
+                      <button
+                        onClick={onBook}
+                        className="mk-focus rounded-full text-[11px] font-bold text-brand-text transition-colors hover:bg-primary/10 px-3 py-1"
+                      >
+                        Randevu Al →
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -203,35 +240,86 @@ export function LandingPage({ onLogin }: { onLogin: (mode: "customer" | "staff")
 
           <div className="mk-card mt-4 flex flex-col items-center justify-between gap-4 rounded-xl p-6 text-center sm:flex-row sm:text-left">
             <div>
-              <div className="mk-display text-lg font-bold">Bereit für Ihren Termin?</div>
-              <div className="mt-1 text-sm text-muted-foreground">Online buchen in 1 Minute — Leistungen, Zeit und Wunschtermin selbst wählen.</div>
+              <div className="mk-display text-lg font-bold">Randevunuz için hazır mısınız?</div>
+              <div className="mt-1 text-sm text-muted-foreground">1 dakikada online alın — hizmeti, saati ve tarihi kendiniz seçin. Giriş gerekmez.</div>
             </div>
             <Button
-              onClick={() => onLogin("customer")}
+              onClick={onBook}
               className="mk-gold-glow h-11 shrink-0 rounded-full bg-primary px-6 font-bold text-primary-foreground hover:bg-primary/90"
             >
-              <CalendarCheck className="mr-1.5 h-4 w-4" /> Jetzt buchen
+              <CalendarCheck className="mr-1.5 h-4 w-4" /> Hemen Al
             </Button>
           </div>
         </div>
       </section>
 
-      {/* ═══ Galerie ═══ */}
-      <section id="galerie" className="border-t border-border/60 py-14 lg:py-20">
+      {/* ═══ Misafir Değerlendirmeleri ═══ */}
+      <section id="yorumlar" className="border-t border-border/60 py-14 lg:py-20">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="mb-10 text-center">
-            <div className="text-[11px] font-bold uppercase tracking-[0.3em] text-brand-text">Galerie</div>
+            <div className="text-[11px] font-bold uppercase tracking-[0.3em] text-brand-text">Değerlendirmeler</div>
             <h2 className="mk-display mt-3 text-3xl font-bold sm:text-4xl">
-              Unsere <span className="mk-gold-text">Arbeiten</span>
+              Misafirlerimiz <span className="mk-gold-text">ne diyor?</span>
+            </h2>
+            {summary && summary.count > 0 && (
+              <div className="mt-4 inline-flex items-center gap-3 rounded-full border border-primary/30 bg-primary/8 px-5 py-2.5">
+                <span className="mk-display text-2xl font-bold text-brand-text">{summary.average.toFixed(1)}</span>
+                <Stars value={summary.average} size="md" />
+                <span className="text-xs text-muted-foreground">{summary.count} değerlendirme</span>
+              </div>
+            )}
+          </div>
+
+          {reviews.length > 0 ? (
+            <div className="grid gap-4 md:grid-cols-3">
+              {reviews.map((r, i) => (
+                <figure key={r.id} className={cn("mk-card mk-anim-up rounded-2xl p-6", `mk-delay-${i + 1}`)}>
+                  <Stars value={r.rating} />
+                  <blockquote className="mt-3 text-sm leading-relaxed text-foreground/90">«{r.comment}»</blockquote>
+                  <figcaption className="mt-4 flex items-center gap-3 border-t border-border/60 pt-4">
+                    <span className="mk-display flex h-9 w-9 items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-xs font-bold text-brand-text">
+                      {r.authorName.split(" ").map((p) => p[0]).join("").slice(0, 2)}
+                    </span>
+                    <div className="leading-tight">
+                      <div className="text-xs font-bold text-foreground">{r.authorName}</div>
+                      <div className="text-[10px] text-muted-foreground">{r.serviceName ?? BRANDING.reviews.anonymousLabel}</div>
+                    </div>
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-sm text-muted-foreground">Henüz yayınlanmış değerlendirme yok — ilk siz olun!</p>
+          )}
+
+          <div className="mt-8 text-center">
+            <Button
+              variant="outline"
+              onClick={onReviews}
+              className="mk-focus h-11 rounded-full border-primary/40 px-6 text-sm font-bold text-brand-text hover:bg-primary/10"
+            >
+              Tüm yorumları gör & değerlendirme yaz
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ Galeri ═══ */}
+      <section id="galeri" className="border-t border-border/60 py-14 lg:py-20">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="mb-10 text-center">
+            <div className="text-[11px] font-bold uppercase tracking-[0.3em] text-brand-text">Galeri</div>
+            <h2 className="mk-display mt-3 text-3xl font-bold sm:text-4xl">
+              <span className="mk-gold-text">Çalışmalarımız</span>
             </h2>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {gallery.map((g, i) => (
               <figure key={g.id} className={cn("mk-card mk-anim-up group relative overflow-hidden rounded-xl", `mk-delay-${Math.min(6, (i % 6) + 1)}`)}>
-                { }
                 <img
                   src={g.imagePath}
-                  alt={`${g.title} — ${CATEGORY_META[g.category]?.label ?? g.category} von Melek'ce Güzellik`}
+                  alt={`${g.title} — Melek'çe Güzellik ${CATEGORY_META[g.category]?.label ?? g.category} çalışması`}
                   className="aspect-square w-full object-cover transition-transform duration-500 group-hover:scale-105"
                   loading="lazy"
                 />
@@ -250,33 +338,32 @@ export function LandingPage({ onLogin }: { onLogin: (mode: "customer" | "staff")
               className="mk-focus inline-flex items-center gap-2 rounded-full border border-border/70 px-5 py-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
             >
               <Instagram className="h-4 w-4 text-brand-text" />
-              Mehr auf Instagram · @{company.instagram}
+              Instagram'da daha fazlası · @{company.instagram}
             </a>
           </div>
         </div>
       </section>
 
-      {/* ═══ Über uns ═══ */}
-      <section id="ueber" className="border-t border-border/60 py-14 lg:py-20">
+      {/* ═══ Hakkımızda ═══ */}
+      <section id="hakkimizda" className="border-t border-border/60 py-14 lg:py-20">
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 sm:px-6 lg:grid-cols-2">
           <div className="mk-gold-glow-soft overflow-hidden rounded-3xl border border-primary/25">
-            { }
             <img
               src="/gallery/salon-interior.png"
-              alt="Elegantes Studio-Interieur in Schwarz und Gold bei Melek'ce Güzellik"
+              alt="Melek'çe Güzellik'te siyah ve altın tonlarında zarif stüdyo iç mekânı"
               className="aspect-[4/3] w-full object-cover"
               loading="lazy"
             />
           </div>
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-[0.3em] text-brand-text">Über uns</div>
+            <div className="text-[11px] font-bold uppercase tracking-[0.3em] text-brand-text">Hakkımızda</div>
             <h2 className="mk-display mt-3 text-3xl font-bold sm:text-4xl">{landing.aboutTitle}</h2>
             <p className="mt-5 max-w-lg text-[15px] leading-relaxed text-muted-foreground">{landing.aboutText}</p>
             <div className="mt-7 space-y-3">
               {[
-                { icon: Sparkles, text: "Hochwertige, hautfreundliche Produkte" },
-                { icon: Heart, text: "Zeit & Beratung für Ihre individuellen Wünsche" },
-                { icon: Crown, text: "Elegantes Ambiente — Sie fühlen sich wie ein Engel" },
+                { icon: Sparkles, text: "Cilt dostu, yüksek kaliteli ürünler" },
+                { icon: Heart, text: "İsteklerinize zaman ve kişisel danışmanlık" },
+                { icon: Crown, text: "Zarif atmosfer — kendinizi bir melek gibi hissedin" },
               ].map((f) => (
                 <div key={f.text} className="flex items-center gap-3 text-sm text-foreground/90">
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-primary/30 bg-primary/8">
@@ -290,13 +377,13 @@ export function LandingPage({ onLogin }: { onLogin: (mode: "customer" | "staff")
         </div>
       </section>
 
-      {/* ═══ Öffnungszeiten & Kontakt ═══ */}
-      <section id="kontakt" className="border-t border-border/60 py-14 lg:py-20">
+      {/* ═══ Çalışma Saatleri & İletişim ═══ */}
+      <section id="iletisim" className="border-t border-border/60 py-14 lg:py-20">
         <div className="mx-auto grid max-w-6xl gap-8 px-4 sm:px-6 lg:grid-cols-2">
-          {/* Öffnungszeiten */}
+          {/* Çalışma saatleri */}
           <div className="mk-card rounded-2xl p-7">
             <div className="flex items-center gap-2.5 text-[11px] font-bold uppercase tracking-[0.25em] text-brand-text">
-              <Clock className="h-4 w-4" /> Öffnungszeiten
+              <Clock className="h-4 w-4" /> Çalışma Saatleri
             </div>
             <div className="mt-5 space-y-1">
               {BRANDING.openingHours.map((h, i) => (
@@ -309,7 +396,7 @@ export function LandingPage({ onLogin }: { onLogin: (mode: "customer" | "staff")
                 >
                   <span className={cn("font-medium", h.closed ? "text-muted-foreground" : "text-foreground")}>
                     {h.day}
-                    {i === todayIdx && <span className="ml-2 text-[10px] font-bold uppercase text-brand-text">Heute</span>}
+                    {i === todayIdx && <span className="ml-2 text-[10px] font-bold uppercase text-brand-text">Bugün</span>}
                   </span>
                   <span className={cn("font-mono text-xs", h.closed ? "text-muted-foreground/70" : "text-foreground")}>{h.hours}</span>
                 </div>
@@ -317,10 +404,10 @@ export function LandingPage({ onLogin }: { onLogin: (mode: "customer" | "staff")
             </div>
           </div>
 
-          {/* Kontakt */}
+          {/* İletişim */}
           <div className="mk-card rounded-2xl p-7">
             <div className="flex items-center gap-2.5 text-[11px] font-bold uppercase tracking-[0.25em] text-brand-text">
-              <MapPin className="h-4 w-4" /> Kontakt & Anfahrt
+              <MapPin className="h-4 w-4" /> İletişim & Ulaşım
             </div>
             <div className="mt-5 space-y-4 text-sm">
               <div className="flex items-start gap-3">
@@ -343,20 +430,20 @@ export function LandingPage({ onLogin }: { onLogin: (mode: "customer" | "staff")
             </div>
             <div className="mt-6 border-t border-border/60 pt-5">
               <Button
-                onClick={() => onLogin("customer")}
+                onClick={onBook}
                 className="mk-gold-glow h-11 w-full rounded-full bg-primary font-bold text-primary-foreground hover:bg-primary/90"
               >
-                <CalendarCheck className="mr-1.5 h-4 w-4" /> Termin online buchen
+                <CalendarCheck className="mr-1.5 h-4 w-4" /> Online randevu al
               </Button>
               <p className="mt-3 text-center text-[11px] text-muted-foreground">
-                Oder klassisch per Telefon oder Instagram-Direktnachricht.
+                Ya da klasik yollarla: telefon veya Instagram mesajı.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ═══ Footer ═══ */}
+      {/* ═══ Alt bilgi ═══ */}
       <footer className="mt-auto border-t border-border/60 bg-card/30">
         <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
           <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
@@ -372,11 +459,12 @@ export function LandingPage({ onLogin }: { onLogin: (mode: "customer" | "staff")
               <a href={instagramUrl} target="_blank" rel="noopener noreferrer" className="mk-focus flex items-center gap-1.5 rounded hover:text-foreground">
                 <Instagram className="h-3.5 w-3.5 text-brand-text/70" /> Instagram
               </a>
-              <button onClick={() => onLogin("staff")} className="mk-focus rounded hover:text-foreground">Team-Login</button>
+              <button onClick={onReviews} className="mk-focus rounded hover:text-foreground">Yorumlar</button>
+              <button onClick={onStaffLogin} className="mk-focus rounded hover:text-foreground">Ekip Girişi</button>
             </div>
           </div>
           <p className="mt-5 text-center text-[10px] italic text-muted-foreground/60">
-            {BRANDING.brand.slogan} — {BRANDING.brand.sloganDe}
+            «{BRANDING.brand.slogan}»
           </p>
         </div>
       </footer>

@@ -1,139 +1,123 @@
-# Melek'ce Güzellik — Nail Art & Beauty Studio Suite
+# Melek'çe Güzellik — Tırnak Sanatı & Güzellik Stüdyosu Suite V2.0.0
 
-**Öffentliche Webseite + Kundinnen-Buchungsportal + Team-Verwaltung — alles in einer Anwendung.**
+**Herkese açık web sitesi + giriş gerektirmeyen randevu ve değerlendirme + ekip yönetimi — tek uygulamada, TAMAMEN TÜRKÇE.**
 
-Entwickelt als **White-Label-Template**: Dieselbe Suite kann mit einer einzigen
-Konfigurationsdatei für jedes andere Studio / jeden anderen Betrieb umetikettiert
-werden (siehe `TEMPLATE-GUIDE.md`).
+**White-Label şablonu** olarak geliştirildi: Tek bir yapılandırma dosyasıyla
+aynı suite herhangi başka bir stüdyo / işletme için yeniden markalanabilir
+(bkz. `TEMPLATE-GUIDE.md`).
 
-| Bereich | Funktion |
+| Alan | İşlev |
 |---|---|
-| 🌐 **Öffentliche Webseite** | Hero, Leistungen & Preise, Galerie, Über uns, Öffnungszeiten, Kontakt — ohne Login sichtbar (für Kundinnen & Suchmaschinen) |
-| 👩 **Kundinnen-Portal** | Online-Termin buchen (3 Schritte: Leistung → Datum & Zeit → Bestätigen), «Meine Termine» mit Stornierung — Login nur mit Name + E-Mail |
-| 👑 **Team-Portal** | Studio-Übersicht (KPIs, heutige Termine, Umsatz), Terminkalender (2 Wochen), Buchungs-Verwaltung (Anfragen bestätigen/abschliessen/stornieren), Kundinnen-CRM mit Historie, Preisliste, Galerie-Verwaltung, Einstellungen |
+| 🌐 **Herkese Açık Web Sitesi** | Hero + **canlı hava durumu (Open-Meteo)**, hizmetler & fiyatlar, galeri, **misafir değerlendirmeleri (yıldızlı)**, hakkımızda, çalışma saatleri, iletişim — giriş olmadan herkes görebilir |
+| 📅 **Randevu Al (Girişsiz!)** | 3 adımlı online randevu: Hizmet → Tarih & Saat (30 dk'lık aralıklar, dolu/geçmiş saatler kilitli) → Ad + Telefon. **Herkes randevu alabilir — üyelik yok, giriş yok** |
+| 📋 **Randevularım** | Telefon numarasıyla randevularını görüntüleme ve iptal etme — giriş gerekmez |
+| ⭐ **Yorumlar (Girişsiz!)** | Herkes yıldızlı değerlendirme yazabilir (1–5 yıldız + yorum + isteğe bağlı hizmet). Yayın öncesi ekip moderasyonu |
+| 👑 **Ekip Portalı (8 Modül)** | Genel Bakış (KPI'lar + **hava durumu** + değerlendirme özeti), Takvim (2 hafta), Randevu Yönetimi, **Yorum Moderasyonu (onayla/reddet/sil)**, Müşteri CRM, Hizmetler & Fiyatlar, Galeri, Ayarlar |
 
-**Design:** «Black Gold Luxury» — tiefes Schwarz, Champagner-Gold, elegante
-Serifen-Headlines (Noto Serif SC) + Inter. Alle Schriften lokal gebündelt.
+**Tasarım:** «Black Gold Luxury» — derin siyah, şampanya altını, zarif serif
+başlıklar (Noto Serif SC) + Inter. Tüm yazı tipleri yerel olarak paketlenmiştir
+(çevrimdışı çalışır). **Mobil:** sabit alt gezinme çubuğu ile uygulama hissi —
+telefon ve bilgisayar için ayrı ayrı optimize.
 
-**Demo-Zugänge:**
+**Demo girişleri:**
 
-| Bereich | Zugang |
+| Alan | Erişim |
 |---|---|
-| Kundinnen-Portal | Beliebiger Name + E-Mail (z. B. `Elif Yilmaz` / `elif.yilmaz@example.ch`) |
-| Team-Portal | `melek` / `melek123` (Inhaberin) oder `admin` / `admin123` |
+| Randevu / Değerlendirme | **Giriş gerekmez** — ad + telefon yeterli |
+| Ekip Portalı | `melek` / `melek123` (İşletme Sahibi) veya `admin` / `admin123` |
+| Randevularım (demo) | Telefon: `+41 79 111 22 33` |
 
 ---
 
-## 1. Was ist darin enthalten?
+## 1. Paket içeriği
 
 ```
 melek-guzellik-suite/
 ├── src/
-│   ├── app/                      # Next.js App Router (Landing-Route, APIs)
-│   │   ├── page.tsx              # Einstieg → AppShell
-│   │   ├── layout.tsx            # Meta-Daten (aus branding.ts generiert)
-│   │   ├── globals.css           # Black-Gold-Design-System (--brand-Token!)
-│   │   └── api/v1/salon/         # REST-API: services, bookings, customers, stats, gallery
+│   ├── app/                      # Next.js App Router (açılış rotası, API'ler)
+│   │   ├── page.tsx              # Giriş noktası → AppShell
+│   │   ├── layout.tsx            # Meta veriler (branding.ts'den üretilir)
+│   │   ├── globals.css           # Black-Gold tasarım sistemi (--brand Token!)
+│   │   └── api/v1/
+│   │       ├── salon/            # REST: services, bookings, reviews, customers, stats, gallery, availability
+│   │       └── weather/          # Canlı hava durumu (Open-Meteo, Türkçe, 10 dk önbellek)
 │   ├── components/
-│   │   ├── landing/              # Öffentliche Webseite
-│   │   ├── auth/                 # Login (Kundinnen-Tab + Team-Tab)
-│   │   ├── customer/             # Kundinnen-Portal (Buchungsflow)
-│   │   ├── staff/                # Team-Portal (7 Module)
-│   │   └── ui/                   # shadcn/ui-Komponenten
-│   ├── config/branding.ts        # ★ DIE EINE DATEI für Rebranding
-│   └── lib/                      # Salon-Typen, Formatierer, Modul-Registry, DB
-├── prisma/schema.prisma          # SQLite-Datenmodell (Service, SalonCustomer, Booking, GalleryItem)
-├── scripts/seed-beauty.ts        # Demo-Daten: 17 Leistungen, 8 Kundinnen, 19 Buchungen, Galerie
-├── public/gallery/               # Studio-Bilder (Landing-Page-Galerie)
-└── public/fonts/                 # Inter + Noto Serif SC (lokal, offline-fähig)
+│   │   ├── landing/              # Herkese açık web sitesi (hava durumu + yorumlar dahil)
+│   │   ├── public/               # Randevu akışı (3 adım) + Değerlendirme sayfası
+│   │   ├── auth/                 # Ekip girişi
+│   │   ├── staff/                # Ekip portalı (8 modül, Türkçe)
+│   │   ├── weather-widget.tsx    # Canlı hava durumu bileşeni
+│   │   └── ui/                   # shadcn/ui bileşenleri
+│   ├── config/branding.ts        # ★ YENİDEN MARKALAMA İÇİN TEK DOSYA
+│   └── lib/                      # Salon tipleri, biçimlendiriciler, modül kaydı, DB
+├── prisma/schema.prisma          # SQLite veri modeli (Service, SalonCustomer, Booking, Review, GalleryItem)
+├── scripts/seed-beauty.ts        # Türkçe demo veriler: 17 hizmet, 8 müşteri, 19 randevu, 9 değerlendirme, galeri
+├── public/gallery/               # Stüdyo görselleri (açılış sayfası galerisi)
+└── public/fonts/                 # Inter + Noto Serif SC (yerel, çevrimdışı)
 ```
 
-## 2. Installation & Start
+## 2. Kurulum (2 dakika)
 
-Voraussetzung: **Node.js 20+** (oder Bun) — https://nodejs.org
+Gereksinimler: Node.js 20+ (veya Bun).
 
 ```bash
-# 1. Abhängigkeiten installieren
-npm install            # oder: bun install
+# 1) Paketleri kur
+bun install        # veya: npm install
 
-# 2. Datenbank einrichten + Demo-Daten laden
-npx prisma db push
-npx tsx scripts/seed-beauty.ts     # oder: bun run scripts/seed-beauty.ts
+# 2) .env dosyası oluştur
+cp .env.example .env
+# → DATABASE_URL="file:./db/custom.db" (klasör otomatik oluşur)
 
-# 3. Entwicklungsserver starten
-npm run dev            # → http://localhost:3000
+# 3) Veritabanını oluştur ve demo verileri yükle
+bun run db:push
+bun run scripts/seed-beauty.ts
+
+# 4) Başlat
+bun run dev        # → http://localhost:3000
 ```
 
-**Das war's.** Die Datenbank (SQLite) liegt lokal in `db/custom.db` — kein
-Cloud-Dienst nötig, alle Daten bleiben auf Ihrem Rechner.
+## 3. V2'de yeni ne var?
 
-### Produktivbetrieb (echte Kundinnen)
+| Sürüm | Yenilikler |
+|---|---|
+| **2.0.0** | • **Tamamı Türkçe** (arayüz, veriler, API hataları) • **Girişsiz randevu**: herkes ad + telefonla randevu alır • **Herkese açık değerlendirmeler**: 1–5 yıldız + yorum, moderasyonlu • **Canlı hava durumu**: Open-Meteo, Türkçe açıklamalar, 4 günlük tahmin • **Randevularım**: telefonla sorgulama + self-servis iptal • **Mobil alt gezinme** (Ana Sayfa / Randevu / Yorumlar) — telefon için uygulama hissi • Ekip portalı 8 modüle çıktı (+ Yorum Moderasyonu) • Yeni API'ler: `reviews`, `weather`, `availability` • Türkçe demo verileri (9 değerlendirme dahil) |
+| 1.0.0 | Açılış sayfası + müşteri portalı (e-posta girişli) + 7 modüllü ekip portalı, Black-Gold tasarım |
 
-Für den dauerhaften Betrieb empfiehlt sich ein Hosting:
+## 4. API'ye hızlı bakış
 
-| Option | Aufwand | Kosten |
+| Uç nokta | Yöntem | Açıklama |
 |---|---|---|
-| **Vercel** (empfohlen) | Repo importieren, `DATABASE_URL` setzen, deploy | kostenlos für kleine Projekte |
-| ** eigener Server / VPS** | `npm run build && npm start` hinter nginx | ab ca. 5 CHF/Monat |
-| **Hetzner / andere** | beliebig | variabel |
+| `/api/v1/salon/services` | GET | Aktif hizmetler (açılış sayfası + randevu akışı) |
+| `/api/v1/salon/availability?date=` | GET | Bir günün dolu randevu blokları (müşteri verisi YOK — gizlilik güvenli) |
+| `/api/v1/salon/bookings` | GET/POST/PATCH | Randevular: telefonla sorgulama · **herkes** randevu oluşturma (ad+telefon) · durum değiştirme / self-iptal |
+| `/api/v1/salon/reviews` | GET/POST/PATCH/DELETE | Değerlendirmeler: onaylılar + özet · **herkes** yorum yazma · moderasyon · silme |
+| `/api/v1/weather` | GET | Canlı hava durumu (Open-Meteo, Türkçe WMO açıklamaları, 10 dk önbellek) |
+| `/api/v1/salon/customers` | GET | Müşteri CRM (ziyaret, ciro, yaklaşan) |
+| `/api/v1/salon/stats` | GET | KPI'lar + **değerlendirme istatistikleri** |
+| `/api/v1/salon/gallery` | GET | Açılış sayfası galerisi |
 
-> Hinweis: SQLite eignet sich für Einzelbetrieb. Bei mehreren gleichzeitigen
-> Nutzern oder Lastausfall auf PostgreSQL/MySQL umstellen (Prisma unterstützt
-> beides mit minimalen Änderungen in `schema.prisma`).
+## 5. Yeniden markalama (başka bir proje için)
 
-## 3. Inhalte anpassen — ohne Programmieren
+1. `src/config/branding.ts` dosyasını açın — **tek dosya**: marka, slogan, stüdyo
+   bilgileri, hava durumu şehri, açılış metinleri, çalışma saatleri, ekip
+   girişleri, modüller (aç/kapat).
+2. `src/app/globals.css` içinde `--brand` değerini istediğiniz vurgu rengine
+   değiştirin (altın → istediğiniz renk; tüm butonlar/grafikler/rozetler otomatik uyum sağlar).
+3. `scripts/seed-beauty.ts` içindeki hizmetleri kendi hizmetlerinizle değiştirip yeniden seed edin.
+4. `public/gallery/` klasörüne kendi fotoğraflarınızı koyun.
 
-### Marke, Adresse, Preise, Texte: `src/config/branding.ts`
+Ayrıntılı adım adım rehber: `TEMPLATE-GUIDE.md`.
 
-Die komplette Suite wird aus dieser EINEN Datei gesteuert: Markenname, Tagline,
-Studio-Adresse, Telefon, Instagram, Landing-Page-Texte, Öffnungszeiten (steuern
-automatisch die Buchungs-Slots!), Team-Zugänge, Fusszeile.
+## 6. Üretimde kullanım (Vercel vb.)
 
-### Akzentfarbe: `src/app/globals.css` → `--brand`
-
-```css
---brand: oklch(0.75 0.12 85);   /* Champagner-Gold (Standard) */
-/* Rosé: oklch(0.72 0.12 15) · Silber: oklch(0.72 0.02 260) · Türkis: oklch(0.68 0.11 195) */
+```bash
+bun run build && bun run start   # veya Vercel'e deploy edin
 ```
 
-Buttons, Charts, Badges, Glow-Effekte und aktive Navigation folgen automatisch.
-
-### Leistungen & Preise: Datenbank
-
-Die Preisliste liegt in der Datenbank (Tabelle `Service`) und wird im
-Team-Portal unter **Leistungen** angezeigt. Änderungen direkt in der DB oder
-über das Seed-Skript (`scripts/seed-beauty.ts` → Array `SERVICES`).
-
-### Bilder: `public/gallery/`
-
-Eigene Fotos als PNG/JPG in `public/gallery/` ablegen und die Pfade in der
-Tabelle `GalleryItem` (Seed-Skript → Array `GALLERY`) eintragen.
-
-## 4. API-Überblick (für eigene Erweiterungen)
-
-| Route | Methode | Zweck |
-|---|---|---|
-| `/api/v1/salon/services` | GET | Alle aktiven Leistungen |
-| `/api/v1/salon/bookings` | GET | Buchungen (Filter: `email`, `from`, `to`, `status`) |
-| | POST | Neue Buchung (Kundinnen-Portal) — mit Kollisionsprüfung |
-| | PATCH | Status ändern: `angefragt → bestaetigt → abgeschlossen` oder `storniert` |
-| `/api/v1/salon/customers` | GET | Kundinnen mit Umsatz-/Besuchsstatistik |
-| `/api/v1/salon/stats` | GET | Dashboard-KPIs (heute, Auslastung, Umsatz, Top-Leistungen) |
-| `/api/v1/salon/gallery` | GET | Galerie-Einträge für die Landing-Page |
-
-## 5. Für andere Projekte wiederverwenden
-
-Diese Suite ist bewusst als **White-Label-Template** gebaut — die Schwester-Suite
-(AutoFaszination Sales Suite, gleiche Architektur) läuft mit identischem
-Bauplan in einer völlig anderen Branche. Schritt-für-Schritt für eigene
-Projekte: **`TEMPLATE-GUIDE.md`** lesen.
-
-## 6. Hinweise
-
-- Demo-Authentifizierung: Team-Logins sind in `branding.ts` definiert (Demo-Modus).
-  Für den Echtbetrieb ein echtes Auth-System ergänzen (NextAuth.js o. Ä.).
-- Die Kundinnen-«Anmeldung» (Name + E-Mail) ist eine bewusst niederschwellige
-  Demo-Lösung ohne Passwort — für echte Kundendaten ggf. mit Bestätigungs-E-Mail
-  kombinieren.
-- Alle Bilder im Ordner `public/gallery/` sind KI-generierte Platzhalter —
-  durch eigene Studio-Fotos ersetzen.
+Notlar:
+- Ekip girişleri demo amaçlıdır (`branding.ts → users`). Gerçek kullanım için
+  NextAuth/Auth.js'e bağlayın.
+- Hava durumu Open-Meteo üzerinden anahtarsız ve ücretsiz çalışır
+  (`branding.ts → weather` ile şehir/koordinat ayarlanır).
+- SQLite yerel dosyadır; Vercel gibi geçici dosya sistemlerinde düzenli
+  yedekleyin veya Postgres'e geçin (Prisma şeması kolayca taşınır).

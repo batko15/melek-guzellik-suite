@@ -1,22 +1,23 @@
 // ═══════════════════════════════════════════════════════════════════════════
-//  MODUL-REGISTRY (Team-Portal) — verbindet branding.ts-Module mit Icons & Views
-//  Neue Views hier registrieren; Sichtbarkeit regelt branding.ts (enabled).
+//  MODÜL KAYDI (Ekip Portalı) — branding.ts modüllerini ikonlar & görünümlerle bağlar
+//  Yeni görünümleri burada kaydedin; görünürlüğü branding.ts düzenler (enabled).
 // ═══════════════════════════════════════════════════════════════════════════
 
 import type { ElementType } from "react"
 import {
-  LayoutDashboard, CalendarDays, ClipboardList, Users, Sparkles, Image as ImageIcon, Settings,
+  LayoutDashboard, CalendarDays, ClipboardList, Users, Sparkles, Image as ImageIcon, Settings, Star,
 } from "lucide-react"
 import { DashboardView } from "@/components/staff/dashboard-view"
 import { KalenderView } from "@/components/staff/kalender-view"
-import { BuchungenView } from "@/components/staff/buchungen-view"
-import { KundenView } from "@/components/staff/kunden-view"
-import { LeistungenView } from "@/components/staff/leistungen-view"
-import { GalerieView } from "@/components/staff/galerie-view"
-import { EinstellungenView } from "@/components/staff/einstellungen-view"
+import { RandevularView } from "@/components/staff/randevular-view"
+import { YorumlarView } from "@/components/staff/yorumlar-view"
+import { MusterilerView } from "@/components/staff/musteriler-view"
+import { HizmetlerView } from "@/components/staff/hizmetler-view"
+import { GaleriView } from "@/components/staff/galeri-view"
+import { AyarlarView } from "@/components/staff/ayarlar-view"
 import { ENABLED_MODULES, BRANDING, type ModuleConfig } from "@/config/branding"
 
-// Icon-Zuordnung (Icon-Namen aus branding.ts)
+// İkon ataması (branding.ts içindeki ikon adları)
 const ICONS: Record<string, ElementType> = {
   "layout-dashboard": LayoutDashboard,
   "calendar-days": CalendarDays,
@@ -25,17 +26,19 @@ const ICONS: Record<string, ElementType> = {
   sparkles: Sparkles,
   image: ImageIcon,
   settings: Settings,
+  star: Star,
 }
 
-// View-Komponenten-Zuordnung (Modul-ID → Komponente)
+// Görünüm bileşenleri ataması (modül kimliği → bileşen)
 const VIEWS: Record<string, ElementType> = {
   dashboard: DashboardView,
   kalender: KalenderView,
-  buchungen: BuchungenView,
-  kunden: KundenView,
-  leistungen: LeistungenView,
-  galerie: GalerieView,
-  einstellungen: EinstellungenView,
+  randevular: RandevularView,
+  yorumlar: YorumlarView,
+  musteriler: MusterilerView,
+  hizmetler: HizmetlerView,
+  galeri: GaleriView,
+  ayarlar: AyarlarView,
 }
 
 export interface RegisteredModule extends ModuleConfig {
@@ -43,25 +46,25 @@ export interface RegisteredModule extends ModuleConfig {
   View: ElementType
 }
 
-/** Alle aktivierten Module inkl. Icon- und View-Auflösung. */
+/** Etkinleştirilmiş tüm modüller (ikon ve görünüm çözümleriyle). */
 export const REGISTERED_MODULES: RegisteredModule[] = ENABLED_MODULES.map((m) => ({
   ...m,
   Icon: ICONS[m.icon] ?? LayoutDashboard,
   View: VIEWS[m.id],
 })).filter((m) => m.View != null)
 
-/** Sidebar-Gruppen in fester Reihenfolge, nur Gruppen mit aktiven Modulen. */
+/** Kenar çubuğu grupları sabit sırayla; yalnızca etkin modülü olan gruplar. */
 export const NAV_SECTIONS: Array<{ key: string; label: string; items: RegisteredModule[] }> = (
   [
-    { key: "uebersicht", label: "Übersicht" },
-    { key: "betrieb", label: "Betrieb" },
-    { key: "stammdaten", label: "Stammdaten" },
+    { key: "genelBakis", label: "Genel Bakış" },
+    { key: "isletme", label: "İşletme" },
+    { key: "kayitlar", label: "Kayıtlar" },
   ] as const
 )
   .map((g) => ({ ...g, items: REGISTERED_MODULES.filter((m) => m.group === g.key) }))
   .filter((g) => g.items.length > 0)
 
-/** Standard-View: aus Config, mit Fallback auf erstes aktives Modul. */
+/** Varsayılan görünüm: yapılandırmadan; ilk etkin modüle düşer. */
 export function resolveDefaultView(): string {
   const configured = BRANDING.defaultView
   if (REGISTERED_MODULES.some((m) => m.id === configured)) return configured

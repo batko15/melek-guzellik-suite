@@ -1,21 +1,22 @@
 // ═══════════════════════════════════════════════════════════════════════════
-//  WHITE-LABEL-KONFIGURATION — DIE EINE DATEI FÜR NEUE PROJEKTE
+//  WHITE-LABEL YAPILANDIRMASI — YENİ PROJELER İÇİN TEK DOSYA
 // ═══════════════════════════════════════════════════════════════════════════
-//  Sie wollen diese Suite für ein ANDERES Projekt verwenden?
-//  Dann NUR HIER die Inhalte abändern — fertig.
+//  Bu yazılımı BAŞKA bir proje için mi kullanmak istiyorsunuz?
+//  O zaman SADECE BURADAki içerikleri değiştirin — bitti.
 //
-//  Schritt-für-Schritt: siehe TEMPLATE-GUIDE.md im Projekt-Root.
+//  Adım adım anlatım: proje kökündeki TEMPLATE-GUIDE.md dosyasına bakın.
 //
-//  Was hier konfigurierbar ist:
-//    • Marke        — Name (zweifarbig), Tagline, Slogan, Versions-Badge
-//    • Studio       — rechtlicher Name, Adresse, Telefon, Instagram, Web
-//    • Landing-Page — Hero, Über-uns, Öffnungszeiten, Kontakt-Hinweise
-//    • Portale      — Kundinnen-Portal & Team-Portal (Rollen, Demo-Zugänge)
-//    • Module       — Team-Module ein-/ausschaltbar, Bezeichnungen frei
-//    • Lokales      — Sprache, Währung
+//  Burada yapılandırılabilir olanlar:
+//    • Marka        — isim (iki renkli), slogan, sürüm etiketi
+//    • Stüdyo       — resmi isim, adres, telefon, Instagram, web
+//    • Açılış Sayfası — Hero, Hakkımızda, Çalışma Saatleri, İletişim
+//    • Hava Durumu  — şehir adı + koordinatlar (canlı hava durumu widget'ı)
+//    • Portallar    — Misafir randevusu (girişsiz) & Ekip portalı
+//    • Modüller     — Ekip modülleri açılıp kapatılabilir, adlar serbest
+//    • Yerel Ayarlar — dil, para birimi
 //
-//  Akzentfarbe (Gold → Wunschfarbe): in src/app/globals.css den Wert
-//  «--brand» unter «:root» ändern (siehe TEMPLATE-GUIDE.md).
+//  Vurgu rengi (altın → istediğiniz renk): src/app/globals.css içindeki
+//  «--brand» değerini «:root» altında değiştirin (bkz. TEMPLATE-GUIDE.md).
 // ═══════════════════════════════════════════════════════════════════════════
 
 export interface BrandStat {
@@ -31,14 +32,9 @@ export interface BrandUser {
   initials: string
 }
 
-export interface BrandCustomerDemo {
-  name: string
-  email: string
-}
-
 export interface ModuleConfig {
   id: string
-  group: "uebersicht" | "betrieb" | "stammdaten"
+  group: "genelBakis" | "isletme" | "kayitlar"
   label: string
   hint: string
   title: string
@@ -48,106 +44,126 @@ export interface ModuleConfig {
 }
 
 export const BRANDING = {
-  // ─── Version (wird überall sichtbar gekennzeichnet) ─────────────────────
-  version: "1.0.0",
+  // ─── Sürüm (her yerde görünür şekilde işaretlenir) ───────────────────────
+  version: "2.0.0",
 
-  // ─── Marke ───────────────────────────────────────────────────────────────
-  // nameParts: Teil 1 normal, Teil 2 in Gold (Akzentfarbe).
+  // ─── Marka ────────────────────────────────────────────────────────────────
+  // nameParts: 1. kısım normal, 2. kısım altın (vurgu rengi) yazılır.
   brand: {
-    nameParts: ["Melek'ce", "Güzellik"],
-    tagline: "Nail Art & Beauty Studio",
+    nameParts: ["Melek'çe", "Güzellik"],
+    tagline: "Tırnak Sanatı & Güzellik Stüdyosu",
     slogan: "Her kadın bir melek gibi güzeldir",
-    sloganDe: "«Jede Frau ist schön wie ein Engel»",
     icon: "sparkles" as "sparkles" | "heart" | "crown" | "flower",
   },
 
-  // ─── Studio / Rechtliches ────────────────────────────────────────────────
+  // ─── Stüdyo / Resmi Bilgiler ──────────────────────────────────────────────
   company: {
-    legalName: "Melek'ce Güzellik",
-    street: "Musterstrasse 12", // ← Hier die echte Adresse eintragen
-    city: "5000 Aarau", // ← Hier den echten Ort eintragen
-    phone: "+41 79 000 00 00", // ← Hier die echte Telefonnummer eintragen
+    legalName: "Melek'çe Güzellik",
+    street: "Örnek Caddesi 12", // ← Gerçek adresi buraya girin
+    city: "5000 Aarau", // ← Gerçek şehri buraya girin
+    phone: "+41 79 000 00 00", // ← Gerçek telefon numarasını buraya girin
     instagram: "melekce_guzellik17",
-    website: "www.melekce-guzellik.ch", // ← Optional: eigene Website
-    footerClaim: "Nail Art · Beauty · Wimpern",
+    website: "www.melekce-guzellik.ch", // ← İsteğe bağlı: kendi web siteniz
+    footerClaim: "Tırnak Sanatı · Güzellik · Kirpik",
   },
 
-  // ─── Regionale Einstellungen ─────────────────────────────────────────────
+  // ─── Canlı Hava Durumu (Open-Meteo, ücretsiz, anahtar gerekmez) ──────────
+  weather: {
+    enabled: true,
+    cityName: "Aarau",
+    latitude: 47.39,
+    longitude: 8.05,
+    timezone: "Europe/Zurich",
+  },
+
+  // ─── Yerel Ayarlar ────────────────────────────────────────────────────────
   locale: {
-    language: "de-CH",
+    language: "tr-TR",
     currency: "CHF",
   },
 
-  // ─── Öffentliche Landing-Page ───────────────────────────────────────────
+  // ─── Herkese Açık Açılış Sayfası ──────────────────────────────────────────
   landing: {
-    heroTitle: "Schönheit, die",
-    heroTitleAccent: "strahlt.",
+    heroTitle: "Işıldayan",
+    heroTitleAccent: "güzellik.",
     heroDescription:
-      "Verwöhnende Nail-Art, elegante Beauty-Behandlungen und ausdrucksstarke Wimpern — bei Melek'ce Güzellik wird jede Frau wie ein Engel verzaubert. Jetzt ganz einfach online einen Termin buchen.",
+      "Bakım yapan tırnak sanatı, zarif güzellik uygulamaları ve etkileyici kirpikler — Melek'çe Güzellik'te her kadın bir melek gibi hisseder. Randevunuzu bugün online alın: üyelik yok, saniyeler içinde.",
     stats: [
-      { value: "17+", label: "Behandlungen" },
-      { value: "1000+", label: "verwöhnte Kundinnen" },
-      { value: "5★", label: "Kundinnen-Liebling" },
+      { value: "17+", label: "Uygulama" },
+      { value: "1000+", label: "mutlu misafir" },
+      { value: "5★", label: "misafir favorisi" },
     ] as BrandStat[],
-    aboutTitle: "Ihr Wohlfühl-Studio",
+    aboutTitle: "Rahatlama Stüdyonuz",
     aboutText:
-      "Bei Melek'ce Güzellik steht Ihre Schönheit im Mittelpunkt. In elegantem Ambiente verwöhnen wir Sie mit hochwertigen Produkten, präzisem Nageldesign und sanften Beauty-Behandlungen. Ob klassische Maniküre, ausgefallenes Nail-Art oder perfekte Wimpern — wir nehmen uns Zeit für Ihre Wünsche.",
-    ctaButton: "Termin buchen",
-    ctaHint: "Online in 1 Minute — ganz ohne Anruf",
+      "Melek'çe Güzellik'te güzelliğiniz merkezdedir. Zarif bir atmosferde sizi yüksek kaliteli ürünler, hassas tırnak tasarımı ve nazik güzellik uygulamalarıyla ağırlıyoruz. Klasik manikürden iddialı tırnak sanatına veya kusursuz kirpiklere kadar — isteklerinize zaman ayırıyoruz.",
+    ctaButton: "Randevu Al",
+    ctaHint: "1 dakikada online — aramaya gerek yok",
+    guestNote: "Giriş gerekmez — herkes randevu alabilir",
   },
 
-  // ─── Öffnungszeiten (Wochentage, Mo = 0) ────────────────────────────────
+  // ─── Çalışma Saatleri (haftanın günleri, Pzt = 0) ─────────────────────────
   openingHours: [
-    { day: "Montag", hours: "Geschlossen", closed: true },
-    { day: "Dienstag", hours: "09:00 – 18:00", closed: false },
-    { day: "Mittwoch", hours: "09:00 – 18:00", closed: false },
-    { day: "Donnerstag", hours: "09:00 – 18:00", closed: false },
-    { day: "Freitag", hours: "09:00 – 18:00", closed: false },
-    { day: "Samstag", hours: "09:00 – 16:00", closed: false },
-    { day: "Sonntag", hours: "Geschlossen", closed: true },
+    { day: "Pazartesi", hours: "Kapalı", closed: true },
+    { day: "Salı", hours: "09:00 – 18:00", closed: false },
+    { day: "Çarşamba", hours: "09:00 – 18:00", closed: false },
+    { day: "Perşembe", hours: "09:00 – 18:00", closed: false },
+    { day: "Cuma", hours: "09:00 – 18:00", closed: false },
+    { day: "Cumartesi", hours: "09:00 – 16:00", closed: false },
+    { day: "Pazar", hours: "Kapalı", closed: true },
   ],
 
-  // ─── Kundinnen-Portal (Login ohne Passwort: Name + E-Mail) ──────────────
-  customerPortal: {
-    welcomeTitle: "Willkommen, liebe Kundin",
-    bookTitle: "Neue Buchung",
-    myBookingsTitle: "Meine Termine",
-    demoCustomers: [
-      { name: "Elif Yilmaz", email: "elif.yilmaz@example.ch" },
-      { name: "Sarah Meier", email: "sarah.meier@example.ch" },
-    ] as BrandCustomerDemo[],
+  // ─── Misafir Randevusu (girişsiz — ad + telefon yeterli) ─────────────────
+  guestBooking: {
+    title: "Randevu Al",
+    subtitle: "Giriş gerekmez — herkes kolayca randevu alabilir",
+    steps: ["Hizmet", "Tarih & Saat", "Bilgileriniz"],
+    myBookingsTitle: "Randevularım",
+    myBookingsHint: "Telefon numaranızı girin — randevularınızı görün ve gerekirse iptal edin",
+    successTitle: "Randevunuz alındı!",
+    successText: "En kısa sürede onaylanacak. Sizi görmek için sabırsızlanıyoruz!",
+    demoPhone: "+41 79 111 22 33",
   },
 
-  // ─── Team-Zugänge (Login-Chips fürs Team-Portal) ────────────────────────
+  // ─── Değerlendirmeler (herkese açık) ──────────────────────────────────────
+  reviews: {
+    title: "Misafir Değerlendirmeleri",
+    subtitle: "Deneyiminizi paylaşın — herkes değerlendirme yazabilir",
+    writeButton: "Değerlendirme Yap",
+    pendingNote: "Değerlendirmeniz yayınlanmadan önce kısa süreyle incelenir. Teşekkürler!",
+    anonymousLabel: "Misafir",
+  },
+
+  // ─── Ekip Girişleri (Ekip portalı için giriş bilgileri) ───────────────────
   users: [
-    { username: "melek", password: "melek123", name: "Melek", role: "Inhaberin", initials: "MK" },
-    { username: "admin", password: "admin123", name: "Administrator", role: "Studio-Admin", initials: "AD" },
+    { username: "melek", password: "melek123", name: "Melek", role: "İşletme Sahibi", initials: "MK" },
+    { username: "admin", password: "admin123", name: "Yönetici", role: "Stüdyo Yöneticisi", initials: "AD" },
   ] as BrandUser[],
 
-  // ─── Fusszeile ───────────────────────────────────────────────────────────
+  // ─── Alt Bilgi ────────────────────────────────────────────────────────────
   footer: {
     notes: [
-      "Termin online buchen — 24/7",
-      "Folgen Sie uns auf Instagram",
+      "Online randevu — 7/24 açık",
+      "Instagram'da bizi takip edin",
     ],
   },
 
-  // ─── Modul-Registry (Team-Portal): Module ein-/ausschalten ──────────────
+  // ─── Modül Kaydı (Ekip portalı): modülleri aç/kapat ──────────────────────
   modules: [
-    { id: "dashboard", group: "uebersicht", label: "Übersicht", hint: "Heute & KPIs", title: "Studio-Übersicht", subtitle: "Termine heute · Anfragen · Auslastung · Umsatz", icon: "layout-dashboard", enabled: true },
-    { id: "kalender", group: "betrieb", label: "Kalender", hint: "Wochenansicht", title: "Terminkalender", subtitle: "Alle Buchungen der nächsten 2 Wochen", icon: "calendar-days", enabled: true },
-    { id: "buchungen", group: "betrieb", label: "Buchungen", hint: "Anfragen & Status", title: "Buchungs-Verwaltung", subtitle: "Anfragen bestätigen · abschliessen · stornieren", icon: "clipboard-list", enabled: true },
-    { id: "kunden", group: "stammdaten", label: "Kundinnen", hint: "CRM & Historie", title: "Kundinnen-Verwaltung", subtitle: "Stammkundinnen · Umsatz · Notizen", icon: "users", enabled: true },
-    { id: "leistungen", group: "stammdaten", label: "Leistungen", hint: "Preisliste", title: "Leistungen & Preise", subtitle: "Nägel · Beauty · Wimpern — Dauer und Preis", icon: "sparkles", enabled: true },
-    { id: "galerie", group: "stammdaten", label: "Galerie", hint: "Arbeiten-Showcase", title: "Galerie verwalten", subtitle: "Bilder für die öffentliche Landing-Page", icon: "image", enabled: true },
-    { id: "einstellungen", group: "stammdaten", label: "Einstellungen", hint: "Studio & Team", title: "Einstellungen", subtitle: "Studio-Daten · Öffnungszeiten · Team · System", icon: "settings", enabled: true },
+    { id: "dashboard", group: "genelBakis", label: "Genel Bakış", hint: "Bugün & KPI'lar", title: "Stüdyo Genel Bakış", subtitle: "Bugünkü randevular · Talepler · Doluluk · Hava durumu", icon: "layout-dashboard", enabled: true },
+    { id: "kalender", group: "isletme", label: "Takvim", hint: "Haftalık görünüm", title: "Randevu Takvimi", subtitle: "Önümüzdeki 2 haftanın tüm randevuları", icon: "calendar-days", enabled: true },
+    { id: "randevular", group: "isletme", label: "Randevular", hint: "Talepler & durum", title: "Randevu Yönetimi", subtitle: "Talepleri onayla · tamamla · iptal et", icon: "clipboard-list", enabled: true },
+    { id: "yorumlar", group: "isletme", label: "Yorumlar", hint: "Değerlendirme moderasyonu", title: "Değerlendirme Yönetimi", subtitle: "Onayla · reddet · yayındaki yorumlar", icon: "star", enabled: true },
+    { id: "musteriler", group: "kayitlar", label: "Müşteriler", hint: "CRM & geçmiş", title: "Müşteri Yönetimi", subtitle: "Sık gelen müşteriler · ciro · notlar", icon: "users", enabled: true },
+    { id: "hizmetler", group: "kayitlar", label: "Hizmetler", hint: "Fiyat listesi", title: "Hizmetler & Fiyatlar", subtitle: "Tırnak · Güzellik · Kirpik — süre ve fiyat", icon: "sparkles", enabled: true },
+    { id: "galeri", group: "kayitlar", label: "Galeri", hint: "Çalışmalar", title: "Galeri Yönetimi", subtitle: "Herkese açık açılış sayfası görselleri", icon: "image", enabled: true },
+    { id: "ayarlar", group: "kayitlar", label: "Ayarlar", hint: "Stüdyo & ekip", title: "Ayarlar", subtitle: "Stüdyo bilgileri · Saatler · Ekip · Sistem", icon: "settings", enabled: true },
   ] as ModuleConfig[],
 
-  // ─── Startansicht im Team-Portal nach Login ─────────────────────────────
+  // ─── Ekip portalında girişten sonraki başlangıç görünümü ─────────────────
   defaultView: "dashboard",
 }
 
-// ─── Abgeleitete Hilfswerte (nicht abändern) ────────────────────────────────
+// ─── Türetilmiş yardımcı değerler (değiştirmeyin) ───────────────────────────
 export const ENABLED_MODULES = BRANDING.modules.filter((m) => m.enabled)
 export const MODULE_MAP = new Map(ENABLED_MODULES.map((m) => [m.id, m]))
 export const BRAND_DISPLAY =

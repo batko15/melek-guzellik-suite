@@ -1,36 +1,36 @@
-// Team-Portal — Kundinnen-Verwaltung: KPIs, Karten mit Historie & Notizen
+// Ekip Portalı — Müşteri Yönetimi: KPI'lar, kartlar + geçmiş ve notlar
 
 "use client"
 
 import { useMemo, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { Users, Search, Sparkles, Phone, Mail, CalendarDays, Crown, X } from "lucide-react"
+import { Users, Search, Phone, Mail, CalendarDays, Crown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
-import { type SalonCustomer, type SalonBooking, BOOKING_STATUS, chf, dateStr, timeStr } from "@/lib/salon"
+import { type SalonCustomerRow, type SalonBooking, BOOKING_STATUS, chf, dateStr, timeStr } from "@/lib/salon"
 
-export function KundenView() {
+export function MusterilerView() {
   const [search, setSearch] = useState("")
-  const [selected, setSelected] = useState<SalonCustomer | null>(null)
+  const [selected, setSelected] = useState<SalonCustomerRow | null>(null)
 
   const { data, isLoading } = useQuery({
     queryKey: ["salon-customers"],
     queryFn: async () => {
       const res = await fetch("/api/v1/salon/customers")
-      if (!res.ok) return { customers: [] as SalonCustomer[] }
-      return (await res.json()) as { customers: SalonCustomer[] }
+      if (!res.ok) return { customers: [] as SalonCustomerRow[] }
+      return (await res.json()) as { customers: SalonCustomerRow[] }
     },
   })
 
   const { data: selectedBookings } = useQuery({
-    queryKey: ["customer-bookings", selected?.email],
+    queryKey: ["customer-bookings", selected?.phone],
     queryFn: async () => {
       if (!selected) return { bookings: [] as SalonBooking[] }
-      const res = await fetch(`/api/v1/salon/bookings?email=${encodeURIComponent(selected.email)}`)
+      const res = await fetch(`/api/v1/salon/bookings?phone=${encodeURIComponent(selected.phone)}`)
       if (!res.ok) return { bookings: [] as SalonBooking[] }
       return (await res.json()) as { bookings: SalonBooking[] }
     },
@@ -40,13 +40,19 @@ export function KundenView() {
   const customers = useMemo(() => {
     const q = search.trim().toLowerCase()
     let list = data?.customers ?? []
-    if (q) list = list.filter((c) => c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q))
+    if (q) {
+      list = list.filter((c) =>
+        c.name.toLowerCase().includes(q) ||
+        (c.phone ?? "").toLowerCase().includes(q) ||
+        (c.email ?? "").toLowerCase().includes(q),
+      )
+    }
     return list
   }, [data, search])
 
   const all = data?.customers ?? []
   const totalVolume = all.reduce((s, c) => s + c.volumeChf, 0)
-  const stammkundinnen = all.filter((c) => c.completedBookings >= 3).length
+  const regulars = all.filter((c) => c.completedBookings >= 3).length
 
   return (
     <div className="mk-velvet">
@@ -56,27 +62,27 @@ export function KundenView() {
             <Users className="h-3.5 w-3.5" /> CRM
           </div>
           <h1 className="mk-display text-2xl font-bold tracking-tight sm:text-3xl">
-            Kundinnen-<span className="mk-gold-text">Verwaltung</span>
+            Müşteri <span className="mk-gold-text">Yönetimi</span>
           </h1>
           <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-            {all.length} Kundinnen · {stammkundinnen} Stammkundinnen · Gesamtvolumen CHF {chf(totalVolume)}
+            {all.length} müşteri · {regulars} sık gelen müşteri · toplam ciro CHF {chf(totalVolume)}
           </p>
         </div>
       </section>
 
       <section className="mx-auto max-w-7xl space-y-5 px-4 py-6 sm:px-6">
-        {/* Suche */}
+        {/* Arama */}
         <div className="relative max-w-sm">
           <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Suchen: Name oder E-Mail …"
+            placeholder="Ara: ad, telefon veya e-posta…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="mk-focus h-10 rounded-full pl-10"
           />
         </div>
 
-        {/* Karten */}
+        {/* Kartlar */}
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {isLoading && [1, 2, 3, 4, 5, 6].map((i) => <Skeleton key={i} className="h-36 w-full rounded-xl" />)}
           {customers.map((c, i) => (
@@ -95,27 +101,27 @@ export function KundenView() {
                   </span>
                   <div className="min-w-0">
                     <div className="truncate text-sm font-bold" title={c.name}>{c.name}</div>
-                    <div className="truncate text-[11px] text-muted-foreground" title={c.email}>{c.email}</div>
+                    <div className="truncate text-[11px] text-muted-foreground" title={c.phone}>{c.phone}</div>
                   </div>
                 </div>
                 {c.completedBookings >= 3 && (
                   <Badge className="shrink-0 border-primary/40 bg-primary/10 text-[9px] font-bold text-brand-text">
-                    <Crown className="mr-0.5 h-2.5 w-2.5" /> Stamm
+                    <Crown className="mr-0.5 h-2.5 w-2.5" /> Sadık
                   </Badge>
                 )}
               </div>
               <div className="mt-4 grid grid-cols-3 gap-2 border-t border-border/50 pt-3 text-center">
                 <div>
                   <div className="mk-display text-base font-bold tabular-nums">{c.completedBookings}</div>
-                  <div className="text-[9px] uppercase tracking-wide text-muted-foreground">Besuche</div>
+                  <div className="text-[9px] uppercase tracking-wide text-muted-foreground">Ziyaret</div>
                 </div>
                 <div>
                   <div className="mk-display text-base font-bold tabular-nums text-brand-text">CHF {chf(c.volumeChf)}</div>
-                  <div className="text-[9px] uppercase tracking-wide text-muted-foreground">Umsatz</div>
+                  <div className="text-[9px] uppercase tracking-wide text-muted-foreground">Ciro</div>
                 </div>
                 <div>
                   <div className="mk-display text-base font-bold tabular-nums">{c.upcomingBookings}</div>
-                  <div className="text-[9px] uppercase tracking-wide text-muted-foreground">Kommend</div>
+                  <div className="text-[9px] uppercase tracking-wide text-muted-foreground">Yaklaşan</div>
                 </div>
               </div>
             </button>
@@ -123,12 +129,12 @@ export function KundenView() {
         </div>
         {!isLoading && customers.length === 0 && (
           <div className="rounded-xl border border-dashed border-border/60 p-10 text-center text-sm text-muted-foreground">
-            Keine Kundinnen gefunden — Suche anpassen.
+            Müşteri bulunamadı — aramayı değiştirin.
           </div>
         )}
       </section>
 
-      {/* ─── Detail-Sheet ─── */}
+      {/* ─── Detay sayfası ─── */}
       <Sheet open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
         <SheetContent className="mk-scroll w-full overflow-y-auto border-border bg-background sm:max-w-md">
           {selected && (
@@ -141,52 +147,53 @@ export function KundenView() {
                   <span className="truncate">{selected.name}</span>
                 </SheetTitle>
                 <SheetDescription className="text-left">
-                  Kundin seit {dateStr(selected.since)}
+                  {dateStr(selected.since)} tarihinden beri müşteri
                 </SheetDescription>
               </SheetHeader>
               <div className="space-y-5 px-4 pb-8">
-                {/* Kontakt */}
+                {/* İletişim */}
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center gap-2 text-muted-foreground">
-                    <Mail className="h-3.5 w-3.5 shrink-0 text-brand-text/70" />
-                    <span className="truncate" title={selected.email}>{selected.email}</span>
+                    <Phone className="h-3.5 w-3.5 shrink-0 text-brand-text/70" />
+                    <span className="truncate" title={selected.phone}>{selected.phone}</span>
                   </div>
-                  {selected.phone && (
+                  {selected.email && (
                     <div className="flex items-center gap-2 text-muted-foreground">
-                      <Phone className="h-3.5 w-3.5 shrink-0 text-brand-text/70" /> {selected.phone}
+                      <Mail className="h-3.5 w-3.5 shrink-0 text-brand-text/70" />
+                      <span className="truncate" title={selected.email}>{selected.email}</span>
                     </div>
                   )}
                 </div>
 
-                {/* Notizen */}
+                {/* Notlar */}
                 {selected.notes && (
                   <div className="rounded-xl border border-primary/25 bg-primary/8 p-3.5">
-                    <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-brand-text">Studio-Notizen</div>
+                    <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-brand-text">Stüdyo notları</div>
                     <p className="text-xs leading-relaxed text-foreground/90">{selected.notes}</p>
                   </div>
                 )}
 
-                {/* Statistik */}
+                {/* İstatistik */}
                 <div className="grid grid-cols-3 divide-x divide-border/60 rounded-xl border border-border/60 text-center">
                   <div className="px-2 py-3">
                     <div className="mk-display text-lg font-bold">{selected.completedBookings}</div>
-                    <div className="text-[9px] uppercase tracking-wide text-muted-foreground">Besuche</div>
+                    <div className="text-[9px] uppercase tracking-wide text-muted-foreground">Ziyaret</div>
                   </div>
                   <div className="px-2 py-3">
                     <div className="mk-display text-lg font-bold text-brand-text">CHF {chf(selected.volumeChf)}</div>
-                    <div className="text-[9px] uppercase tracking-wide text-muted-foreground">Umsatz</div>
+                    <div className="text-[9px] uppercase tracking-wide text-muted-foreground">Ciro</div>
                   </div>
                   <div className="px-2 py-3">
                     <div className="mk-display text-lg font-bold">{selected.upcomingBookings}</div>
-                    <div className="text-[9px] uppercase tracking-wide text-muted-foreground">Kommend</div>
+                    <div className="text-[9px] uppercase tracking-wide text-muted-foreground">Yaklaşan</div>
                   </div>
                 </div>
 
-                {/* Historie */}
+                {/* Geçmiş */}
                 <div>
                   <div className="mb-2 flex items-center gap-2">
                     <CalendarDays className="h-3.5 w-3.5 text-brand-text" />
-                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Termin-Historie</span>
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Randevu geçmişi</span>
                   </div>
                   <div className="space-y-1.5">
                     {(selectedBookings?.bookings ?? []).map((b) => (
@@ -205,7 +212,7 @@ export function KundenView() {
                     ))}
                     {(selectedBookings?.bookings ?? []).length === 0 && (
                       <div className="rounded-lg border border-dashed border-border/60 p-4 text-center text-xs text-muted-foreground">
-                        Noch keine Termine.
+                        Henüz randevu yok.
                       </div>
                     )}
                   </div>

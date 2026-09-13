@@ -1,8 +1,8 @@
-// Melek'ce Güzellik Suite — App-Shell (White-Label V1.0)
-// Landing-Page (öffentlich) → Login (Kundinnen ODER Team) →
-//   • Kundinnen-Portal (Buchung + Meine Termine)
-//   • Team-Portal (Sidebar + Module aus branding.ts)
-// ALLE Inhalte kommen aus src/config/branding.ts — dort abändern für neue Projekte.
+// Melek'çe Güzellik Suite — Uygulama Kabuğu (White-Label V2.0)
+// HERKES AÇIK alan: Açılış sayfası → Randevu Al (girişsiz) → Yorumlar (girişsiz)
+// Ekip alanı: Giriş → Ekip portalı (kenar çubuğu + branding.ts modülleri)
+// Tüm içerikler src/config/branding.ts dosyasından gelir — yeni projeler için orayı değiştirin.
+// Mobil: alt gezinme çubuğu (uygulama hissi) · Masaüstü: üst gezinme çubuğu
 
 "use client"
 
@@ -10,33 +10,79 @@ import { useEffect, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import {
   Sparkles, Heart, Crown, Flower2, MapPin, Phone, LogOut, Menu, X,
-  Activity, Instagram,
+  Activity, Instagram, Home, CalendarCheck, Star,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { LandingPage } from "@/components/landing/landing-page"
-import { LoginScreen, type LoginMode, type PortalSession } from "@/components/auth/login-screen"
-import { CustomerPortal } from "@/components/customer/customer-portal"
+import { BookingFlow } from "@/components/public/booking-flow"
+import { ReviewsPage } from "@/components/public/reviews-page"
+import { LoginScreen, type StaffSession } from "@/components/auth/login-screen"
 import { BRANDING, BRAND_DISPLAY, MODULE_MAP } from "@/config/branding"
 import { REGISTERED_MODULES, NAV_SECTIONS, resolveDefaultView } from "@/lib/module-registry"
 
 const BRAND_ICONS: Record<string, React.ElementType> = { sparkles: Sparkles, heart: Heart, crown: Crown, flower: Flower2 }
 const BrandIcon = BRAND_ICONS[BRANDING.brand.icon] ?? Sparkles
 
-type View = string
+type PublicView = "landing" | "randevu" | "yorumlar"
+type Stage = PublicView | "login"
 
 // ═══════════════════════════════════════════════════════════════════════════
-// TEAM-SIDEBAR
+// MOBİL ALT GEZİNME (herkese açık alan) — telefon için uygulama hissi
+// ═══════════════════════════════════════════════════════════════════════════
+
+const PUBLIC_NAV: Array<{ id: PublicView; label: string; Icon: React.ElementType }> = [
+  { id: "landing", label: "Ana Sayfa", Icon: Home },
+  { id: "randevu", label: "Randevu", Icon: CalendarCheck },
+  { id: "yorumlar", label: "Yorumlar", Icon: Star },
+]
+
+function MobileBottomNav({ view, setView }: { view: PublicView; setView: (v: PublicView) => void }) {
+  return (
+    <nav
+      aria-label="Alt gezinme"
+      className="fixed inset-x-0 bottom-0 z-50 border-t border-border/70 bg-background/95 backdrop-blur-md lg:hidden"
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+    >
+      <div className="mx-auto flex max-w-md items-stretch">
+        {PUBLIC_NAV.map((item) => {
+          const active = view === item.id
+          return (
+            <button
+              key={item.id}
+              onClick={() => setView(item.id)}
+              aria-current={active ? "page" : undefined}
+              className="mk-focus relative flex min-h-[60px] flex-1 flex-col items-center justify-center gap-1 px-2 py-2"
+            >
+              {active && <span className="absolute top-0 h-[3px] w-10 rounded-b-full bg-primary mk-gold-glow" />}
+              <item.Icon
+                className={cn("h-5 w-5", active ? "text-brand-text" : "text-muted-foreground")}
+                strokeWidth={active ? 2.2 : 1.8}
+              />
+              <span className={cn("text-[10px] font-bold", active ? "text-foreground" : "text-muted-foreground")}>
+                {item.label}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+    </nav>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// EKİP KENAR ÇUBUĞU
 // ═══════════════════════════════════════════════════════════════════════════
 
 function SidebarContent({
-  view, setView, onLogout, onNavigate, badge,
+  view, setView, onLogout, onNavigate, badge, reviewBadge,
 }: {
-  view: View
-  setView: (v: View) => void
+  view: string
+  setView: (v: string) => void
   onLogout: () => void
   onNavigate?: () => void
   badge: number
+  reviewBadge: number
 }) {
   const { company } = BRANDING
   return (
@@ -44,7 +90,7 @@ function SidebarContent({
       {/* Logo */}
       <div className="flex h-[68px] shrink-0 items-center gap-3 border-b border-border/70 px-5">
         <div className="mk-gold-glow flex h-9 w-9 items-center justify-center rounded-full border border-primary/40 bg-primary/10">
-          <BrandIcon className="h-4.5 w-4.5 h-[18px] w-[18px] text-brand-text" strokeWidth={1.6} />
+          <BrandIcon className="h-[18px] w-[18px] text-brand-text" strokeWidth={1.6} />
         </div>
         <div className="leading-none">
           <div className="mk-display text-[14px] font-bold tracking-wide">
@@ -52,13 +98,13 @@ function SidebarContent({
             <span className="mk-gold-text">{BRAND_DISPLAY.part2}</span>
           </div>
           <div className="mt-1 text-[9px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-            Team-Portal · V{BRANDING.version}
+            Ekip Portalı · V{BRANDING.version}
           </div>
         </div>
       </div>
 
-      {/* Navigation */}
-      <nav className="mk-scroll flex-1 overflow-y-auto px-3 py-4" aria-label="Hauptnavigation">
+      {/* Gezinme */}
+      <nav className="mk-scroll flex-1 overflow-y-auto px-3 py-4" aria-label="Ana gezinme">
         {NAV_SECTIONS.map((section) => (
           <div key={section.key} className="mb-4">
             <div className="px-2.5 pb-1.5 text-[9px] font-bold uppercase tracking-[0.25em] text-muted-foreground">
@@ -67,7 +113,10 @@ function SidebarContent({
             <ul className="space-y-1">
               {section.items.map((item) => {
                 const active = view === item.id
-                const showBadge = item.id === "buchungen" && badge > 0
+                const showBadge =
+                  (item.id === "randevular" && badge > 0) ||
+                  (item.id === "yorumlar" && reviewBadge > 0)
+                const badgeValue = item.id === "randevular" ? badge : reviewBadge
                 return (
                   <li key={item.id}>
                     <button
@@ -89,8 +138,8 @@ function SidebarContent({
                         <span className="block text-[10px] text-muted-foreground">{item.hint}</span>
                       </span>
                       {showBadge && (
-                        <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary/80 px-1.5 text-[10px] font-bold text-primary-foreground" aria-label={`${badge} offene Anfragen`}>
-                          {badge}
+                        <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary/80 px-1.5 text-[10px] font-bold text-primary-foreground" aria-label={`${badgeValue} bekleyen`}>
+                          {badgeValue}
                         </span>
                       )}
                     </button>
@@ -101,7 +150,7 @@ function SidebarContent({
           </div>
         ))}
 
-        {/* Firmenblock */}
+        {/* Şirket bloğu */}
         <div className="mt-2 border-t border-border/70 pt-4">
           <div className="px-2.5 pb-2 text-[9px] font-bold uppercase tracking-[0.25em] text-muted-foreground">
             {company.legalName}
@@ -114,20 +163,20 @@ function SidebarContent({
         </div>
       </nav>
 
-      {/* User-Karte */}
+      {/* Kullanıcı kartı */}
       <div className="shrink-0 border-t border-border/70 p-3">
         <div className="flex items-center gap-3 rounded-lg bg-secondary/50 px-3 py-2.5">
           <div className="mk-display flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-xs font-bold text-brand-text">
             {BRANDING.users[0]?.initials ?? "MK"}
           </div>
           <div className="min-w-0 flex-1 leading-tight">
-            <div className="truncate text-[13px] font-semibold text-foreground">{BRANDING.users[0]?.name ?? "Team"}</div>
-            <div className="truncate text-[10px] text-muted-foreground">{BRANDING.users[0]?.role ?? "Studio"}</div>
+            <div className="truncate text-[13px] font-semibold text-foreground">{BRANDING.users[0]?.name ?? "Ekip"}</div>
+            <div className="truncate text-[10px] text-muted-foreground">{BRANDING.users[0]?.role ?? "Stüdyo"}</div>
           </div>
           <button
             onClick={onLogout}
-            title="Abmelden"
-            aria-label="Abmelden"
+            title="Çıkış yap"
+            aria-label="Çıkış yap"
             className="mk-focus flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/15 hover:text-destructive"
           >
             <LogOut className="h-4 w-4" />
@@ -139,7 +188,7 @@ function SidebarContent({
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// APP-SHELL
+// UYGULAMA KABUĞU
 // ═══════════════════════════════════════════════════════════════════════════
 
 function useClock() {
@@ -153,30 +202,28 @@ function useClock() {
   return now
 }
 
-type Stage = "landing" | "login"
-
 export function AppShell() {
-  const [session, setSession] = useState<PortalSession | null>(null)
+  const [session, setSession] = useState<StaffSession | null>(null)
   const [stage, setStage] = useState<Stage>("landing")
-  const [loginMode, setLoginMode] = useState<LoginMode>("customer")
-  const [view, setView] = useState<View>(resolveDefaultView())
+  const [view, setView] = useState<string>(resolveDefaultView())
   const [mobileOpen, setMobileOpen] = useState(false)
   const now = useClock()
 
-  // Offene Anfragen als Badge
+  // Bekleyen randevular + bekleyen yorumlar (rozetler)
   const { data: statsBadge } = useQuery({
     queryKey: ["salon-stats-badge"],
     queryFn: async () => {
       const res = await fetch("/api/v1/salon/stats")
-      if (!res.ok) return { pending: 0 }
-      return (await res.json()) as { pending: number }
+      if (!res.ok) return { pending: 0, reviews: { pending: 0 } }
+      return (await res.json()) as { pending: number; reviews?: { pending: number } }
     },
     refetchInterval: 60000,
     enabled: session?.role === "staff",
   })
   const pending = statsBadge?.pending ?? 0
+  const reviewPending = statsBadge?.reviews?.pending ?? 0
 
-  // ESC schliesst mobiles Menü
+  // ESC mobil menüyü kapatır
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setMobileOpen(false)
@@ -185,33 +232,77 @@ export function AppShell() {
     return () => window.removeEventListener("keydown", onKey)
   }, [])
 
-  // ─── Öffentliche Landing-Page ───
+  // Tarayıcı geçmişi: herkese açık görünümler için hash kullan
+  useEffect(() => {
+    const onHash = () => {
+      const h = window.location.hash.replace("#", "")
+      if (h === "randevu" || h === "yorumlar" || h === "") {
+        if (!session) setStage(h === "" ? "landing" : (h as PublicView))
+      }
+    }
+    window.addEventListener("hashchange", onHash)
+    return () => window.removeEventListener("hashchange", onHash)
+  }, [session])
+
+  const goPublic = (v: PublicView) => {
+    window.location.hash = v === "landing" ? "" : v
+    setStage(v)
+    window.scrollTo({ top: 0 })
+  }
+
+  // ─── Herkese açık: Açılış sayfası ───
   if (!session && stage === "landing") {
     return (
-      <LandingPage
-        onLogin={(mode) => { setLoginMode(mode); setStage("login") }}
-      />
+      <>
+        <LandingPage
+          onBook={() => goPublic("randevu")}
+          onReviews={() => goPublic("yorumlar")}
+          onStaffLogin={() => setStage("login")}
+        />
+        <MobileBottomNav view="landing" setView={goPublic} />
+      </>
     )
   }
 
-  // ─── Login (Kundinnen ODER Team) ───
+  // ─── Herkese açık: Randevu Al (girişsiz) ───
+  if (!session && stage === "randevu") {
+    return (
+      <>
+        <BookingFlow
+          onBack={() => goPublic("landing")}
+          onReviews={() => goPublic("yorumlar")}
+          onStaffLogin={() => setStage("login")}
+        />
+        <MobileBottomNav view="randevu" setView={goPublic} />
+      </>
+    )
+  }
+
+  // ─── Herkese açık: Yorumlar (girişsiz) ───
+  if (!session && stage === "yorumlar") {
+    return (
+      <>
+        <ReviewsPage
+          onBack={() => goPublic("landing")}
+          onBook={() => goPublic("randevu")}
+          onStaffLogin={() => setStage("login")}
+        />
+        <MobileBottomNav view="yorumlar" setView={goPublic} />
+      </>
+    )
+  }
+
+  // ─── Ekip girişi ───
   if (!session) {
     return (
       <LoginScreen
-        mode={loginMode}
-        onBack={() => setStage("landing")}
-        onCustomerLogin={(c) => setSession(c)}
+        onBack={() => goPublic("landing")}
         onStaffLogin={(s) => setSession(s)}
       />
     )
   }
 
-  // ─── Kundinnen-Portal (ohne Sidebar) ───
-  if (session.role === "customer") {
-    return <CustomerPortal session={session} onLogout={() => { setSession(null); setStage("landing") }} />
-  }
-
-  // ─── Team-Portal (Sidebar + Module) ───
+  // ─── Ekip portalı (kenar çubuğu + modüller) ───
   const meta = MODULE_MAP.get(view) ?? REGISTERED_MODULES[0]
   const ActiveView: React.ElementType | undefined = REGISTERED_MODULES.find((m) => m.id === view)?.View
 
@@ -219,24 +310,24 @@ export function AppShell() {
     ? now.toLocaleTimeString(BRANDING.locale.language, { hour: "2-digit", minute: "2-digit", second: "2-digit" })
     : "--:--:--"
   const dateStr = now
-    ? now.toLocaleDateString(BRANDING.locale.language, { weekday: "short", day: "2-digit", month: "short", year: "numeric" })
+    ? now.toLocaleDateString(BRANDING.locale.language, { weekday: "long", day: "numeric", month: "long", year: "numeric" })
     : ""
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* ─── Sidebar (Desktop) ─── */}
+      {/* ─── Kenar çubuğu (masaüstü) ─── */}
       <aside className="sticky top-0 hidden h-screen w-[264px] shrink-0 border-r border-border/70 bg-card/40 lg:block">
-        <SidebarContent view={view} setView={setView} onLogout={() => { setSession(null); setStage("landing") }} badge={pending} />
+        <SidebarContent view={view} setView={setView} onLogout={() => { setSession(null); goPublic("landing") }} badge={pending} reviewBadge={reviewPending} />
       </aside>
 
-      {/* ─── Mobile-Sidebar (Overlay) ─── */}
+      {/* ─── Mobil kenar çubuğu (katman) ─── */}
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true">
           <div className="mk-anim-in absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
           <div className="mk-anim-right absolute inset-y-0 left-0 w-[280px] border-r border-border bg-background shadow-2xl">
             <button
               onClick={() => setMobileOpen(false)}
-              aria-label="Menü schliessen"
+              aria-label="Menüyü kapat"
               className="mk-focus absolute right-3 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground"
             >
               <X className="h-5 w-5" />
@@ -244,23 +335,24 @@ export function AppShell() {
             <SidebarContent
               view={view}
               setView={setView}
-              onLogout={() => { setSession(null); setStage("landing") }}
+              onLogout={() => { setSession(null); goPublic("landing") }}
               onNavigate={() => setMobileOpen(false)}
               badge={pending}
+              reviewBadge={reviewPending}
             />
           </div>
         </div>
       )}
 
-      {/* ─── Hauptbereich ─── */}
+      {/* ─── Ana alan ─── */}
       <div className="mk-velvet flex min-w-0 flex-1 flex-col">
-        {/* Topbar */}
+        {/* Üst bar */}
         <header className="sticky top-0 z-40 border-b border-border/70 bg-background/85 backdrop-blur-md">
           <div className="mk-gold-line h-0.5 w-full" />
           <div className="flex h-[68px] items-center gap-3 px-4 sm:px-6">
             <button
               onClick={() => setMobileOpen(true)}
-              aria-label="Menü öffnen"
+              aria-label="Menüyü aç"
               className="mk-focus flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground lg:hidden"
             >
               <Menu className="h-5 w-5" />
@@ -271,21 +363,31 @@ export function AppShell() {
               <div className="hidden truncate text-[11px] text-muted-foreground sm:block">{meta.subtitle}</div>
             </div>
 
-            {/* Offene Anfragen (mobil sichtbar) */}
+            {/* Bekleyenler (mobilde görünür) */}
             {pending > 0 && (
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setView("buchungen")}
+                onClick={() => setView("randevular")}
                 className="h-9 rounded-full border-primary/40 px-3 text-xs font-semibold text-brand-text"
               >
-                {pending} Anfrage{pending === 1 ? "" : "n"}
+                {pending} talep
+              </Button>
+            )}
+            {reviewPending > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setView("yorumlar")}
+                className="h-9 hidden rounded-full border-primary/40 px-3 text-xs font-semibold text-brand-text min-[420px]:flex"
+              >
+                {reviewPending} yorum
               </Button>
             )}
 
-            {/* Live-Uhr */}
-            <div className="hidden items-center gap-3 rounded-lg border border-border/70 bg-secondary/40 px-3.5 py-2 md:flex" aria-label="Aktuelle Uhrzeit">
-              <div className="flex items-center gap-2 text-brand-text" title="System aktiv">
+            {/* Canlı saat */}
+            <div className="hidden items-center gap-3 rounded-lg border border-border/70 bg-secondary/40 px-3.5 py-2 md:flex" aria-label="Şu anki saat">
+              <div className="flex items-center gap-2 text-brand-text" title="Sistem aktif">
                 <span className="h-1.5 w-1.5 rounded-full bg-primary mk-anim-blink" />
                 <Activity className="h-3.5 w-3.5" />
               </div>
@@ -295,11 +397,11 @@ export function AppShell() {
               </div>
             </div>
 
-            {/* User */}
+            {/* Kullanıcı */}
             <div className="flex items-center gap-2.5">
               <div className="hidden text-right leading-tight sm:block">
                 <div className="text-xs font-semibold text-foreground">{session.name}</div>
-                <div className="text-[10px] text-muted-foreground">{session.role}</div>
+                <div className="text-[10px] text-muted-foreground">{session.roleLabel}</div>
               </div>
               <div className="mk-display flex h-9 w-9 items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-xs font-bold text-brand-text">
                 {session.initials}
@@ -308,12 +410,12 @@ export function AppShell() {
           </div>
         </header>
 
-        {/* Inhalt */}
+        {/* İçerik */}
         <main className="mk-anim-in min-h-0 flex-1" key={view}>
           {ActiveView ? <ActiveView /> : null}
         </main>
 
-        {/* Footer */}
+        {/* Alt bilgi */}
         <footer className="mt-auto border-t border-border/70 bg-card/30">
           <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-3 px-4 py-4 sm:flex-row sm:items-center sm:px-6">
             <div className="text-xs">
