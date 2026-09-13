@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.melekce.guzellik",
+    "sha256_cert_fingerprints": ["70:39:8C:65:CF:38:59:47:8F:10:80:1C:F3:0A:89:57:3E:4B:AD:16:5A:18:7F:F4:9C:8D:84:74:B4:28:52:06"]
+  }
+}]

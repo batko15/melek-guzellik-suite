@@ -79,3 +79,4 @@ scripts/test_github_token.py
 # Recherche-Artefakte
 scripts/extracted/
 scripts/search-results/
+apk-build/
