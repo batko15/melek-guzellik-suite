@@ -247,6 +247,49 @@ Navigation, PWA-Shortcut «Nail Art» und direkt über den Live-Link.
 
 ---
 
+## 5️⃣g NEU V5.7 — Canlı Nail Studio (`/nailstudio`) 🪄
+
+Das Highlight: Kundinnen bauen ihr **Nageldesign jetzt selbst zusammen** —
+mit **Live-Vorschau einer stilisierten Hand (SVG)**, die bei jeder Auswahl
+**sofort** aktualisiert wird. Kein Anmelden nötig.
+
+**👉 Live-Link: `https://melek-guzellik-suite.vercel.app/nailstudio`**
+
+So funktioniert es für die Kundin:
+
+1. **Hazır Şablonlar** — 9 Fertig-Designs aus deiner echten Galerie
+   (Bordo Kedi Gözü, Bordo Ombre, Klasik French, Deniz Kabuğu French,
+   24K Altın Folyo, İnci Tozu, Nar Çiçeği, Siyah Krom, Pudra Sim) —
+   ein Tipp, Design geladen
+2. **Şekil** — Kare, Yuvarlak, Oval, Badem, Stiletto, Balerina
+3. **Boy** — Kısa / Orta / Uzun (Nägel wachsen in der Vorschau!)
+4. **Renk** — 16 Studio-Farben (Bordo, Nude, Şampanya Altın, …)
+5. **Efekt** — Parlak, Mat, Kedi Gözü, Sim, Krom, Sedefli (mit
+   Aufpreis-Anzeige, z. B. «+100₺»)
+6. **Nail Art** — Düz, French, Ombre, Altın Folyo, Deniz Kabuğu,
+   İnci & Taş, Nar Çiçeği, Dantel
+7. **«Bu Tasarımla Randevu Al»** — das Design wird **automatisch an die
+   Buchung angehängt**. Die Kundin sieht es auf jedem Buchungsschritt und
+   im Erfolgsbildschirm; du siehst es im Ekip-Portal (Rezervasyon
+   Merkezi) als goldene Zeile «💅 …» direkt beim Termin.
+8. Alternativ: **WhatsApp-Button** schickt das fertige Design als
+   vorausgefüllte Nachricht — und **«Paylaş»** kopiert den Design-Text.
+
+**Preis-Schätzung:** Das Studio rechnet Grundleistung (Kısa → Jel
+Manikür, Orta/Uzun → Jel Uzatma aus deiner Preisliste) + Effekt/Nail-Art
+Aufpreis zusammen und zeigt «≈ ücret» an. **Hinweis:** Die Schätzung ist
+unverbindlich — du bestätigst den Endpreis bei der Terminbestätigung.
+Die Aufpreise (Efekt/Nail Art) kannst du in
+`src/lib/nail-design.ts` (`NAIL_FINISHES` / `NAIL_ARTS`, Feld
+`surcharge`) anpassen.
+
+**Wo Kundinnen das Studio finden:** Navigation oben («Canlı Studio 💅»),
+Gold-Button im Hero («Canlı Nail Studio»), 2. Tab in der mobilen
+Navigation, CTA in der Nail-Art-Galerie («Tasarımı Canlı Dene»),
+PWA-Shortcut «Studio» und direkt über den Live-Link.
+
+---
+
 ## 6️⃣ Zugänge & Sicherheit
 
 | Was | Wo |

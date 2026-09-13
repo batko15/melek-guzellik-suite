@@ -1,5 +1,5 @@
 // Passwort aus .env.cloud-test laden (gitignored) — NICHT hardcodieren!
-const fs = require('fs')
+import fs from 'node:fs'
 function loadPw() {
   try {
     const m = fs.readFileSync('/home/z/my-project/.env.cloud-test', 'utf8').match(/postgresql:\/\/[^:]*:([^@]+)@/)
@@ -7,8 +7,8 @@ function loadPw() {
   } catch { return null }
 }
 // Find the correct Supabase pooler region for project pmudlcpusvwvmejirpsq
-const { Client } = require('pg')
-const dns = require('dns').promises
+import { Client } from 'pg'
+const dns = (await import('node:dns')).promises
 
 const REF = 'pmudlcpusvwvmejirpsq'
 const REGIONS = [

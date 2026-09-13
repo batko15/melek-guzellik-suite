@@ -2,8 +2,8 @@
 // Prüft exakt die Produktionslogik: Transaktion + Advisory-Lock + Tabellen-Check
 // + DO-Block-DDL (Upgrade: Service existiert, GiftCard/WaitlistEntry fehlen)
 // + Paket-Saat. Passwort aus gitignored .env.cloud-test.
-const fs = require('fs')
-const { Client } = require('pg')
+import fs from 'node:fs'
+import { Client } from 'pg'
 
 function loadUrl() {
   try {

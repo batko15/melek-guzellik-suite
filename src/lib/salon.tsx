@@ -21,6 +21,8 @@ export interface SalonBooking {
   status: "bekliyor" | "onaylandi" | "tamamlandi" | "iptal" | "gelmedi" | string
   notes: string | null
   staffNote: string | null
+  // V5.7: Canlı Nail Studio tasarımı (kompakt JSON)
+  design: string | null
   serviceId: string
   // V4
   deposit: number

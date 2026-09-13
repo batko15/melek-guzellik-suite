@@ -13,7 +13,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import {
   ChevronLeft, ChevronRight, X, Clock, CalendarCheck, Instagram, Sparkles,
-  Share2, Copy, Check, MessageCircle, Crown, Gem, Palette, ArrowRight, Phone,
+  Share2, Copy, Check, MessageCircle, Crown, Gem, Palette, ArrowRight, Phone, Wand2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -28,12 +28,13 @@ function waLink(text: string): string {
 }
 
 export function NailArtPage({
-  onBack, onBook, onReviews, onStaffLogin,
+  onBack, onBook, onReviews, onStaffLogin, onStudio,
 }: {
   onBack: () => void
   onBook: () => void
   onReviews: () => void
   onStaffLogin: () => void
+  onStudio: () => void
 }) {
   const { company, brand } = BRANDING
   const instagramUrl = `https://www.instagram.com/${company.instagram}`
@@ -276,8 +277,15 @@ export function NailArtPage({
           </div>
           <div className="flex flex-col items-center gap-3 sm:flex-row">
             <Button
-              onClick={onBook}
+              onClick={onStudio}
               className="mk-gold-glow mk-btn-lift h-12 rounded-full bg-primary px-7 font-bold text-primary-foreground hover:bg-primary/90"
+            >
+              <Wand2 className="mr-1.5 h-4 w-4" /> Tasarımı Canlı Dene
+            </Button>
+            <Button
+              onClick={onBook}
+              variant="outline"
+              className="h-12 rounded-full border-primary/40 px-7 font-bold text-brand-text hover:bg-primary/10"
             >
               <CalendarCheck className="mr-1.5 h-4 w-4" /> Hemen Randevu Al
             </Button>

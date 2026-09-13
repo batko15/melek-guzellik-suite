@@ -2,9 +2,9 @@
 // (idempotent: fügt nur ein, wenn noch nicht vorhanden)
 // Lädt die Verbindung aus .env.cloud-test (gitignored — keine Credentials im Repo)
 
-const fs = require("fs")
-const path = require("path")
-const { Client } = require("pg")
+import fs from "node:fs"
+import path from "node:path"
+import { Client } from "pg"
 
 function loadCloudUrl() {
   const envPath = path.join(__dirname, "..", ".env.cloud-test")

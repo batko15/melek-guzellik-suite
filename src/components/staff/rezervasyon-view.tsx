@@ -17,6 +17,7 @@ import {
   Mail, Smartphone, Trash2, AlertTriangle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { designLabelSafe } from "@/lib/nail-design"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -447,6 +448,11 @@ export function RezervasyonView() {
                           </td>
                           <td className="px-4 py-3">
                             <div>{b.service.name}</div>
+                            {b.design && (
+                              <div className="mt-0.5 max-w-[220px] truncate text-[11px] font-semibold text-brand-text" title={designLabelSafe(b.design) ?? undefined}>
+                                💅 {designLabelSafe(b.design)}
+                              </div>
+                            )}
                             {b.notes && <div className="mt-0.5 max-w-[220px] truncate text-xs italic text-muted-foreground">«{b.notes}»</div>}
                           </td>
                           <td className="mk-display px-4 py-3 text-right font-bold text-brand-text">{para(b.priceChf)}</td>
@@ -535,6 +541,9 @@ export function RezervasyonView() {
                       <div className="mt-0.5 flex items-center gap-1 text-[10px] text-muted-foreground">
                         <Phone className="h-2.5 w-2.5" /> {b.customer.phone}
                       </div>
+                      {b.design && (
+                        <div className="mt-1 truncate text-[11px] font-semibold text-brand-text">💅 {designLabelSafe(b.design)}</div>
+                      )}
                       {b.notes && <div className="mt-1 truncate text-[11px] italic text-muted-foreground">«{b.notes}»</div>}
                       {b.staffNote && (
                         <div className="mt-1 truncate text-[10px] italic text-purple-300/80">iç not: {b.staffNote}</div>

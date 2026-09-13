@@ -1,5 +1,5 @@
 // Passwort aus .env.cloud-test laden (gitignored) — NICHT hardcodieren!
-const fs = require('fs')
+import fs from 'node:fs'
 function loadPw() {
   try {
     const m = fs.readFileSync('/home/z/my-project/.env.cloud-test', 'utf8').match(/postgresql:\/\/[^:]*:([^@]+)@/)
@@ -7,7 +7,7 @@ function loadPw() {
   } catch { return null }
 }
 // Full connection test with correct database name + table creation check
-const { Client } = require('pg')
+import { Client } from 'pg'
 
 const REF = 'pmudlcpusvwvmejirpsq'
 const HOST = 'aws-1-eu-west-1.pooler.supabase.com'

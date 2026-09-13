@@ -43,6 +43,18 @@
   ],
   "shortcuts": [
     {
+      "name": "Canlı Nail Studio",
+      "short_name": "Studio",
+      "description": "Tırnak tasarımını canlı oluştur ve randevu al",
+      "url": "/nailstudio",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
       "name": "Randevu Al",
       "short_name": "Randevu",
       "description": "Yeni randevu oluştur",
@@ -67,21 +79,9 @@
       ]
     },
     {
-      "name": "Yorumlar",
-      "short_name": "Yorumlar",
-      "description": "Müşteri değerlendirmelerini gör",
-      "url": "/yorumlar",
-      "icons": [
-        {
-          "src": "/icon-192.png",
-          "sizes": "192x192"
-        }
-      ]
-    },
-    {
-      "name": "Nail Art",
+      "name": "Nail Art Galeri",
       "short_name": "Nail Art",
-      "description": "Tırnak sanatı tasarım galerisini gör",
+      "description": "Tırnak sanatı tasarım galerisi",
       "url": "/nailart",
       "icons": [
         {

@@ -10,7 +10,7 @@ import { useEffect, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import {
   MapPin, Phone, LogOut, Menu, X,
-  Activity, Instagram, Home, CalendarCheck, Star, Sparkles,
+  Activity, Instagram, Home, CalendarCheck, Star, Sparkles, Wand2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -18,11 +18,12 @@ import { LandingPage } from "@/components/landing/landing-page"
 import { BookingFlow } from "@/components/public/booking-flow"
 import { ReviewsPage } from "@/components/public/reviews-page"
 import { NailArtPage } from "@/components/public/nail-art-page"
+import { NailStudio } from "@/components/public/nail-studio"
 import { LoginScreen, type StaffSession } from "@/components/auth/login-screen"
 import { BRANDING, BRAND_DISPLAY, MODULE_MAP } from "@/config/branding"
 import { REGISTERED_MODULES, NAV_SECTIONS, resolveDefaultView } from "@/lib/module-registry"
 
-type PublicView = "landing" | "randevu" | "yorumlar" | "nailart"
+type PublicView = "landing" | "randevu" | "yorumlar" | "nailart" | "nailstudio"
 type Stage = PublicView | "login"
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -31,6 +32,7 @@ type Stage = PublicView | "login"
 
 const PUBLIC_NAV: Array<{ id: PublicView; label: string; Icon: React.ElementType }> = [
   { id: "landing", label: "Ana Sayfa", Icon: Home },
+  { id: "nailstudio", label: "Studio", Icon: Wand2 },
   { id: "nailart", label: "Nail Art", Icon: Sparkles },
   { id: "randevu", label: "Randevu", Icon: CalendarCheck },
   { id: "yorumlar", label: "Yorumlar", Icon: Star },
@@ -216,6 +218,7 @@ function viewForPath(p: string): PublicView {
   if (clean === "/randevu") return "randevu"
   if (clean === "/yorumlar") return "yorumlar"
   if (clean === "/nailart") return "nailart"
+  if (clean === "/nailstudio") return "nailstudio"
   return "landing"
 }
 
@@ -263,7 +266,7 @@ export function AppShell({ initialStage }: { initialStage?: PublicView }) {
   useEffect(() => {
     const onHash = () => {
       const h = window.location.hash.replace("#", "")
-      if (h === "randevu" || h === "yorumlar" || h === "nailart" || h === "") {
+      if (h === "randevu" || h === "yorumlar" || h === "nailart" || h === "nailstudio" || h === "") {
         if (!session) setStage(h === "" ? viewForPath(window.location.pathname) : (h as PublicView))
       }
     }
@@ -277,7 +280,7 @@ export function AppShell({ initialStage }: { initialStage?: PublicView }) {
     const onPop = () => {
       if (session) return
       const h = window.location.hash.replace("#", "")
-      if (h === "randevu" || h === "yorumlar" || h === "nailart") {
+      if (h === "randevu" || h === "yorumlar" || h === "nailart" || h === "nailstudio") {
         setStage(h)
         return
       }
@@ -305,6 +308,7 @@ export function AppShell({ initialStage }: { initialStage?: PublicView }) {
           onBook={() => goPublic("randevu")}
           onReviews={() => goPublic("yorumlar")}
           onStaffLogin={() => setStage("login")}
+          onStudio={() => goPublic("nailstudio")}
         />
         <MobileBottomNav view="landing" setView={goPublic} />
       </>
@@ -348,8 +352,23 @@ export function AppShell({ initialStage }: { initialStage?: PublicView }) {
           onBook={() => goPublic("randevu")}
           onReviews={() => goPublic("yorumlar")}
           onStaffLogin={() => setStage("login")}
+          onStudio={() => goPublic("nailstudio")}
         />
         <MobileBottomNav view="nailart" setView={goPublic} />
+      </>
+    )
+  }
+
+  // ─── V5.7 Herkese açık: Canlı Nail Studio (girişsiz) ───
+  if (!session && stage === "nailstudio") {
+    return (
+      <>
+        <NailStudio
+          onBack={() => goPublic("landing")}
+          onBook={() => goPublic("randevu")}
+          onStaffLogin={() => setStage("login")}
+        />
+        <MobileBottomNav view="nailstudio" setView={goPublic} />
       </>
     )
   }

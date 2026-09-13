@@ -1,5 +1,5 @@
 // Passwort aus .env.cloud-test laden (gitignored) — NICHT hardcodieren!
-const fs = require('fs')
+import fs from 'node:fs'
 function loadPw() {
   try {
     const m = fs.readFileSync('/home/z/my-project/.env.cloud-test', 'utf8').match(/postgresql:\/\/[^:]*:([^@]+)@/)
@@ -7,7 +7,7 @@ function loadPw() {
   } catch { return null }
 }
 // Test Supabase connection: password variants × pooler hosts
-const { Client } = require('pg')
+import { Client } from 'pg'
 
 const REF = 'pmudlcpusvwvmejirpsq'
 const HOSTS = ['aws-0-eu-central-1.pooler.supabase.com', 'aws-1-eu-central-1.pooler.supabase.com']

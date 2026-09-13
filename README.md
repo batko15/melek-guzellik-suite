@@ -1,4 +1,4 @@
-# 💅 Melek'çe Güzellik Suite — V5.6 NAIL ART GALERİSİ
+# 💅 Melek'çe Güzellik Suite — V5.7 CANLI NAIL STUDIO
 
 **Die komplette Salon-Software für Nagelstudios & Beauty-Studios — öffentliche Webseite, Kundinnen-Buchungsportal und Team-Verwaltung in einer Anwendung.**
 
@@ -6,7 +6,7 @@
 
 ---
 
-## ✨ Feature-Highlights (V5.6 NAIL ART GALERİSİ)
+## ✨ Feature-Highlights (V5.7 CANLI NAIL STUDIO)
 
 ### 🌐 Öffentliche Webseite (ohne Login)
 - **Luxury-Design** «Black-Gold-Champagner» mit echtem Studio-Logo (Engelsflügel), Gold-Eck-Ornamenten und Rauten-Trennern — mobil, Tablet & Desktop optimiert
@@ -17,6 +17,7 @@
 - ⭐ **V5 GALERIE**: 22 echte Instagram-Fotos des Studios (die 6 neuesten Arbeiten direkt von @melekce_guzellik17 übernommen)
 - Leistungen & Preise im **Menü-Stil** (punktierte Preisführung), **Galerie mit Kategorie-Filter** (Tırnak / Güzellik / Kirpik / Stüdyo)
 - ⭐ **V5.6 Nail Art**: Eigene, teilbare **Tırnak-Sanatı-Galerie** unter `/nailart` — alle 14 Nagel-Designs groß im **Lightbox-Modus** (Pfeiltasten/ESC), pro Design **«Bu tasarımı WhatsApp'tan iste»** (Design-Name automatisch in der Nachricht), Preisliste der 8 Nageldienste, Teilen-Button (Web-Share/Panoya kopyala); verlinkt aus Navigation, Galerie-Sektion, mobiler Alt-Navigation und PWA-Shortcut
+- ⭐ **V5.7 Canlı Nail Studio**: **Interaktiver Nageldesign-Konfigurator** unter `/nailstudio` — Kundinnen wählen **Şekil (6 Formen) · Boy (3 Längen) · Renk (16 Farben) · Efekt (6 Finishes) · Nail Art (8 Muster)** und sehen eine **stilisierte Hand als Live-SVG-Vorschau**, die sofort mitwächst; 9 Fertig-Presets aus der echten Galerie, unverbindliche **Preis-Schätzung** (Grundleistung + Aufpreise), **«Bu Tasarımla Randevu Al»** hängt das Design automatisch an die Buchung (DB-Feld `design` + lesbarer Notizeile) — sichtbar auf jedem Buchungsschritt, im Erfolgsbildschirm und als goldene «💅»-Zeile im Ekip-Portal; WhatsApp-Share & Copy-Link inklusive
 - Live-**Wetter-Widget** mit türkischen Pflege-Tipps (Open-Meteo, schlüssellos), **interaktive Karte** (Leaflet, dunkle CARTO-Tiles)
 - ⭐ **V5.5 Mobil Uygulama**: App-Download-Bereich im Footer mit **QR-Code in Markenfarben** (Champagner-Gold auf Samt) — zeigt immer auf das neueste GitHub-Release; dazu PWA-Installationshinweis für iPhone
 - Gästebewertungen mit Sternen — jeder darf ohne Login bewerten (moderiert)
@@ -214,6 +215,18 @@ public/gallery/real/          # echte Studio-Fotos
 ---
 
 ## 📋 Changelog
+
+### V5.7 — «CANLI NAIL STUDIO» (Live-Nageldesign-Konfigurator)
+- 🪄 **Neue öffentliche Route `/nailstudio`** (SEO + Sitemap + PWA-Shortcut): Kundinnen erstellen ihr Nageldesign **selbst und live** — reine SVG-Vorschau (keine Bilder, ultra-schnell, offline-fähig)
+- 🖐️ **Live-Hand-Vorschau**: 5 Finger mit individuell gezeichneten Nägeln — alle 6 Formen (Kare/Yuvarlak/Oval/Badem/Stiletto/Balerina) als echte SVG-Pfade, Längen ändern die Nagelgröße sichtbar, Effekte (Kedi Gözü mit Magnetlinie, Sim-Partikel, Krom-Verlauf, Sedef-Schimmer, Mat/Parlak) und alle 8 Nail-Art-Muster werden live darüber gerendert
+- 🎨 **16 Studio-Farben** + 9 Galerie-Presets (Bordo Kedi Gözü, Bordo Ombre, Klasik French, Deniz Kabuğu French, 24K Altın Folyo, İnci Tozu, Nar Çiçeği, Siyah Krom, Pudra Sim)
+- 💰 **Preis-Schätzung live**: Grundleistung aus der echten Preisliste (Kısa → Jel Manikür, Orta/Uzun → Jel Uzatma) + konfigurierbare Aufpreise pro Efekt/Nail-Art
+- 📅 **Buchungs-Integration**: «Bu Tasarımla Randevu Al» → Design hängt an der Buchung (neues DB-Feld `Booking.design`, kompakter JSON + Menschen-lesbare Notiz) — Chip «💅 Tasarım hazır» im Booking-Header, Zusammenfassung in Schritt 1 & 3, Anzeige im Erfolgsbildschirm, **goldene Design-Zeile im Ekip-Portal** (Rezervasyon Merkezi, Tabelle + Karten)
+- 🐛 **Bugfix**: «Randevularım» fand mit lokal formatierter Nummer («0539 …») die Buchung nicht, wenn sie als «+90 539 …» gespeichert war — GET `/api/v1/salon/bookings?phone=` durchsucht jetzt kanonisch + roh
+- 🐛 **Bugfix**: konkurrierende `public/robots.txt` + `src/app/robots.ts` → 500-Fehler auf `/robots.txt` behoben (Datei entfernt, Metadata-Route gewinnt)
+- ⚡ **Performance & Sicherheit**: `compress`, `poweredByHeader: false`, Security-Header (nosniff, SAMEORIGIN, Referrer-Policy, Permissions-Policy), 1-Jahres-`immutable`-Cache für Galerie-/Brand-Assets, `optimizePackageImports` (lucide-react, date-fns), AVIF/WebP-Formate; ESLint 0 Fehler (auch in allen Dev-Skripten)
+- 📱 Mobile: 5. Tab «Studio» in der App-Navigation, Grid-Overflow-Fix (`minmax(0, …)`) — auf 390 px exakt ohne horizontales Scrollen
+- 📚 Doku: `APP-ANLEITUNG.md` Kapitel 5️⃣g mit Kundinnen-Anleitung + Anpassung der Aufpreise
 
 ### V5.6 — «NAIL ART GALERİSİ» (teilbare Design-Galerie)
 - 💅 **Neue öffentliche Route `/nailart`** — die komplette Tırnak-Sanatı-Galerie als eigener, teilbarer Live-Link (SEO-Metadaten + Sitemap-Eintrag): alle Nagel-Designs aus der Datenbank in großer Grid-Ansicht

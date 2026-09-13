@@ -9,7 +9,7 @@
 
 import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { Instagram, MapPin, Phone, Clock, CalendarCheck, ChevronRight, MessageSquareHeart, ArrowRight, MessageCircle, Navigation, Sparkles, Heart, Crown, Mail, Gift, Copy, Check, User, MessageSquare, Smartphone, Download } from "lucide-react"
+import { Instagram, MapPin, Phone, Clock, CalendarCheck, ChevronRight, MessageSquareHeart, ArrowRight, MessageCircle, Navigation, Sparkles, Heart, Crown, Mail, Gift, Copy, Check, User, MessageSquare, Smartphone, Download, Wand2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -66,11 +66,12 @@ function BrandMark({ size = 44, className }: { size?: number; className?: string
 }
 
 export function LandingPage({
-  onBook, onReviews, onStaffLogin,
+  onBook, onReviews, onStaffLogin, onStudio,
 }: {
   onBook: () => void
   onReviews: () => void
   onStaffLogin: () => void
+  onStudio: () => void
 }) {
   const { company, landing, brand } = BRANDING
   const instagramUrl = `https://www.instagram.com/${company.instagram}`
@@ -131,7 +132,8 @@ export function LandingPage({
           <nav className="ml-auto hidden items-center gap-7 text-sm text-muted-foreground md:flex">
             <a href="#hizmetler" className="mk-focus rounded transition-colors hover:text-foreground">Hizmetler</a>
             <a href="#galeri" className="mk-focus rounded transition-colors hover:text-foreground">Galeri</a>
-            <a href="/nailart" className="mk-focus rounded font-semibold text-brand-text transition-colors hover:text-foreground">Nail Art ✨</a>
+            <a href="/nailstudio" className="mk-focus rounded font-semibold text-brand-text transition-colors hover:text-foreground">Canlı Studio 💅</a>
+            <a href="/nailart" className="mk-focus rounded transition-colors hover:text-foreground">Nail Art ✨</a>
             <a href="#yorumlar" className="mk-focus rounded transition-colors hover:text-foreground">Yorumlar</a>
             <a href="#iletisim" className="mk-focus rounded transition-colors hover:text-foreground">İletişim</a>
           </nav>
@@ -189,6 +191,14 @@ export function LandingPage({
               >
                 {landing.ctaButton}
                 <ChevronRight className="ml-1 h-5 w-5" />
+              </Button>
+              <Button
+                variant="outline"
+                onClick={onStudio}
+                className="mk-focus h-12 rounded-full border-primary/50 px-6 text-sm font-semibold text-brand-text hover:bg-primary/10"
+              >
+                <Wand2 className="mr-1.5 h-4 w-4 text-brand-text" />
+                Canlı Nail Studio
               </Button>
               <Button
                 variant="outline"

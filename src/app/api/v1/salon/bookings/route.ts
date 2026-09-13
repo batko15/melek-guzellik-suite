@@ -30,6 +30,7 @@ interface BookingRow {
   status: string
   notes: string | null
   staffNote: string | null
+  design: string | null
   serviceId: string
   deposit: number
   depositPaid: boolean
@@ -65,6 +66,7 @@ type DbBooking = {
   status: string
   notes: string | null
   staffNote: string | null
+  design: string | null
   serviceId: string
   deposit: number
   depositPaid: boolean
@@ -86,6 +88,7 @@ function toRow(b: DbBooking): BookingRow {
     status: b.status,
     notes: b.notes,
     staffNote: b.staffNote,
+    design: b.design,
     serviceId: b.serviceId,
     deposit: b.deposit,
     depositPaid: b.depositPaid,
@@ -136,9 +139,15 @@ async function listBookings(params: URLSearchParams): Promise<BookingRow[]> {
   const to = params.get("to")
   const status = params.get("status")
 
+  // V5.7 DÜZELTME: misafir farklı biçimde yazsa bile («0539…», «+90 539 …»)
+  // randevularını bulabilsin — kanonik biçimle VE ham girişle arama yapılır.
+  const phoneFilter = phone
+    ? { customer: { phone: { in: Array.from(new Set([phone.trim(), canonicalPhone(phone)])) } } }
+    : {}
+
   const bookings = await db.booking.findMany({
     where: {
-      ...(phone ? { customer: { phone } } : {}),
+      ...phoneFilter,
       ...(status ? { status } : {}),
       ...(from || to
         ? {
@@ -177,6 +186,7 @@ export async function POST(request: Request) {
       startAt?: string
       notes?: string
       staffNote?: string
+      design?: string
       byStaff?: boolean
       deposit?: number
       staffId?: string | null
@@ -266,6 +276,8 @@ export async function POST(request: Request) {
         status: "bekliyor",
         notes: body.notes?.trim() || null,
         staffNote: isStaff ? body.staffNote?.trim() || null : null,
+        // V5.7: Canlı Nail Studio tasarımı (kompakt JSON — en fazla 500 karakter)
+        design: body.design && body.design.trim().length > 0 && body.design.length <= 500 ? body.design.trim() : null,
         deposit,
         staffId,
       },

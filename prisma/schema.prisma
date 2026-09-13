@@ -74,6 +74,8 @@ model Booking {
   status      String        @default("bekliyor") // bekliyor | onaylandi | tamamlandi | iptal | gelmedi
   notes       String?       // müşteri isteği (örn. «Fransız + altın parıltı»)
   staffNote   String?       // iç not (yalnızca ekip görür — müşteriye bildirilmez)
+  // V5.7: Canlı Nail Studio tasarımı (JSON: {v,s,l,c,f,a}) — şekil·boy·renk·efekt·nail art
+  design      String?
   // V4: Depozito — no-show koruması (youcanbook/stxsoftware önerisi)
   deposit     Float         @default(0) // talep edilen depozito tutarı
   depositPaid Boolean       @default(false) // depozito alındı mı

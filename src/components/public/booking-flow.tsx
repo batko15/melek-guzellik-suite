@@ -22,6 +22,8 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BRANDING } from "@/config/branding"
+import { useNailDesign } from "@/lib/nail-design-store"
+import { designLabel, designSurcharge, serializeDesign } from "@/lib/nail-design"
 import {
   type SalonService, type SalonBooking, CATEGORY_META, para, minutesLabel,
   timeStr, dateStrShort, weekdayStr, isOpenDay, openSlots, BOOKING_STATUS,
@@ -42,6 +44,10 @@ export function BookingFlow({
   const qc = useQueryClient()
   const { guestBooking } = BRANDING
   const company = BRANDING.company
+
+  // V5.7: Canlı Nail Studio tasarımı (varsa randevuya bağlanır)
+  const pendingDesign = useNailDesign((s) => s.pending)
+  const clearPendingDesign = useNailDesign((s) => s.clearPending)
 
   const [step, setStep] = useState<Step>(0)
   const [service, setService] = useState<SalonService | null>(null)
@@ -177,6 +183,9 @@ export function BookingFlow({
     setSubmitting(true)
     try {
       const startAt = new Date(`${dateKey}T${timeKey}:00`).toISOString()
+      // V5.7: Nail-Studio-Tasarımı → notlara ek + ayrıca yapılandırılmış «design» alanı
+      const designLine = pendingDesign ? `Nail Studio tasarımı: ${designLabel(pendingDesign)}` : null
+      const fullNote = [note.trim(), designLine].filter(Boolean).join(" | ") || undefined
       const res = await fetch("/api/v1/salon/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -186,7 +195,8 @@ export function BookingFlow({
           customerEmail: email.trim() || undefined,
           serviceId: service.id,
           startAt,
-          notes: note.trim() || undefined,
+          notes: fullNote,
+          design: pendingDesign ? serializeDesign(pendingDesign) : undefined,
         }),
       })
       const json = (await res.json()) as {
@@ -215,6 +225,7 @@ export function BookingFlow({
   const restart = () => {
     setDone(null); setWhatsappUrl(""); setStep(0); setService(null); setDateKey(""); setTimeKey("")
     setName(""); setPhone(""); setEmail(""); setNote(""); setError("")
+    clearPendingDesign()
   }
 
   const steps = guestBooking.steps
@@ -239,6 +250,11 @@ export function BookingFlow({
             <h1 className="mk-display truncate text-lg font-bold">Melek'çe — {guestBooking.title}</h1>
             <div className="truncate text-[11px] text-muted-foreground">{guestBooking.subtitle}</div>
           </div>
+          {pendingDesign && (
+            <div className="hidden items-center gap-1.5 rounded-full border border-primary/30 bg-primary/8 px-3 py-1.5 text-[10px] font-bold text-brand-text min-[420px]:flex" title={designLabel(pendingDesign)}>
+              💅 Tasarım hazır
+            </div>
+          )}
           <div className="hidden items-center gap-1.5 rounded-full border border-primary/30 bg-primary/8 px-3 py-1.5 text-[10px] font-bold text-brand-text sm:flex">
             <Sparkles className="h-3 w-3" /> Giriş gerekmez
           </div>
@@ -270,6 +286,9 @@ export function BookingFlow({
                   <div className="flex justify-between"><span className="text-muted-foreground">Hizmet</span><span className="font-bold text-foreground">{done.serviceName ?? "—"}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Tarih</span><span className="font-bold text-foreground">{dateStrShort(done.startAt)} {weekdayStr(done.startAt)}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Saat</span><span className="font-bold text-foreground">{timeStr(done.startAt)}</span></div>
+                  {pendingDesign && (
+                    <div className="flex justify-between gap-3"><span className="shrink-0 text-muted-foreground">Tasarım</span><span className="text-right font-bold text-brand-text">💅 {designLabel(pendingDesign)}</span></div>
+                  )}
                   <div className="flex justify-between"><span className="text-muted-foreground">Ücret</span><span className="font-bold text-brand-text">{para(done.priceChf ?? 0)}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Durum</span><span className="font-bold text-amber-300">Onay bekliyor</span></div>
                 </div>
@@ -324,6 +343,23 @@ export function BookingFlow({
                 {/* ═══ 1. Adım: Hizmet ═══ */}
                 {step === 0 && (
                   <div className="mk-anim-in">
+                    {/* V5.7: Nail Studio tasarımı hazır → özet kart */}
+                    {pendingDesign && (
+                      <div className="mk-card mk-anim-up mb-5 flex items-center justify-between gap-3 rounded-xl border-primary/40 p-4">
+                        <div className="min-w-0">
+                          <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-text">Canlı Nail Studio tasarımınız</div>
+                          <div className="mk-display mt-0.5 truncate text-sm font-bold text-foreground">💅 {designLabel(pendingDesign)}</div>
+                          <div className="mt-0.5 text-[11px] text-muted-foreground">Bu tasarım randevunuza otomatik eklenir</div>
+                        </div>
+                        <button
+                          onClick={clearPendingDesign}
+                          className="mk-focus shrink-0 rounded-full border border-border/70 px-3 py-1.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:border-destructive/50 hover:text-destructive"
+                        >
+                          Kaldır
+                        </button>
+                      </div>
+                    )}
+
                     {/* Veritabanı/bağlantı hatası — açık mesaj + telefon alternatifi */}
                     {servicesError && (
                       <div className="mb-5 rounded-xl border border-destructive/40 bg-destructive/10 p-4">
@@ -557,7 +593,13 @@ export function BookingFlow({
                       <div className="flex justify-between"><span className="text-muted-foreground">Hizmet</span><span className="font-bold text-foreground">{service.name}</span></div>
                       <div className="flex justify-between"><span className="text-muted-foreground">Tarih</span><span className="font-bold text-foreground">{new Date(`${dateKey}T00:00:00`).toLocaleDateString("tr-TR", { day: "numeric", month: "long" })}</span></div>
                       <div className="flex justify-between"><span className="text-muted-foreground">Saat</span><span className="font-bold text-foreground">{timeKey}</span></div>
+                      {pendingDesign && (
+                        <div className="flex justify-between gap-3"><span className="shrink-0 text-muted-foreground">Tasarım</span><span className="text-right font-bold text-brand-text">💅 {designLabel(pendingDesign)}</span></div>
+                      )}
                       <div className="flex justify-between"><span className="text-muted-foreground">Ücret</span><span className="font-bold text-brand-text">{para(service.priceChf)}</span></div>
+                      {pendingDesign && designSurcharge(pendingDesign) > 0 && (
+                        <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Tasarım ek ücreti</span><span className="font-semibold text-brand-text">+ {designSurcharge(pendingDesign)}₺ (tahmini)</span></div>
+                      )}
                     </div>
 
                     {/* V5.4: İptal/no-show politikası — açık ve önceden bildirilmiş */}
