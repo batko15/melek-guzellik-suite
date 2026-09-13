@@ -46,8 +46,8 @@ export interface ModuleConfig {
 
 export const BRANDING = {
   // ─── Sürüm (her yerde görünür şekilde işaretlenir) ───────────────────────
-  version: "5.7.0",
-  versionFull: "5.7.0",
+  version: "5.8.0",
+  versionFull: "5.8.0",
   versionDate: "2026-09-13",
   versionCodename: "Canlı Studio Edition",
   lastUpdate: "Telefonnummer +905365726610",
