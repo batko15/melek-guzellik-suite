@@ -46,8 +46,8 @@ export interface ModuleConfig {
 
 export const BRANDING = {
   // ─── Sürüm (her yerde görünür şekilde işaretlenir) ───────────────────────
-  version: "6.0.0",
-  versionFull: "6.0.0",
+  version: "6.0.1",
+  versionFull: "6.0.1",
   versionDate: "2026-09-14",
   versionCodename: "Profesyonel Edition",
   lastUpdate: "Yeni tasarım + SSS + canlı durum + akıllı randevu",

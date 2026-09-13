@@ -30,18 +30,29 @@ function secretEquals(a: string, b: string): boolean {
   return timingSafeEqual(ab, bb)
 }
 
-function authorized(request: Request): boolean {
+function authorized(request: Request): { ok: boolean; configError?: boolean } {
   // V5.7.1: geçerli ekip oturumu da yetkili sayılır (portaldan manuel tetikleme)
-  if (getOptionalStaff(request)) return true
+  if (getOptionalStaff(request)) return { ok: true }
 
   const secret = process.env.CRON_SECRET?.trim()
-  if (!secret) return true // tanımlı değil → korumasız (yerel test modu)
+  if (!secret) {
+    // V6.0.1 FAIL-CLOSED BUGFIX: Ohne CRON_SECRET war der Endpunkt in
+    // Production offen (jeder konnte Sweeps auslösen + Kundendaten im
+    // Summary sehen). Jetzt gilt: fehlendes Secret auf Vercel/Production
+    // = Konfigurationsfehler → 401 (nur noch die Ekip-Oturum bleibt weg).
+    // Rein lokal (NODE_ENV=development, kein VERCEL) bleibt der Testmodus.
+    const isProduction =
+      process.env.VERCEL_ENV === "production" ||
+      process.env.NODE_ENV === "production" ||
+      process.env.VERCEL === "1"
+    return isProduction ? { ok: false, configError: true } : { ok: true }
+  }
 
   const header = request.headers.get("authorization") ?? ""
   const bearer = header.replace(/^Bearer\s+/i, "").trim()
   const query = new URL(request.url).searchParams.get("secret") ?? ""
   // V5.7.2: === durch timing-sicheren Vergleich ersetzt (Secret-Extraktion per Response-Timing verhindern)
-  return secretEquals(bearer, secret) || secretEquals(query, secret)
+  return { ok: secretEquals(bearer, secret) || secretEquals(query, secret) }
 }
 
 async function runReminderSweep() {
@@ -127,8 +138,20 @@ async function runReminderSweep() {
 }
 
 export async function GET(request: Request) {
-  if (!authorized(request)) {
-    return Response.json({ error: "Yetkisiz." }, { status: 401 })
+  const auth = authorized(request)
+  if (!auth.ok) {
+    return Response.json(
+      {
+        error: "Yetkisiz.",
+        ...(auth.configError
+          ? {
+              hint:
+                "CRON_SECRET ist auf Vercel nicht gesetzt — Environment Variable anlegen (Vercel → Settings → Environment Variables) und neu deployen. Bis dahin bleiben tägliche Erinnerungen deaktiviert.",
+            }
+          : {}),
+      },
+      { status: 401 },
+    )
   }
   try {
     const summary = await runReminderSweep()

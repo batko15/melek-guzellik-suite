@@ -169,7 +169,7 @@ async function main() {
   let assigned = 0
   for (let i = 0; i < bookings.length; i++) {
     const b = bookings[i]
-    const data: { deposit?: number; depositPaid?: boolean; staffId?: string } = {}
+    const data: { deposit?: number; depositPaid?: boolean; staffId?: string | null } = {}
     // Uzun/pahalı hizmetlere depozito (no-show koruması) — 3'te 1 oranında
     if (b.priceChf >= 900 && b.status !== "tamamlandi" && i % 3 === 0) {
       data.deposit = 200

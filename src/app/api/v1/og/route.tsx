@@ -32,11 +32,21 @@ const size = { width: 1200, height: 630 } as const
 
 // Inter aus public/fonts — volle türkische Glyphen (ş/ğ/İ fehlen im
 // latin-only Standard-Font von next/og → Tofu-Boxen).
-const interRegular = readFileSync(join(process.cwd(), "public/fonts/Inter-400.ttf"))
-const interBold = readFileSync(join(process.cwd(), "public/fonts/Inter-700.ttf"))
+// V6.0.1 BUGFIX: readFileSync ist FAULT-TOLERANT — fehlt eine Font-Datei
+// im Deploy-Bundle, fällt die Route auf den eingebauten Font zurück
+// (schlechtere Türkisch-Glyphen, aber KEIN 500 mehr beim Modul-Init).
+function loadFont(file: string): Buffer | null {
+  try {
+    return readFileSync(join(process.cwd(), "public/fonts", file))
+  } catch {
+    return null
+  }
+}
+const interRegular = loadFont("Inter-400.ttf")
+const interBold = loadFont("Inter-700.ttf")
 const fonts = [
-  { name: "Inter", data: interRegular, weight: 400 as const, style: "normal" as const },
-  { name: "Inter", data: interBold, weight: 700 as const, style: "normal" as const },
+  ...(interRegular ? [{ name: "Inter", data: interRegular, weight: 400 as const, style: "normal" as const }] : []),
+  ...(interBold ? [{ name: "Inter", data: interBold, weight: 700 as const, style: "normal" as const }] : []),
 ]
 const upper = (s: string) => s.toLocaleUpperCase("tr-TR")
 
@@ -208,20 +218,24 @@ export async function GET(request: Request) {
           />
         ))}
 
-        {/* ─── Inhalt ─── */}
+        {/* ─── Inhalt — V6.0.1: ABSOLUTE Positionierung (Satori legt
+                Flex-Spalten sonst nebeneinander statt untereinander —
+                Chips liefen über den rechten Rand) ─── */}
         <div
           style={{
+            position: "absolute",
+            left: 100,
+            top: 140,
+            width: 660,
             display: "flex",
             flexDirection: "column",
             alignItems: "flex-start",
-            paddingLeft: 100,
-            paddingRight: 430,
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             <div style={{ width: 12, height: 12, backgroundColor: GOLD, transform: "rotate(45deg)", display: "flex" }} />
             <div style={{ fontSize: 22, letterSpacing: 6, color: GOLD_SOFT }}>
-              {upper(`${BRAND_DISPLAY.part1} ${BRAND_DISPLAY.part2}`)} · Canlı Nail Studio
+              {`${upper(`${BRAND_DISPLAY.part1} ${BRAND_DISPLAY.part2}`)} · Canlı Nail Studio`}
             </div>
           </div>
 
@@ -234,54 +248,31 @@ export async function GET(request: Request) {
             </div>
           </div>
 
+          {/* V6.0.1 KERNFIX: React-Fragmente (<>…) rendern Satori in einer
+              unsichtbaren REIHE statt in der Spalte → beide Zwecke bekommen
+              jetzt echte Column-Divs (beweislich korrekt gestapelt). */}
           {cfg ? (
-            <>
-              {/* Lesbare Design-Zeile */}
-              <div style={{ marginTop: 24, fontSize: 30, color: "rgba(246,239,231,0.82)" }}>
-                {nailShapeLabel(cfg.shape)} · {nailLengthLabel(cfg.length)} · {color.label} ·{" "}
-                {nailArtLabel(cfg.art)}
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+              <div style={{ display: "flex", marginTop: 24, fontSize: 30, color: "rgba(246,239,231,0.82)" }}>
+                {`${nailShapeLabel(cfg.shape)} · ${nailLengthLabel(cfg.length)} · ${color.label} · ${nailArtLabel(cfg.art)}`}
               </div>
-
-              {/* Design-Chips (echte Katalog-Labels + echtes Farbfeld) */}
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginTop: 34 }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginTop: 34, width: 660 }}>
                 <Chip label="Şekil" value={nailShapeLabel(cfg.shape)} />
                 <Chip label="Boy" value={nailLengthLabel(cfg.length)} />
                 <Chip label="Renk" value={color.label} hex={color.hex} />
                 <Chip label="Efekt" value={nailFinishLabel(cfg.finish)} />
                 <Chip label="Nail Art" value={nailArtLabel(cfg.art)} />
               </div>
-            </>
+            </div>
           ) : (
-            <>
-              <div style={{ marginTop: 24, fontSize: 32, color: "rgba(246,239,231,0.82)" }}>
-                Tasarımını canlı oluştur — randevuna otomatik eklenir
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+              <div style={{ display: "flex", marginTop: 24, fontSize: 32, color: "rgba(246,239,231,0.82)" }}>
+                {`Tasarımını canlı oluştur — randevuna otomatik eklenir`}
               </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginTop: 36 }}>
-                {[
-                  `${NAIL_SHAPES.length} Şekil`,
-                  `${NAIL_LENGTHS.length} Boy`,
-                  `${NAIL_COLORS.length} Renk`,
-                  `${NAIL_FINISHES.length} Efekt`,
-                  `${NAIL_ARTS.length} Nail Art`,
-                ].map((c) => (
-                  <div
-                    key={c}
-                    style={{
-                      display: "flex",
-                      padding: "10px 20px",
-                      borderRadius: 9999,
-                      borderWidth: 1,
-                      borderStyle: "solid",
-                      borderColor: "rgba(212,175,55,0.5)",
-                      color: GOLD_SOFT,
-                      fontSize: 24,
-                    }}
-                  >
-                    {c}
-                  </div>
-                ))}
+              <div style={{ display: "flex", marginTop: 36, fontSize: 26, color: GOLD_SOFT }}>
+                {`${NAIL_SHAPES.length} Şekil · ${NAIL_LENGTHS.length} Boy · ${NAIL_COLORS.length} Renk · ${NAIL_FINISHES.length} Efekt · ${NAIL_ARTS.length} Nail Art`}
               </div>
-            </>
+            </div>
           )}
         </div>
 
@@ -331,8 +322,10 @@ export async function GET(request: Request) {
           >
             Bu tasarımla randevu al
           </div>
-          <div style={{ fontSize: 24, color: "rgba(246,239,231,0.6)" }}>
-            {BRANDING.company.city.replace("17500 ", "")} · {BRANDING.brand.since}'den beri
+          {/* V6.0.1 BUGFIX: mehrere Text-Kinder ohne display:flex → Satori-500
+              («Expected <div> to have explicit display:flex …») auf JEDEN Aufruf */}
+          <div style={{ display: "flex", fontSize: 24, color: "rgba(246,239,231,0.6)" }}>
+            {`${BRANDING.company.city.replace("17500 ", "")} · ${BRANDING.brand.since}'den beri`}
           </div>
         </div>
       </div>
