@@ -3,7 +3,15 @@
 // idempotentes TypeScript-Modul um: src/lib/pg-ddl.ts
 // Transformationen: CREATE TABLE → IF NOT EXISTS, CREATE INDEX → IF NOT EXISTS,
 // CREATE SCHEMA → IF NOT EXISTS (bereits vorhanden).
-// ALTER TABLE / ADD CONSTRAINT bleiben unverändert (Bootstrap fängt Fehler ab).
+//
+// V5.4: ALTER TABLE / ADD CONSTRAINT werden in DO $$ … EXCEPTION $$-Blöcke
+// gewickelt. Grund: In einer PostgreSQL-TRANSAKTION versetzt ein fehlgeschlagenes
+// Statement (z.B. «constraint already exists» auf einer Bestands-DB) die GESAMTE
+// Transaktion in den Zustand «aborted» (25P02) — alle weiteren Statements
+// scheitern dann blind. Ein DO-Block mit EXCEPTION-Klausel bildet dagegen eine
+// Subtransaktion: der Fehler wird abgefangen, die äußere Transaktion bleibt
+// intakt. So läuft derselbe DDL-Block sowohl auf leeren als auch auf
+// bereits eingerichteten Datenbanken (Upgrade-Pfad V5.2 → V5.4).
 
 import { readFileSync, writeFileSync } from "node:fs"
 
@@ -23,9 +31,17 @@ const statements = raw
   .map((s) => s.replace(/^CREATE TABLE (?!IF NOT EXISTS)/, "CREATE TABLE IF NOT EXISTS "))
   .map((s) => s.replace(/^CREATE INDEX (?!IF NOT EXISTS)/, "CREATE INDEX IF NOT EXISTS "))
   .map((s) => s.replace(/^CREATE UNIQUE INDEX (?!IF NOT EXISTS)/, "CREATE UNIQUE INDEX IF NOT EXISTS "))
+  // V5.4: ALTER … ADD CONSTRAINT in subtransaktionssicheren DO-Block wickeln
+  // (duplicate_object = 42710 «already exists», undefined_table = 42P01 Defensive)
+  .map((s) =>
+    s.startsWith("ALTER TABLE")
+      ? `DO $$\nBEGIN\n  ${s.replace(/;$/, "")};\nEXCEPTION\n  WHEN duplicate_object THEN NULL;\n  WHEN undefined_table THEN NULL;\nEND $$;`
+      : s,
+  )
 
 const out = `// AUTO-GENERIERT aus prisma/schema.postgres.prisma (scripts/build-pg-ddl.mjs)
-// PostgreSQL-DDL für Supabase-Bootstrap — idempotent (IF NOT EXISTS).
+// PostgreSQL-DDL für Supabase-Bootstrap — idempotent (IF NOT EXISTS +
+// ALTER in DO-EXCEPTION-Blöcken: lauffähig auf leeren UND bestehenden DBs).
 // NICHT von Hand bearbeiten — stattdessen Schema ändern und Skript neu ausführen.
 
 export const PG_DDL: string[] = [

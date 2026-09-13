@@ -1,5 +1,6 @@
 // AUTO-GENERIERT aus prisma/schema.postgres.prisma (scripts/build-pg-ddl.mjs)
-// PostgreSQL-DDL für Supabase-Bootstrap — idempotent (IF NOT EXISTS).
+// PostgreSQL-DDL für Supabase-Bootstrap — idempotent (IF NOT EXISTS +
+// ALTER in DO-EXCEPTION-Blöcken: lauffähig auf leeren UND bestehenden DBs).
 // NICHT von Hand bearbeiten — stattdessen Schema ändern und Skript neu ausführen.
 
 export const PG_DDL: string[] = [
@@ -35,12 +36,12 @@ export const PG_DDL: string[] = [
   "CREATE INDEX IF NOT EXISTS \"WaitlistEntry_phone_idx\" ON \"WaitlistEntry\"(\"phone\");",
   "CREATE INDEX IF NOT EXISTS \"LoyaltyLog_customerId_idx\" ON \"LoyaltyLog\"(\"customerId\");",
   "CREATE INDEX IF NOT EXISTS \"LoyaltyLog_createdAt_idx\" ON \"LoyaltyLog\"(\"createdAt\");",
-  "ALTER TABLE \"Booking\" ADD CONSTRAINT \"Booking_customerId_fkey\" FOREIGN KEY (\"customerId\") REFERENCES \"SalonCustomer\"(\"id\") ON DELETE RESTRICT ON UPDATE CASCADE;",
-  "ALTER TABLE \"Booking\" ADD CONSTRAINT \"Booking_serviceId_fkey\" FOREIGN KEY (\"serviceId\") REFERENCES \"Service\"(\"id\") ON DELETE RESTRICT ON UPDATE CASCADE;",
-  "ALTER TABLE \"Booking\" ADD CONSTRAINT \"Booking_staffId_fkey\" FOREIGN KEY (\"staffId\") REFERENCES \"StaffMember\"(\"id\") ON DELETE SET NULL ON UPDATE CASCADE;",
-  "ALTER TABLE \"Review\" ADD CONSTRAINT \"Review_serviceId_fkey\" FOREIGN KEY (\"serviceId\") REFERENCES \"Service\"(\"id\") ON DELETE SET NULL ON UPDATE CASCADE;",
-  "ALTER TABLE \"NotificationLog\" ADD CONSTRAINT \"NotificationLog_bookingId_fkey\" FOREIGN KEY (\"bookingId\") REFERENCES \"Booking\"(\"id\") ON DELETE SET NULL ON UPDATE CASCADE;",
-  "ALTER TABLE \"GalleryItem\" ADD CONSTRAINT \"GalleryItem_customerId_fkey\" FOREIGN KEY (\"customerId\") REFERENCES \"SalonCustomer\"(\"id\") ON DELETE SET NULL ON UPDATE CASCADE;",
-  "ALTER TABLE \"WaitlistEntry\" ADD CONSTRAINT \"WaitlistEntry_serviceId_fkey\" FOREIGN KEY (\"serviceId\") REFERENCES \"Service\"(\"id\") ON DELETE SET NULL ON UPDATE CASCADE;",
-  "ALTER TABLE \"LoyaltyLog\" ADD CONSTRAINT \"LoyaltyLog_customerId_fkey\" FOREIGN KEY (\"customerId\") REFERENCES \"SalonCustomer\"(\"id\") ON DELETE RESTRICT ON UPDATE CASCADE;",
+  "DO $$\nBEGIN\n  ALTER TABLE \"Booking\" ADD CONSTRAINT \"Booking_customerId_fkey\" FOREIGN KEY (\"customerId\") REFERENCES \"SalonCustomer\"(\"id\") ON DELETE RESTRICT ON UPDATE CASCADE;\nEXCEPTION\n  WHEN duplicate_object THEN NULL;\n  WHEN undefined_table THEN NULL;\nEND $$;",
+  "DO $$\nBEGIN\n  ALTER TABLE \"Booking\" ADD CONSTRAINT \"Booking_serviceId_fkey\" FOREIGN KEY (\"serviceId\") REFERENCES \"Service\"(\"id\") ON DELETE RESTRICT ON UPDATE CASCADE;\nEXCEPTION\n  WHEN duplicate_object THEN NULL;\n  WHEN undefined_table THEN NULL;\nEND $$;",
+  "DO $$\nBEGIN\n  ALTER TABLE \"Booking\" ADD CONSTRAINT \"Booking_staffId_fkey\" FOREIGN KEY (\"staffId\") REFERENCES \"StaffMember\"(\"id\") ON DELETE SET NULL ON UPDATE CASCADE;\nEXCEPTION\n  WHEN duplicate_object THEN NULL;\n  WHEN undefined_table THEN NULL;\nEND $$;",
+  "DO $$\nBEGIN\n  ALTER TABLE \"Review\" ADD CONSTRAINT \"Review_serviceId_fkey\" FOREIGN KEY (\"serviceId\") REFERENCES \"Service\"(\"id\") ON DELETE SET NULL ON UPDATE CASCADE;\nEXCEPTION\n  WHEN duplicate_object THEN NULL;\n  WHEN undefined_table THEN NULL;\nEND $$;",
+  "DO $$\nBEGIN\n  ALTER TABLE \"NotificationLog\" ADD CONSTRAINT \"NotificationLog_bookingId_fkey\" FOREIGN KEY (\"bookingId\") REFERENCES \"Booking\"(\"id\") ON DELETE SET NULL ON UPDATE CASCADE;\nEXCEPTION\n  WHEN duplicate_object THEN NULL;\n  WHEN undefined_table THEN NULL;\nEND $$;",
+  "DO $$\nBEGIN\n  ALTER TABLE \"GalleryItem\" ADD CONSTRAINT \"GalleryItem_customerId_fkey\" FOREIGN KEY (\"customerId\") REFERENCES \"SalonCustomer\"(\"id\") ON DELETE SET NULL ON UPDATE CASCADE;\nEXCEPTION\n  WHEN duplicate_object THEN NULL;\n  WHEN undefined_table THEN NULL;\nEND $$;",
+  "DO $$\nBEGIN\n  ALTER TABLE \"WaitlistEntry\" ADD CONSTRAINT \"WaitlistEntry_serviceId_fkey\" FOREIGN KEY (\"serviceId\") REFERENCES \"Service\"(\"id\") ON DELETE SET NULL ON UPDATE CASCADE;\nEXCEPTION\n  WHEN duplicate_object THEN NULL;\n  WHEN undefined_table THEN NULL;\nEND $$;",
+  "DO $$\nBEGIN\n  ALTER TABLE \"LoyaltyLog\" ADD CONSTRAINT \"LoyaltyLog_customerId_fkey\" FOREIGN KEY (\"customerId\") REFERENCES \"SalonCustomer\"(\"id\") ON DELETE RESTRICT ON UPDATE CASCADE;\nEXCEPTION\n  WHEN duplicate_object THEN NULL;\n  WHEN undefined_table THEN NULL;\nEND $$;",
 ]
