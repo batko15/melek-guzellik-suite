@@ -378,7 +378,7 @@ export function ReviewsPage({
       {/* Alt bilgi (masaüstü) */}
       <footer className="mt-auto hidden border-t border-border/60 bg-card/30 lg:block">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4 text-[11px] text-muted-foreground">
-          <span>{BRANDING.company.legalName} · {BRANDING.company.phone}</span>
+          <span>{BRANDING.company.legalName} · {BRANDING.company.city}</span>
           <button onClick={onStaffLogin} className="mk-focus rounded hover:text-foreground">Ekip Girişi</button>
         </div>
       </footer>

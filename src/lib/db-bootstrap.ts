@@ -68,7 +68,7 @@ const GALLERY = [
 ]
 
 const STAFF = [
-  { name: "Melek", role: "İşletme Sahibi & Nail Artist", commissionRate: 45, phone: "+90 542 633 15 70", active: true },
+  { name: "Melek", role: "İşletme Sahibi & Nail Artist", commissionRate: 45, phone: "+90 536 572 66 10", active: true },
 ]
 
 // V5.4: Paket hizmetleri — kombinasyon indirimi (Booksy "Packages" standardı).

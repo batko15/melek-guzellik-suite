@@ -554,7 +554,7 @@ export function LandingPage({
                 <div className="flex items-center gap-3">
                   <Phone className="h-4 w-4 shrink-0 text-brand-text/70" />
                   <a href={`tel:${company.phone.replace(/\s/g, "")}`} className="text-muted-foreground hover:text-foreground hover:underline">
-                    {company.phone}
+                    Bizi arayın
                   </a>
                 </div>
                 <div className="flex items-center gap-3">
@@ -1006,7 +1006,14 @@ function GiftCardSection() {
             </Button>
             <p className="text-center text-[11px] leading-relaxed text-muted-foreground">
               Talebiniz stüdyomuza iletilir — ödeme sonrası kart kodunuz aktifleşir. Sorunuz olursa{" "}
-              <a href={`tel:${company.phone.replace(/\s/g, "")}`} className="font-bold text-brand-text hover:underline">{company.phone}</a>
+              <a
+                href={`https://wa.me/${(company.whatsapp ?? company.phone).replace(/\D/g, "")}?text=${encodeURIComponent("Merhaba! Hediye kartı hakkında sorum var. 🎁")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-bold text-brand-text hover:underline"
+              >
+                WhatsApp'tan yazın
+              </a>
             </p>
           </form>
         )}

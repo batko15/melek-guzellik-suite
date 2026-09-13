@@ -45,7 +45,7 @@ export interface ModuleConfig {
 
 export const BRANDING = {
   // ─── Sürüm (her yerde görünür şekilde işaretlenir) ───────────────────────
-  version: "5.5.0",
+  version: "5.5.1",
 
   // ─── Marka ────────────────────────────────────────────────────────────────
   // nameParts: 1. kısım normal, 2. kısım altın (vurgu rengi) yazılır.
@@ -67,8 +67,10 @@ export const BRANDING = {
     legalName: "Melek'çe Güzellik",
     street: "Hoca Hamza Mah. 1023. Sokak No: 2 (Villa Tunçaydın)",
     city: "17500 Gelibolu / Çanakkale",
-    phone: "+90 542 633 15 70",
-    whatsapp: "+90 542 633 15 70", // WhatsApp bildirimleri için numara (ülke koduyla)
+    phone: "+90 536 572 66 10",
+    whatsapp: "+90 536 572 66 10", // WhatsApp bildirimleri için numara (ülke koduyla)
+    // V5.5.1: Nummer wird auf öffentlichen Seiten NICHT als Klartext gezeigt —
+    // nur über tel:-/wa.me-Links (Buttons) erreichbar. Pflege nur hier.
     email: "", // Salon e-postası (boş = iletişim bölümünde görünmez) — örn. "randevu@melekce.com"
     instagram: "melekce_guzellik17",
     website: "Gelibolu · Çanakkale · Türkiye",
@@ -140,7 +142,6 @@ export const BRANDING = {
     myBookingsHint: "Telefon numaranızı girin — randevularınızı görün ve gerekirse iptal edin",
     successTitle: "Randevunuz alındı!",
     successText: "En kısa sürede onaylanacak. Sizi görmek için sabırsızlanıyoruz!",
-    demoPhone: "+90 542 633 15 70",
   },
 
   // ─── Değerlendirmeler (herkese açık) ──────────────────────────────────────
