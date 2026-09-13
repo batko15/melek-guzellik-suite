@@ -100,7 +100,7 @@
 
 ```bash
 # 1. Repository klonen
-git clone https://github.com/<user>/melek-salon-suite.git
+git clone https://github.com/batko15/melek-salon-suite.git
 cd melek-salon-suite
 
 # 2. Abhängigkeiten installieren
