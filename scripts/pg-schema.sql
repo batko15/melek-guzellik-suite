@@ -46,6 +46,7 @@ CREATE TABLE "Booking" (
     "status" TEXT NOT NULL DEFAULT 'bekliyor',
     "notes" TEXT,
     "staffNote" TEXT,
+    "design" TEXT,
     "deposit" DOUBLE PRECISION NOT NULL DEFAULT 0,
     "depositPaid" BOOLEAN NOT NULL DEFAULT false,
     "staffId" TEXT,

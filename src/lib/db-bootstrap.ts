@@ -16,7 +16,7 @@
 //  Die Lock-Nummer ist frei gewählt, muss nur projektweit eindeutig sein.
 // ═══════════════════════════════════════════════════════════════════════════
 
-import type { PrismaClient } from "@prisma/client"
+import { Prisma, type PrismaClient } from "@prisma/client"
 import { PG_DDL } from "@/lib/pg-ddl"
 
 // ─── Produktions-Grunddaten (bewusst KEINE Demo-Randevulars/Yorumlar) ──────
@@ -101,6 +101,16 @@ export function isPostgres(): boolean {
   return /^postgres(ql)?:\/\//i.test(process.env.DATABASE_URL ?? "")
 }
 
+// V6.0.2 — SCHEMA-PATCHES: Spalten, die nach dem Erst-Setup dazukamen.
+// Bug-Historie: V5.7 fügte Booking.design NUR im SQLite-Schema hinzu — das
+// Prod-Postgres-Schema/DDL blieb alt → JEDE Buchung auf Vercel crashte mit
+// 500 («Unknown argument design»). Diese Patches machen bestehende Cloud-DBs
+// selbstheilend: bei jedem Kaltstart 1 kleine information_schema-Abfrage,
+// fehlende Spalten werden idempotent ergänzt (ADD COLUMN IF NOT EXISTS).
+const COLUMN_PATCHES: Array<{ table: string; column: string; type: string }> = [
+  { table: "Booking", column: "design", type: "TEXT" }, // V5.7 Canlı Nail Studio
+]
+
 /** V5.5 — Supabase-Projekt-Ref aus der Pooler-DATABASE_URL ableiten.
  *  Pooler-Benutzername hat die Form «postgres.<proje-ref>»; für lokale
  *  SQLite oder fremde Postgres-Hosts gilt der Salon-Standard ( unten).
@@ -174,7 +184,19 @@ async function runBootstrap(prisma: PrismaClient): Promise<void> {
           AND table_name IN ('Service', 'GiftCard', 'WaitlistEntry')
       `
       const present = new Set(tables.map((t) => t.table_name))
-      if (present.has("Service") && present.has("GiftCard") && present.has("WaitlistEntry")) return
+      const tablesComplete = present.has("Service") && present.has("GiftCard") && present.has("WaitlistEntry")
+
+      // V6.0.2: DDL-Phase NICHT überspringen, wenn ein Schema-Patch fehlt
+      let patchMissing = false
+      if (tablesComplete) {
+        const cols = await tx.$queryRaw<{ column_name: string }[]>`
+          SELECT column_name FROM information_schema.columns
+          WHERE table_schema = 'public' AND table_name = 'Booking'
+            AND column_name IN (${Prisma.join(COLUMN_PATCHES.map((p) => p.column))})
+        `
+        patchMissing = cols.length < COLUMN_PATCHES.length
+      }
+      if (tablesComplete && !patchMissing) return
 
       console.log("[bootstrap] Tabellen werden erstellt/ergänzt …")
       for (const stmt of PG_DDL) {
@@ -189,6 +211,20 @@ async function runBootstrap(prisma: PrismaClient): Promise<void> {
         }
       }
       console.log(`[bootstrap] ✓ ${PG_DDL.length} DDL-Statements ausgeführt`)
+
+      // V6.0.2: Spalten-Patches idempotent anwenden (alte DBs heilen sich selbst)
+      for (const p of COLUMN_PATCHES) {
+        try {
+          await tx.$executeRawUnsafe(
+            `ALTER TABLE "${p.table}" ADD COLUMN IF NOT EXISTS "${p.column}" ${p.type}`,
+          )
+        } catch (err) {
+          const msg = String((err as Error)?.message ?? err)
+          if (/already exists|duplicate/i.test(msg)) continue
+          console.error(`[bootstrap] Patch ${p.table}.${p.column} fehlgeschlagen:`, msg.slice(0, 200))
+          throw err
+        }
+      }
     },
     { timeout: 90_000, maxWait: 15_000 },
   )
@@ -230,7 +266,7 @@ async function runBootstrap(prisma: PrismaClient): Promise<void> {
   console.log(`[bootstrap] ✓ fertig in ${Date.now() - started} ms`)
 }
 
-/** Fast-Path-Check: Tabellen + Grunddaten bereits vollständig vorhanden? */
+/** Fast-Path-Check: Tabellen + Grunddaten + Schema-Patches bereits vollständig? */
 async function isAlreadyBootstrapped(prisma: PrismaClient): Promise<boolean> {
   try {
     const existing = await prisma.$queryRaw<{ table_name: string }[]>`
@@ -240,6 +276,14 @@ async function isAlreadyBootstrapped(prisma: PrismaClient): Promise<boolean> {
     `
     const present = new Set(existing.map((t) => t.table_name))
     if (present.size < 3) return false
+    // V6.0.2: Schema-Patches gehören zum „fertig“-Zustand — fehlt eine Spalte,
+    // wird der DDL-Pfad angestoßen (self-healing für bestehende DBs).
+    const patchCols = await prisma.$queryRaw<{ column_name: string }[]>`
+      SELECT column_name FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = 'Booking'
+        AND column_name = 'design'
+    `
+    if (patchCols.length < COLUMN_PATCHES.length) return false
     const [svc, gal, staff, paket] = await Promise.all([
       prisma.service.count(),
       prisma.galleryItem.count(),
