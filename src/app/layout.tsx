@@ -18,6 +18,20 @@ export const metadata: Metadata = {
   description: `${BRANDING.landing.heroDescription}`,
   keywords: [BRAND_DISPLAY.part2, "Tırnak Sanatı", "Güzellik Stüdyosu", "Manikür", "Kirpik", BRANDING.company.city, "Randevu Al", BRANDING.locale.currency],
   authors: [{ name: BRANDING.company.legalName }],
+  manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Melek'çe",
+  },
+  formatDetection: { telephone: true },
   openGraph: {
     title: `${brandName} — ${BRANDING.brand.tagline}`,
     description: BRANDING.landing.heroDescription,

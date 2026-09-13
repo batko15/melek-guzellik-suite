@@ -4,12 +4,14 @@
 // PATCH  /api/v1/salon/customers              — sadakat puanı ekle/kullan (ekip)
 
 import { db } from "@/lib/db"
+import { dbUnavailable } from "@/lib/api-errors"
 import { rateLimit, clientIp, tooManyRequests } from "@/lib/rate-limit"
 
 const SHAPES = ["badem", "oval", "kare", "yuvarlak", "stiletto", null]
 const GELS = ["jel", "akrilik", "dip", "kalici-oje", "dogal", null]
 
 export async function GET() {
+  try {
   const customers = await db.salonCustomer.findMany({
     include: {
       bookings: {
@@ -63,6 +65,10 @@ export async function GET() {
   })
 
   return Response.json({ customers: rows, count: rows.length })
+
+  } catch (e) {
+    return dbUnavailable(String((e as Error)?.message ?? e))
+  }
 }
 
 // ─── Müşteri kartı güncelleme (PUT) — ekip ──────────────────────────────────

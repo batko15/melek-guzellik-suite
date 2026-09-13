@@ -32,10 +32,18 @@ function resolveDatabaseUrl() {
 }
 
 const url = resolveDatabaseUrl()
-const isPostgres = !!url && /^postgres(ql)?:\/\//i.test(url)
+// Provider-Wahl:
+//  • DATABASE_URL sichtbar → Protokoll entscheidet (postgres:// → PostgreSQL)
+//  • URL NICHT sichtbar, aber Vercel-Build (VERCEL=1) → PostgreSQL annehmen.
+//    Grund: «Sensitive» Umgebungsvariablen sind beim Build versteckt, zur
+//    Laufzeit aber vorhanden. Auf Vercel ist die Cloud-Datenbank der Normalfall.
+//  • Lokal ohne URL → SQLite (Entwicklung wie gehabt).
+const isPostgres = url
+  ? /^postgres(ql)?:\/\//i.test(url)
+  : process.env.VERCEL === "1"
 const schema = isPostgres ? "prisma/schema.postgres.prisma" : "prisma/schema.prisma"
 
-console.log(`▸ Prisma-Schema: ${schema} (${isPostgres ? "PostgreSQL" : "SQLite"})`)
+console.log(`▸ Prisma-Schema: ${schema} (${isPostgres ? "PostgreSQL" : "SQLite"}${url ? "" : " · URL nicht sichtbar → " + (process.env.VERCEL === "1" ? "Vercel-Cloud-Annahme" : "lokale Annahme")})`)
 if (isPostgres && !existsSync(resolve(root, schema))) {
   console.error(`✗ FEHLER: ${schema} fehlt!`)
   process.exit(1)

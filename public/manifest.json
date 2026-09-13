@@ -1,0 +1,57 @@
+{
+  "name": "Melek'çe Güzellik — Tırnak Sanatı & Güzellik Stüdyosu",
+  "short_name": "Melek'çe",
+  "description": "Online randevu: tırnak sanatı, kalıcı oje, kirpik ve güzellik uygulamaları — Gelibolu. Bir dokunuşla randevunuzu alın.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#151210",
+  "theme_color": "#151210",
+  "lang": "tr",
+  "dir": "ltr",
+  "categories": ["beauty", "lifestyle"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Randevu Al",
+      "short_name": "Randevu",
+      "description": "Yeni randevu oluştur",
+      "url": "/#randevu",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Randevularım",
+      "short_name": "Randevularım",
+      "description": "Telefon numaranızla randevularınızı görün",
+      "url": "/#randevu",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

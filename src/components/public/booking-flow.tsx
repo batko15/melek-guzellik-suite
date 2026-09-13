@@ -13,7 +13,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query"
 import confetti from "canvas-confetti"
 import {
   Sparkles, CalendarCheck, ChevronLeft, ChevronRight, Check, Clock, User, Phone, Mail,
-  MessageSquare, Search, CalendarX2, PartyPopper, Star, MessageCircle,
+  MessageSquare, Search, CalendarX2, PartyPopper, Star, MessageCircle, AlertTriangle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -41,6 +41,7 @@ export function BookingFlow({
 }) {
   const qc = useQueryClient()
   const { guestBooking } = BRANDING
+  const company = BRANDING.company
 
   const [step, setStep] = useState<Step>(0)
   const [service, setService] = useState<SalonService | null>(null)
@@ -72,14 +73,16 @@ export function BookingFlow({
     return () => { clearTimeout(t); clearTimeout(t2) }
   }, [done?.startAt])
 
-  // Hizmetleri yükle
-  const { data: servicesData } = useQuery({
+  // Hizmetleri yükle (hata durumunda açık mesaj — boş liste yerine)
+  const { data: servicesData, error: servicesError, isLoading: servicesLoading } = useQuery({
     queryKey: ["salon-services-booking"],
     queryFn: async () => {
       const res = await fetch("/api/v1/salon/services")
-      if (!res.ok) return { services: [] as SalonService[] }
+      if (!res.ok) throw new Error("db")
       return (await res.json()) as { services: SalonService[] }
     },
+    retry: 1,
+    refetchOnWindowFocus: false,
   })
   const services = servicesData?.services ?? []
   const categories = ["tirnak", "guzellik", "kirpik"].filter((c) => services.some((s) => s.category === c))
@@ -281,7 +284,44 @@ export function BookingFlow({
                 {/* ═══ 1. Adım: Hizmet ═══ */}
                 {step === 0 && (
                   <div className="mk-anim-in">
+                    {/* Veritabanı/bağlantı hatası — açık mesaj + telefon alternatifi */}
+                    {servicesError && (
+                      <div className="mb-5 rounded-xl border border-destructive/40 bg-destructive/10 p-4">
+                        <div className="flex items-start gap-3">
+                          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+                          <div className="text-xs leading-relaxed text-destructive">
+                            <p className="font-bold">Randevu sistemi şu anda yüklenemiyor.</p>
+                            <p className="mt-1">
+                              Lütfen birkaç dakika sonra tekrar deneyin ya da bize doğrudan ulaşın:{" "}
+                              <a href={`tel:${company.phone.replace(/\s/g, "")}`} className="font-bold underline">
+                                {company.phone}
+                              </a>{" "}
+                              ·{" "}
+                              <a
+                                href={`https://wa.me/${(company.whatsapp ?? company.phone).replace(/\D/g, "")}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="font-bold underline"
+                              >
+                                WhatsApp
+                              </a>
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Yükleniyor iskeleti */}
+                    {servicesLoading && !servicesError && (
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        {[1, 2, 3, 4].map((i) => (
+                          <div key={i} className="mk-card h-28 animate-pulse rounded-xl" />
+                        ))}
+                      </div>
+                    )}
+
                     {/* Kategori sekmeleri */}
+                    {!servicesError && !servicesLoading && (
                     <div className="mb-5 flex flex-wrap gap-2">
                       {categories.map((c) => (
                         <button
@@ -298,6 +338,7 @@ export function BookingFlow({
                         </button>
                       ))}
                     </div>
+                    )}
 
                     <div className="grid gap-3 sm:grid-cols-2">
                       {services.filter((s) => s.category === cat).map((s, i) => (

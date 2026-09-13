@@ -5,7 +5,7 @@
 
 import { useState } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { Sparkles, Clock, Crown, Info, Pencil, Check, X } from "lucide-react"
+import { Sparkles, Clock, Crown, Info, Pencil, Check, X, TrendingUp } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/hooks/use-toast"
+import { BulkPriceDialog } from "@/components/staff/bulk-price-dialog"
 import { type SalonService, CATEGORY_META, para, minutesLabel } from "@/lib/salon"
 
 export function HizmetlerView() {
@@ -22,6 +23,7 @@ export function HizmetlerView() {
   const [editPrice, setEditPrice] = useState("")
   const [editDuration, setEditDuration] = useState("")
   const [saving, setSaving] = useState(false)
+  const [bulkOpen, setBulkOpen] = useState(false)
 
   const { data, isLoading } = useQuery({
     queryKey: ["salon-services"],
@@ -106,6 +108,17 @@ export function HizmetlerView() {
           <p className="mt-2 max-w-xl text-sm text-muted-foreground">
             {services.length} uygulama · ortalama fiyat {para(avgPrice)} · ortalama süre {minutesLabel(avgDur)} — kalem simgesine dokunup fiyat ve süreyi doğrudan güncelleyin.
           </p>
+          {/* V5.1: Toplu fiyat güncelleme */}
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button
+              onClick={() => setBulkOpen(true)}
+              disabled={services.length === 0}
+              className="mk-gold-glow h-11 rounded-full bg-primary px-5 text-sm font-bold text-primary-foreground"
+            >
+              <TrendingUp className="mr-1.5 h-4 w-4" />
+              Toplu Fiyat Güncelle — Tümünü Tek Tıkla
+            </Button>
+          </div>
         </div>
       </section>
 
@@ -216,6 +229,9 @@ export function HizmetlerView() {
           )
         })}
       </section>
+
+      {/* V5.1: Toplu fiyat güncelleme diyaloğu */}
+      <BulkPriceDialog services={services} open={bulkOpen} onOpenChange={setBulkOpen} />
     </div>
   )
 }

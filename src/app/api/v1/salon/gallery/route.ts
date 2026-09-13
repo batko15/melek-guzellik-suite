@@ -2,9 +2,11 @@
 // GET   /api/v1/salon/gallery                    — aktif öğeler (customerId dahil)
 // PATCH /api/v1/salon/gallery                    — öğeyi müşteri portfolyosuna bağla / çöz
 import { db } from "@/lib/db"
+import { dbUnavailable } from "@/lib/api-errors"
 import { rateLimit, clientIp, tooManyRequests } from "@/lib/rate-limit"
 
 export async function GET() {
+  try {
   const items = await db.galleryItem.findMany({
     where: { active: true },
     orderBy: { sortOrder: "asc" },
@@ -19,6 +21,10 @@ export async function GET() {
     },
   })
   return Response.json({ items, count: items.length })
+
+  } catch (e) {
+    return dbUnavailable(String((e as Error)?.message ?? e))
+  }
 }
 
 // ─── Portfolyo bağlama (PATCH) — ekip ───────────────────────────────────────
