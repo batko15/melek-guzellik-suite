@@ -128,6 +128,38 @@ CREATE TABLE "StaffMember" (
 );
 
 -- CreateTable
+CREATE TABLE "GiftCard" (
+    "id" TEXT NOT NULL,
+    "code" TEXT NOT NULL,
+    "amount" DOUBLE PRECISION NOT NULL,
+    "balance" DOUBLE PRECISION NOT NULL,
+    "buyerName" TEXT NOT NULL,
+    "buyerPhone" TEXT NOT NULL,
+    "recipientName" TEXT,
+    "message" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'talep',
+    "usedCount" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "GiftCard_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "WaitlistEntry" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "phone" TEXT NOT NULL,
+    "serviceId" TEXT,
+    "desiredDate" TIMESTAMP(3) NOT NULL,
+    "note" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'bekliyor',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "WaitlistEntry_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "LoyaltyLog" (
     "id" TEXT NOT NULL,
     "customerId" TEXT NOT NULL,
@@ -176,6 +208,24 @@ CREATE INDEX "InventoryItem_category_idx" ON "InventoryItem"("category");
 CREATE INDEX "StaffMember_active_idx" ON "StaffMember"("active");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "GiftCard_code_key" ON "GiftCard"("code");
+
+-- CreateIndex
+CREATE INDEX "GiftCard_status_idx" ON "GiftCard"("status");
+
+-- CreateIndex
+CREATE INDEX "GiftCard_createdAt_idx" ON "GiftCard"("createdAt");
+
+-- CreateIndex
+CREATE INDEX "WaitlistEntry_desiredDate_idx" ON "WaitlistEntry"("desiredDate");
+
+-- CreateIndex
+CREATE INDEX "WaitlistEntry_status_idx" ON "WaitlistEntry"("status");
+
+-- CreateIndex
+CREATE INDEX "WaitlistEntry_phone_idx" ON "WaitlistEntry"("phone");
+
+-- CreateIndex
 CREATE INDEX "LoyaltyLog_customerId_idx" ON "LoyaltyLog"("customerId");
 
 -- CreateIndex
@@ -198,6 +248,9 @@ ALTER TABLE "NotificationLog" ADD CONSTRAINT "NotificationLog_bookingId_fkey" FO
 
 -- AddForeignKey
 ALTER TABLE "GalleryItem" ADD CONSTRAINT "GalleryItem_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "SalonCustomer"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "WaitlistEntry" ADD CONSTRAINT "WaitlistEntry_serviceId_fkey" FOREIGN KEY ("serviceId") REFERENCES "Service"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "LoyaltyLog" ADD CONSTRAINT "LoyaltyLog_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "SalonCustomer"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

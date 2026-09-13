@@ -85,7 +85,7 @@ export function BookingFlow({
     refetchOnWindowFocus: false,
   })
   const services = servicesData?.services ?? []
-  const categories = ["tirnak", "guzellik", "kirpik"].filter((c) => services.some((s) => s.category === c))
+  const categories = ["tirnak", "guzellik", "kirpik", "paket"].filter((c) => services.some((s) => s.category === c))
   const [cat, setCat] = useState<string>("tirnak")
 
   // Önümüzdeki günler (yalnızca açık günler, en fazla 10)
@@ -125,6 +125,46 @@ export function BookingFlow({
 
   const selectedDate = dateKey ? new Date(`${dateKey}T00:00:00`) : null
   const slots = selectedDate ? openSlots(selectedDate) : []
+  const freeSlotCount = selectedDate ? slots.filter(({ hour, minute }) => isSlotFree(new Date(`${dateKey}T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00`))).length : 0
+
+  // ─── V5.4: Bekleme listesi (dolu gün için) ────────────────────────────
+  const [wlName, setWlName] = useState("")
+  const [wlPhone, setWlPhone] = useState("")
+  const [wlNote, setWlNote] = useState("")
+  const [wlDone, setWlDone] = useState(false)
+  const [wlError, setWlError] = useState("")
+  const [wlSending, setWlSending] = useState(false)
+
+  const joinWaitlist = async (e?: React.FormEvent) => {
+    e?.preventDefault()
+    setWlError("")
+    if (wlName.trim().length < 2) return setWlError("Lütfen adınızı girin.")
+    if (wlPhone.replace(/\D/g, "").length < 7) return setWlError("Lütfen geçerli bir telefon numarası girin.")
+    setWlSending(true)
+    try {
+      const res = await fetch("/api/v1/salon/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: wlName.trim(),
+          phone: wlPhone.trim(),
+          serviceId: service?.id,
+          desiredDate: dateKey,
+          note: wlNote.trim() || undefined,
+        }),
+      })
+      const json = (await res.json()) as { entry?: unknown; error?: string }
+      if (!res.ok || !json.entry) {
+        setWlError(json.error ?? "Kayıt oluşturulamadı.")
+        return
+      }
+      setWlDone(true)
+    } catch {
+      setWlError("Bağlantı hatası — lütfen tekrar deneyin.")
+    } finally {
+      setWlSending(false)
+    }
+  }
 
   // ─── Gönder ───────────────────────────────────────────────────────────────
   const submit = async (e?: React.FormEvent) => {
@@ -455,6 +495,49 @@ export function BookingFlow({
                           </p>
                         )}
 
+                        {/* V5.4: Gün tamamen doluysa → bekleme listesi daveti */}
+                        {freeSlotCount === 0 && (
+                          <div className="mt-5 rounded-xl border border-primary/30 bg-primary/5 p-5">
+                            <div className="flex items-start gap-3">
+                              <CalendarX2 className="mt-0.5 h-5 w-5 shrink-0 text-brand-text" />
+                              <div className="flex-1">
+                                <div className="mk-display text-sm font-bold text-foreground">
+                                  Bu gün tamamen doldu 🤍
+                                </div>
+                                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                                  Bekleme listesine yazılın — bir yer açılırsa sizi hemen ararız.
+                                </p>
+
+                                {wlDone ? (
+                                  <div className="mt-4 rounded-lg border border-emerald-800/50 bg-emerald-950/40 p-4 text-xs leading-relaxed text-emerald-300">
+                                    <span className="font-bold">Bekleme listesine eklendiniz!</span> {dateKey &&
+                                      new Date(`${dateKey}T00:00:00`).toLocaleDateString("tr-TR", { day: "numeric", month: "long" })}{" "}
+                                    günü için yer açılırsa {wlPhone.trim() || "numaranızdan"} sizi arayacağız.
+                                  </div>
+                                ) : (
+                                  <form onSubmit={joinWaitlist} className="mt-4 grid gap-2.5 sm:grid-cols-2">
+                                    <Input placeholder="Adınız Soyadınız" value={wlName}
+                                      onChange={(e) => setWlName(e.target.value)} className="mk-focus h-10 rounded-lg text-sm" autoComplete="name" />
+                                    <Input type="tel" placeholder="Telefon" value={wlPhone}
+                                      onChange={(e) => setWlPhone(e.target.value)} className="mk-focus h-10 rounded-lg text-sm" autoComplete="tel" />
+                                    <Input placeholder="Not (isteğe bağlı) — örn. öğleden sonra" value={wlNote}
+                                      onChange={(e) => setWlNote(e.target.value)} className="mk-focus h-10 rounded-lg text-sm sm:col-span-2" />
+                                    {wlError && (
+                                      <p role="alert" className="sm:col-span-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive">
+                                        {wlError}
+                                      </p>
+                                    )}
+                                    <Button type="submit" disabled={wlSending}
+                                      className="mk-gold-glow h-10 rounded-full bg-primary text-sm font-bold text-primary-foreground hover:bg-primary/90 sm:col-span-2">
+                                      {wlSending ? "Ekleniyor…" : "Bekleme Listesine Ekle"}
+                                    </Button>
+                                  </form>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
                         <Button
                           disabled={timeKey === ""}
                           onClick={() => setStep(2)}
@@ -475,6 +558,14 @@ export function BookingFlow({
                       <div className="flex justify-between"><span className="text-muted-foreground">Tarih</span><span className="font-bold text-foreground">{new Date(`${dateKey}T00:00:00`).toLocaleDateString("tr-TR", { day: "numeric", month: "long" })}</span></div>
                       <div className="flex justify-between"><span className="text-muted-foreground">Saat</span><span className="font-bold text-foreground">{timeKey}</span></div>
                       <div className="flex justify-between"><span className="text-muted-foreground">Ücret</span><span className="font-bold text-brand-text">{para(service.priceChf)}</span></div>
+                    </div>
+
+                    {/* V5.4: İptal/no-show politikası — açık ve önceden bildirilmiş */}
+                    <div className="mb-5 rounded-xl border border-border/70 bg-secondary/40 p-4 text-[11px] leading-relaxed text-muted-foreground">
+                      <div className="mb-1.5 flex items-center gap-1.5 font-bold text-foreground">
+                        <CalendarX2 className="h-3.5 w-3.5 text-brand-text/80" /> İptal & Değişiklik Politikası
+                      </div>
+                      Randevunuzu ücretsiz değiştirebilir veya iptal edebilirsiniz — lütfen en az <span className="font-bold text-foreground">24 saat önce</span> haber verin. 24 saat altı iptallerde ve gelinmeyen randevularda ayrılan süre kaybedilir; bir sonraki randevunuzda 24 saat kuralına uyun.
                     </div>
 
                     <div className="space-y-4">

@@ -1,0 +1,29 @@
+[
+  {
+    "url": "https://github.com",
+    "name": "Ready-to-run Prisma example projects",
+    "snippet": "This repository contains a number of ready-to-run example projects demonstrating various use cases of Prisma . Pick an example and follow the instructions in ... Read more",
+    "host_name": "github.com",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://dev.to",
+    "name": "Build a simple E-commerce PIM with Next.js, Prisma, and",
+    "snippet": "Mar 9, 2024 — This article will walk you through the steps of creating an e-commerce product information management system (PIM) with the Next.js framework, ...",
+    "host_name": "dev.to",
+    "rank": 1,
+    "date": "Mar 9, 2024",
+    "favicon": ""
+  },
+  {
+    "url": "https://starterindex.com",
+    "name": "44 Next.js, Prisma Github Boilerplates and Starter Kits",
+    "snippet": "StarterIndex features the best Github, Next.js, Prisma boilerplates and starters on the web. Explore a list of templates curated by us to ... Read more",
+    "host_name": "starterindex.com",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  }
+]

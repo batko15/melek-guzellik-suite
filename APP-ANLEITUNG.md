@@ -132,6 +132,61 @@ WhatsApp · SMS · E-Mail · Instagram«**:
 
 ---
 
+## 5️⃣b NEU V5.4 — Hediye Kartları (Geschenkkarten) 🎁
+
+**So funktioniert's für die Kundin (ohne Login):**
+1. Webseite → Abschnitt **«Hediye Kartı»** (unter den Leistungen)
+2. Betrag antippen (500 / 750 / 1.000 / 1.500 ₺) oder eigenen Betrag eintippen
+3. Name + Telefon eintragen, optional «Kime hediye?» und eine Notiz
+4. **«Hediye Kartı Oluştur»** → Code erscheint im Format `MELEK-XXXX-XXXX`
+   (kopierbar) + WhatsApp-Knopf zur schnellen Absprache mit dem Studio
+5. Der Code gilt für **alle Leistungen & Pakete** — Restbakiye bleibt erhalten
+
+**So funktioniert's für Sie (Ekip-Portal → Hediye Kartları):**
+- **«Ödeme Alındı — Aktifleştir»**: Kundin hat bezahlt (bar/Überweisung) →
+  Karte mit einem Klick aktivieren → WhatsApp-Nachricht an die Käuferin ist
+  vorbereitet («Kartınız hazır!»)
+- **«Ödemede Kullan»**: Bei einem Termin den Betrag vom Guthaben abziehen —
+  Teilbeträge möglich; ist die Bakiye aufgebraucht, wird die Karte automatisch
+  auf «Tamamen Kullanıldı» gesetzt
+- **«Yeni Kart (Ödeme Alındı)»**: direkt am Studio verkaufte Karten anlegen
+  (sofort aktiv)
+- Übersicht: Karten-Stand, offene Zahlungen, aktive Bakiye (Σ ₺)
+
+---
+
+## 5️⃣c NEU V5.4 — Bekleme Listesi (Warteliste) 📋
+
+**Das Problem:** Ein Tag ist voll → Kundin geht verloren.
+**Die Lösung (Branchen-Best-Practice gegen No-Shows):**
+
+1. Ist ein Tag komplett ausgebucht, zeigt der Buchungsfluss automatisch
+   **«Bu gün tamamen doldu — Bekleme Listesine Ekle»** — Name + Telefon genügt
+2. Im Ekip-Portal → **Bekleme Listesi** sehen Sie alle Wünsche (Datum, Dienst,
+   Notiz wie «nachmittags bitte»)
+3. Fällt ein Termin aus: **«Randevu Oluştur»** → freie Stunde wählen →
+   Buchung wird erstellt und der Eintrag auf «Randevuya Dönüştü» gesetzt
+4. **«WhatsApp Teklif Gönder»** öffnet die fertige Nachricht
+   («yer açıldı!») an die Kundin — ein Klick, ein verkaufter Termin
+
+---
+
+## 5️⃣d NEU V5.4 — Automatische Erinnerungen (Vercel Cron) ⏰
+
+- Vercel ruft täglich um **11:00 Türkische Zeit** den Endpunkt
+  `/api/v1/cron/reminders` auf
+- Der Sweep versendet für alle Termine der **nächsten 24 Stunden** automatisch
+  Erinnerungen — per E-Mail (SMTP) und/oder WhatsApp (Twilio), sofern in den
+  Umgebungsvariablen konfiguriert; ohne Konfiguration wird nur protokolliert
+- Jede versendete Erinnerung landet im Benachrichtigungs-Protokoll →
+  **kein Doppelversand**
+- Optional: Umgebungsvariable `CRON_SECRET` in Vercel setzen → dann ist der
+  Endpunkt nur mit `Authorization: Bearer <geheimnis>` erreichbar
+- (**Hinweis:** Auf dem Hobby-Plan läuft Cron 1× täglich. Manuell jederzeit
+  aufrufbar: `…/api/v1/cron/reminders` im Browser.)
+
+---
+
 ## 6️⃣ Zugänge & Sicherheit
 
 | Was | Wo |

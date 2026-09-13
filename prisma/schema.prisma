@@ -33,8 +33,9 @@ model Service {
   sortOrder   Int       @default(0)
   createdAt   DateTime  @default(now())
 
-  bookings Booking[]
-  reviews  Review[]
+  bookings    Booking[]
+  reviews     Review[]
+  waitlistEntries WaitlistEntry[]
 }
 
 // ─── Müşteriler (girişsiz randevu: telefon ile otomatik oluşturulur) ─────────
@@ -169,6 +170,46 @@ model StaffMember {
   bookings Booking[]
 
   @@index([active])
+}
+
+// ─── V5.4: Hediye Kartı — dijital hediye kartı (Booksy/Mangomint standardı) ─
+// Müşteri siteden kart talep eder → stüdyo ödemeyi alınca aktifleştirir →
+// bakiye randevu ödemesinden düşülür. Kod biçimi: MELEK-XXXX-XXXX
+model GiftCard {
+  id            String   @id @default(cuid())
+  code          String   @unique // örn. MELEK-A7K2-9MXP
+  amount        Float    // başlangıç bakiyesi (₺)
+  balance       Float    // kalan bakiye (₺)
+  buyerName     String   // satın alan / talep eden kişi
+  buyerPhone    String   // iletişim telefonu
+  recipientName String?  // kime hediye (opsiyonel)
+  message       String?  // hediye notu (opsiyonel)
+  status        String   @default("talep") // talep | aktif | kullanildi | iptal
+  usedCount     Int      @default(0) // kaç ödemede kullanıldı
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ─── V5.4: Bekleme Listesi — dolu günler için otomatik geri doldurma ────────
+// (Araştırma: no-show kaybını azaltan 4 kaldıraçtan biri — iptal olunca
+//  aynı gün isteyen müşteriye teklif verilir, takvim boş kalmaz)
+model WaitlistEntry {
+  id          String    @id @default(cuid())
+  name        String    // müşteri adı
+  phone       String    // ulaşım telefonu
+  serviceId   String?   // istenen hizmet (opsiyonel)
+  service     Service?  @relation(fields: [serviceId], references: [id])
+  desiredDate DateTime  // istenen gün (gün başı 00:00)
+  note        String?   // örn. «öğleden sonra olursa çok iyi olur»
+  status      String    @default("bekliyor") // bekliyor | teklif | randevu | iptal
+  createdAt   DateTime  @default(now())
+
+  @@index([desiredDate])
+  @@index([status])
+  @@index([phone])
 }
 
 // ─── V4: Sadakat işlem günlüğü (puan kazanma/harcama denetimi) ─────────────

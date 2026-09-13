@@ -267,6 +267,7 @@ export const CATEGORY_META: Record<string, { label: string; emoji: string }> = {
   guzellik: { label: "Güzellik", emoji: "✨" },
   kirpik: { label: "Kirpik", emoji: "👁️" },
   studyo: { label: "Stüdyo", emoji: "🏛️" },
+  paket: { label: "Paketler", emoji: "🎁" },
 }
 
 // ─── Yıldız yardımcıları ────────────────────────────────────────────────────

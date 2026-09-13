@@ -71,6 +71,29 @@ const STAFF = [
   { name: "Melek", role: "İşletme Sahibi & Nail Artist", commissionRate: 45, phone: "+90 542 633 15 70", active: true },
 ]
 
+// V5.4: Paket hizmetleri — kombinasyon indirimi (Booksy "Packages" standardı).
+// Yalnızca category="paket" hizmetleri eksikse eklenir (mevcut DB'ler de alır).
+const PACKAGES = [
+  {
+    name: "Manikür + Pedikür Düet Paketi",
+    category: "paket",
+    description: "Jel Manikür + Delüks Pedikür birlikte: normalde 1.300 ₺ → pakette 1.100 ₺ (200 ₺ tasarruf)",
+    durationMin: 135, priceChf: 1100, popular: true, sortOrder: 30,
+  },
+  {
+    name: "Kalıcı Oje + Kaş & Kirpik Boyama",
+    category: "paket",
+    description: "Kalıcı Oje (Shellac) + Kaş & Kirpik Boyama birlikte: normalde 850 ₺ → pakette 700 ₺ (150 ₺ tasarruf)",
+    durationMin: 75, priceChf: 700, popular: false, sortOrder: 31,
+  },
+  {
+    name: "Jel Uzatma + Lash Lift Paketi",
+    category: "paket",
+    description: "Jel Uzatma + Lash Lift & Boyama birlikte: normalde 2.000 ₺ → pakette 1.750 ₺ (250 ₺ tasarruf)",
+    durationMin: 165, priceChf: 1750, popular: false, sortOrder: 32,
+  },
+]
+
 // ─── Bootstrap ──────────────────────────────────────────────────────────────
 
 /** true, wenn die App gegen PostgreSQL (Supabase) läuft. */
@@ -114,18 +137,21 @@ async function runBootstrap(prisma: PrismaClient): Promise<void> {
   // nächste Request macht nahtlos weiter (Alles-oder-Nichts pro Phase).
   // RENNEN-SCHUTZ: wer die Lock zuerst hält, setzt auf; alle anderen warten
   // und sehen danach den frisch eingetragenen Stand (READ COMMITTED).
+  // V5.4: DDL läuft jetzt IMMER, wenn IRGENDEINE kritische Tabelle fehlt —
+  // bestehende DBs (nur Service etc.) erhalten so die neuen V5.4-Tabellen
+  // (GiftCard, WaitlistEntry). IF NOT EXISTS macht alles idempotent.
   await prisma.$transaction(
     async (tx) => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(${BOOTSTRAP_LOCK_ID})`
-      const existing = await tx.$queryRaw<{ exists: boolean }[]>`
-        SELECT EXISTS (
-          SELECT FROM information_schema.tables
-          WHERE table_schema = 'public' AND table_name = 'Service'
-        ) AS exists
+      const tables = await tx.$queryRaw<{ table_name: string }[]>`
+        SELECT table_name FROM information_schema.tables
+        WHERE table_schema = 'public'
+          AND table_name IN ('Service', 'GiftCard', 'WaitlistEntry')
       `
-      if (existing[0]?.exists === true) return
+      const present = new Set(tables.map((t) => t.table_name))
+      if (present.has("Service") && present.has("GiftCard") && present.has("WaitlistEntry")) return
 
-      console.log("[bootstrap] Supabase-Datenbank leer → Tabellen werden erstellt …")
+      console.log("[bootstrap] Tabellen werden erstellt/ergänzt …")
       for (const stmt of PG_DDL) {
         try {
           await tx.$executeRawUnsafe(stmt)
@@ -164,6 +190,14 @@ async function runBootstrap(prisma: PrismaClient): Promise<void> {
         console.log("[bootstrap] Ekip säen …")
         await tx.staffMember.createMany({ data: STAFF })
       }
+
+      // V5.4: Paket-Hizmetler — bestehende Installationen (17 hizmet) erhalten
+      // die 3 kombinasyon paketi nachträglich, neue direkt beim Erstsetup
+      const paketCount = await tx.service.count({ where: { category: "paket" } })
+      if (paketCount === 0) {
+        console.log("[bootstrap] Paket hizmetleri säen (3) …")
+        await tx.service.createMany({ data: PACKAGES })
+      }
     },
     { timeout: 60_000, maxWait: 15_000 },
   )
@@ -174,19 +208,20 @@ async function runBootstrap(prisma: PrismaClient): Promise<void> {
 /** Fast-Path-Check: Tabellen + Grunddaten bereits vollständig vorhanden? */
 async function isAlreadyBootstrapped(prisma: PrismaClient): Promise<boolean> {
   try {
-    const existing = await prisma.$queryRaw<{ exists: boolean }[]>`
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables
-        WHERE table_schema = 'public' AND table_name = 'Service'
-      ) AS exists
+    const existing = await prisma.$queryRaw<{ table_name: string }[]>`
+      SELECT table_name FROM information_schema.tables
+      WHERE table_schema = 'public'
+        AND table_name IN ('Service', 'GiftCard', 'WaitlistEntry')
     `
-    if (existing[0]?.exists !== true) return false
-    const [svc, gal, staff] = await Promise.all([
+    const present = new Set(existing.map((t) => t.table_name))
+    if (present.size < 3) return false
+    const [svc, gal, staff, paket] = await Promise.all([
       prisma.service.count(),
       prisma.galleryItem.count(),
       prisma.staffMember.count(),
+      prisma.service.count({ where: { category: "paket" } }),
     ])
-    return svc > 0 && gal > 0 && staff > 0
+    return svc > 0 && gal > 0 && staff > 0 && paket > 0
   } catch {
     // Tabelle noch nicht da o.ä. → Setup-Pfad laufen lassen
     return false

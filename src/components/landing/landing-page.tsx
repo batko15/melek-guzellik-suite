@@ -9,7 +9,7 @@
 
 import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { Instagram, MapPin, Phone, Clock, CalendarCheck, ChevronRight, MessageSquareHeart, ArrowRight, MessageCircle, Navigation, Sparkles, Heart, Crown, Mail } from "lucide-react"
+import { Instagram, MapPin, Phone, Clock, CalendarCheck, ChevronRight, MessageSquareHeart, ArrowRight, MessageCircle, Navigation, Sparkles, Heart, Crown, Mail, Gift, Copy, Check, User, MessageSquare } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -105,7 +105,7 @@ export function LandingPage({
   const galleryAll = galleryData?.items ?? []
   const reviews = (reviewsData?.reviews ?? []).slice(0, 3)
   const summary = reviewsData?.summary
-  const categories = ["tirnak", "guzellik", "kirpik"].filter((c) => services.some((s) => s.category === c))
+  const categories = ["tirnak", "guzellik", "kirpik", "paket"].filter((c) => services.some((s) => s.category === c))
   const galleryCategories = ["tumu", ...Array.from(new Set(galleryAll.map((g) => g.category)))]
   const gallery = galleryFilter === "tumu" ? galleryAll : galleryAll.filter((g) => g.category === galleryFilter)
   const todayIdx = (new Date().getDay() + 6) % 7
@@ -338,6 +338,19 @@ export function LandingPage({
               <CalendarCheck className="mr-1.5 h-4 w-4" /> Hemen Al
             </Button>
           </div>
+        </div>
+      </section>
+
+      {/* ═══ V5.4: Hediye Kartı — sevdiklerinize şımartma ═══ */}
+      <section id="hediye-karti" className="border-t border-border/60 py-14 lg:py-20">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <SectionHeader
+            eyebrow="Hediye Kartı"
+            title="Sevdiklerinize"
+            accent="şımartma hediyesi"
+            description="Dijital hediye kartı ile manikürden kirpiklere dilediği bakımı hediye edin — kodu anında oluşturulur, ödeme sonrası aktifleşir."
+          />
+          <GiftCardSection />
         </div>
       </section>
 
@@ -691,6 +704,271 @@ export function LandingPage({
           </div>
         </div>
       </footer>
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// V5.4: HEDİYE KARTI BÖLÜMÜ — talep formu + dijital kart görseli
+// (Araştırma: dijital hediye kartları nail salonları için yıl boyu satış
+//  iticisi — Booksy/Mangomint/Square hepsinde standart özellik)
+// ═══════════════════════════════════════════════════════════════════════════
+
+function GiftCardSection() {
+  const company = BRANDING.company
+  const [amount, setAmount] = useState<number>(1000)
+  const [customAmount, setCustomAmount] = useState<string>("")
+  const [name, setName] = useState("")
+  const [phone, setPhone] = useState("")
+  const [recipient, setRecipient] = useState("")
+  const [note, setNote] = useState("")
+  const [error, setError] = useState("")
+  const [sending, setSending] = useState(false)
+  const [done, setDone] = useState<{ code: string; amount: number } | null>(null)
+  const [copied, setCopied] = useState(false)
+  const [waUrl, setWaUrl] = useState("")
+
+  const amounts = [500, 750, 1000, 1500]
+  const selectedAmount = customAmount ? Math.round(Number(customAmount.replace(/\D/g, "")) || 0) : amount
+
+  const submit = async (e?: React.FormEvent) => {
+    e?.preventDefault()
+    setError("")
+    if (name.trim().length < 2) return setError("Lütfen adınızı girin.")
+    if (phone.replace(/\D/g, "").length < 7) return setError("Lütfen geçerli bir telefon numarası girin.")
+    if (!Number.isFinite(selectedAmount) || selectedAmount < 250 || selectedAmount > 25000) {
+      return setError("Tutar 250 – 25.000 ₺ arasında olmalı.")
+    }
+    setSending(true)
+    try {
+      const res = await fetch("/api/v1/salon/giftcards", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          buyerName: name.trim(),
+          buyerPhone: phone.trim(),
+          amount: selectedAmount,
+          recipientName: recipient.trim() || undefined,
+          message: note.trim() || undefined,
+        }),
+      })
+      const json = (await res.json()) as {
+        card?: { code: string; amount: number }
+        whatsappUrl?: string
+        error?: string
+      }
+      if (!res.ok || !json.card) {
+        setError(json.error ?? "Hediye kartı oluşturulamadı.")
+        return
+      }
+      setDone({ code: json.card.code, amount: json.card.amount })
+      setWaUrl(json.whatsappUrl ?? "")
+    } catch {
+      setError("Bağlantı hatası — lütfen tekrar deneyin.")
+    } finally {
+      setSending(false)
+    }
+  }
+
+  const copyCode = async () => {
+    if (!done) return
+    try {
+      await navigator.clipboard.writeText(done.code)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // panoya kopyalanamadı — zararsız
+    }
+  }
+
+  return (
+    <div className="grid items-start gap-8 lg:grid-cols-2">
+      {/* ── Sol: dijital kart görseli + neden hediye kartı ── */}
+      <div className="mk-anim-up">
+        {/* Dijital hediye kartı (CSS ile çizilmiş — saman+altın) */}
+        <div className="mk-gold-glow relative overflow-hidden rounded-2xl border border-primary/40 p-7 sm:p-9">
+          <div className="mk-velvet absolute inset-0" aria-hidden="true" />
+          <div className="relative">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-2.5">
+                <span className="mk-gold-glow flex h-10 w-10 items-center justify-center rounded-full border border-primary/45 bg-primary/10">
+                  <img src={BRANDING.brand.logoWing} alt="" className="h-full w-full scale-[1.18] object-cover" />
+                </span>
+                <div>
+                  <div className="mk-display text-sm font-bold leading-tight">{BRAND_DISPLAY.part1}'çe</div>
+                  <div className="text-[9px] font-bold uppercase tracking-[0.28em] text-brand-text/80">Hediye Kartı</div>
+                </div>
+              </div>
+              <Gift className="h-6 w-6 text-brand-text" strokeWidth={1.6} />
+            </div>
+            <div className="mt-7 flex items-baseline gap-2">
+              <span className="mk-display text-4xl font-bold text-brand-text sm:text-5xl">
+                {selectedAmount ? Math.round(selectedAmount).toLocaleString("tr-TR") : "—"}
+              </span>
+              <span className="mk-display text-lg font-bold text-brand-text/70">{BRANDING.locale.currencySymbol}</span>
+            </div>
+            <div className="mt-2 text-[11px] text-muted-foreground">
+              Tüm hizmetlerde geçerli — {company.city}
+            </div>
+            <div className="mt-6 flex items-center justify-between border-t border-border/50 pt-4">
+              <div className="font-mono text-[11px] tracking-[0.18em] text-muted-foreground">
+                {done ? done.code : "MELEK-••••-••••"}
+              </div>
+              <div className="text-[9px] font-bold uppercase tracking-[0.24em] text-muted-foreground/60">
+                Since {BRANDING.brand.since}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-5 grid gap-2.5 text-xs leading-relaxed text-muted-foreground">
+          {[
+            "✉️ Kod dijital olarak oluşturulur — çıktı veya kargo gerekmez",
+            "💅 Manikür, pedikür, kirpik ve tüm paketlerde geçerli",
+            "🤝 Ödeme nakit veya havale ile yapıldığında anında aktifleşir",
+            "📅 Bakiye birden fazla randevuda kullanılabilir",
+          ].map((t) => (
+            <div key={t} className="flex items-start gap-2 rounded-lg border border-border/50 bg-card/50 px-3.5 py-2.5">
+              {t}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Sağ: talep formu ── */}
+      <div className="mk-card mk-anim-up mk-delay-2 rounded-2xl p-6 sm:p-7">
+        {done ? (
+          <div className="text-center">
+            <div className="mk-gold-glow mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-primary/40 bg-primary/10">
+              <Check className="h-8 w-8 text-brand-text" strokeWidth={1.8} />
+            </div>
+            <h3 className="mk-display mt-4 text-xl font-bold">Hediye kartınız hazır!</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Ödeme alındığında kartınız aktifleşir — kodu hediye edeceğiniz kişiyle paylaşabilirsiniz.
+            </p>
+            <button
+              onClick={copyCode}
+              className="mk-focus mt-5 flex w-full items-center justify-center gap-2 rounded-xl border border-primary/40 bg-primary/10 px-4 py-3.5 font-mono text-lg font-bold tracking-[0.14em] text-brand-text transition-colors hover:bg-primary/15"
+            >
+              {done.code} {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4 opacity-70" />}
+            </button>
+            {waUrl && (
+              <Button asChild variant="outline" className="mk-focus mt-3 h-11 w-full rounded-full border-emerald-700/50 font-semibold text-emerald-400 hover:bg-emerald-950/30">
+                <a href={waUrl} target="_blank" rel="noopener noreferrer">
+                  <MessageCircle className="mr-1.5 h-4 w-4" /> WhatsApp'tan Bildir
+                </a>
+              </Button>
+            )}
+            <button
+              onClick={() => { setDone(null); setCopied(false); setName(""); setPhone(""); setRecipient(""); setNote(""); setCustomAmount("") }}
+              className="mk-focus mt-4 text-xs font-semibold text-brand-text hover:underline"
+            >
+              Yeni bir kart daha oluştur
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={submit} className="space-y-4">
+            <div>
+              <div className="mb-2.5 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                Tutar seçin
+              </div>
+              <div className="grid grid-cols-4 gap-2">
+                {amounts.map((a) => (
+                  <button
+                    key={a}
+                    type="button"
+                    onClick={() => { setAmount(a); setCustomAmount("") }}
+                    className={cn(
+                      "mk-focus rounded-xl border py-2.5 text-sm font-bold transition-all",
+                      !customAmount && amount === a
+                        ? "mk-gold-glow border-primary bg-primary/15 text-brand-text"
+                        : "border-border/70 text-muted-foreground hover:border-primary/40 hover:text-foreground",
+                    )}
+                  >
+                    {a.toLocaleString("tr-TR")}
+                  </button>
+                ))}
+              </div>
+              <div className="mt-2 flex items-center gap-2 rounded-xl border border-border/70 px-3.5">
+                <span className="text-sm font-bold text-brand-text">{BRANDING.locale.currencySymbol}</span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="veya özel tutar (250–25.000)"
+                  value={customAmount}
+                  onChange={(e) => setCustomAmount(e.target.value.replace(/[^\d]/g, ""))}
+                  className="h-11 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground" htmlFor="gc-name">
+                Adınız Soyadınız <span className="text-brand-text">*</span>
+              </label>
+              <div className="relative">
+                <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <input id="gc-name" placeholder="örn. Ayşe Demir" autoComplete="name" value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="mk-focus h-11 w-full rounded-xl border border-border/70 bg-transparent pl-10 pr-3 text-sm outline-none transition-colors focus:border-primary/50" />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground" htmlFor="gc-phone">
+                Telefon <span className="text-brand-text">*</span>
+              </label>
+              <div className="relative">
+                <Phone className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <input id="gc-phone" type="tel" placeholder="+90 5XX XXX XX XX" autoComplete="tel" value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="mk-focus h-11 w-full rounded-xl border border-border/70 bg-transparent pl-10 pr-3 text-sm outline-none transition-colors focus:border-primary/50" />
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <label className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground" htmlFor="gc-recipient">
+                  Kime hediye? <span className="text-muted-foreground/60">(isteğe bağlı)</span>
+                </label>
+                <input id="gc-recipient" placeholder="örn. Annem" value={recipient}
+                  onChange={(e) => setRecipient(e.target.value)}
+                  className="mk-focus h-11 w-full rounded-xl border border-border/70 bg-transparent px-3.5 text-sm outline-none transition-colors focus:border-primary/50" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground" htmlFor="gc-note">
+                  Hediye notu <span className="text-muted-foreground/60">(isteğe bağlı)</span>
+                </label>
+                <input id="gc-note" placeholder="örn. Doğum günün kutlu olsun!" value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  className="mk-focus h-11 w-full rounded-xl border border-border/70 bg-transparent px-3.5 text-sm outline-none transition-colors focus:border-primary/50" />
+              </div>
+            </div>
+
+            {error && (
+              <p role="alert" className="rounded-lg border border-destructive/40 bg-destructive/10 px-3.5 py-2.5 text-xs font-medium text-destructive">
+                {error}
+              </p>
+            )}
+
+            <Button type="submit" disabled={sending}
+              className="mk-gold-glow h-12 w-full rounded-full bg-primary text-base font-bold text-primary-foreground hover:bg-primary/90">
+              {sending ? (
+                <span className="flex items-center gap-2">
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground" />
+                  Oluşturuluyor…
+                </span>
+              ) : (
+                <><Gift className="mr-1.5 h-5 w-5" /> Hediye Kartı Oluştur</>
+              )}
+            </Button>
+            <p className="text-center text-[11px] leading-relaxed text-muted-foreground">
+              Talebiniz stüdyomuza iletilir — ödeme sonrası kart kodunuz aktifleşir. Sorunuz olursa{" "}
+              <a href={`tel:${company.phone.replace(/\s/g, "")}`} className="font-bold text-brand-text hover:underline">{company.phone}</a>
+            </p>
+          </form>
+        )}
+      </div>
     </div>
   )
 }

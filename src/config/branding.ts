@@ -45,7 +45,7 @@ export interface ModuleConfig {
 
 export const BRANDING = {
   // ─── Sürüm (her yerde görünür şekilde işaretlenir) ───────────────────────
-  version: "5.3.0",
+  version: "5.4.0",
 
   // ─── Marka ────────────────────────────────────────────────────────────────
   // nameParts: 1. kısım normal, 2. kısım altın (vurgu rengi) yazılır.
@@ -171,6 +171,8 @@ export const BRANDING = {
     { id: "dashboard", group: "genelBakis", label: "Genel Bakış", hint: "Bugün & KPI'lar", title: "Stüdyo Genel Bakış", subtitle: "Bugünkü randevular · Talepler · Doluluk · Hava durumu", icon: "layout-dashboard", enabled: true },
     { id: "kalender", group: "isletme", label: "Takvim", hint: "Haftalık görünüm", title: "Randevu Takvimi", subtitle: "Önümüzdeki 2 haftanın tüm randevuları", icon: "calendar-days", enabled: true },
     { id: "randevular", group: "isletme", label: "Rezervasyon Merkezi", hint: "Tüm randevu yönetimi", title: "Rezervasyon Merkezi", subtitle: "Görüntüle · düzenle · oluştur · müşteriyi bilgilendir · hatırlat", icon: "clipboard-list", enabled: true },
+    { id: "bekleme", group: "isletme", label: "Bekleme Listesi", hint: "Dolu gün istekleri", title: "Bekleme Listesi", subtitle: "Dolu gün isteyen müşteriler · iptal olunca geri doldur · WhatsApp teklif", icon: "hourglass", enabled: true },
+    { id: "hediyekartlari", group: "isletme", label: "Hediye Kartları", hint: "Dijital kart yönetimi", title: "Hediye Kartları", subtitle: "Talepleri aktifleştir · ödemede bakiye düş · alıcıyı bilgilendir", icon: "gift", enabled: true },
     { id: "yorumlar", group: "isletme", label: "Yorumlar", hint: "Değerlendirme moderasyonu", title: "Değerlendirme Yönetimi", subtitle: "Onayla · reddet · yayındaki yorumlar", icon: "star", enabled: true },
     { id: "envanter", group: "isletme", label: "Envanter", hint: "Stok & malzeme", title: "Envanter & Stok", subtitle: "Jel · akrilik · kirpik malzemeleri — düşük stok uyarıları", icon: "boxes", enabled: true },
     { id: "musteriler", group: "kayitlar", label: "Müşteriler", hint: "CRM & müşteri kartı", title: "Müşteri Yönetimi", subtitle: "Alerji beyanı · tercihler · sadakat kartı · portfolyo", icon: "users", enabled: true },

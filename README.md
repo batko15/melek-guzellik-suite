@@ -1,4 +1,4 @@
-# 💅 Melek'çe Güzellik Suite — V5.2 CLOUD
+# 💅 Melek'çe Güzellik Suite — V5.4 EŞSİZ
 
 **Die komplette Salon-Software für Nagelstudios & Beauty-Studios — öffentliche Webseite, Kundinnen-Buchungsportal und Team-Verwaltung in einer Anwendung.**
 
@@ -6,7 +6,7 @@
 
 ---
 
-## ✨ Feature-Highlights (V5.2 CLOUD)
+## ✨ Feature-Highlights (V5.4 EŞSİZ)
 
 ### 🌐 Öffentliche Webseite (ohne Login)
 - **Luxury-Design** «Black-Gold-Champagner» mit echtem Studio-Logo (Engelsflügel), Gold-Eck-Ornamenten und Rauten-Trennern — mobil, Tablet & Desktop optimiert
@@ -21,6 +21,10 @@
 
 ### 👩 Kundinnen-Portal (ohne Login)
 - **Online-Buchung in 3 Schritten** (Leistung → Datum & Zeit → Kontaktdaten) — keine Registrierung, Telefon genügt
+- ⭐ **V5.4 Hediye Kartı**: Digitale Geschenkkarten direkt auf der Webseite kaufen — Betragswahl (500/750/1000/1500 ₺ oder frei), persönliche Widmung, Code im Format `MELEK-XXXX-XXXX`, öffentliche Bakiye-Abfrage
+- ⭐ **V5.4 Paketler**: Kombi-Pakete mit Sparvorteil (Manikür+Pedikür 1.100 ₺ statt 1.300 ₺ u.v.m.) — direkt buchbar wie Einzelleistungen
+- ⭐ **V5.4 Bekleme Listesi**: Ist ein Tag ausgebucht, landet die Kundin automatisch auf der Warteliste — das Studio füllt abgesagte Termine mit einem Klick nach
+- ⭐ **V5.4 Klare Storno-Politik** im Buchungsfluss (24-h-Regel, transparent vor Absenden)
 - «Randevularım»: eigene Termine per Telefonnummer einsehen & stornieren
 - Buchungsbestätigung mit **Gold-Konfetti** + **WhatsApp-Deep-Link** (vorausgefüllte türkische Buchungszusammenfassung)
 
@@ -30,6 +34,8 @@
 | **Genel Bakış** | 6 Live-KPIs: heutige Termine, offene Anfragen, **fällige Erinnerungen**, **niedriger Lagerbestand**, Auslastung, **belohnungsbereite Kundinnen** + Wetter |
 | **Takvim** | 2-Wochen-Kalender, klickbare Karten → gemeinsames Formular zum Bearbeiten |
 | **Rezervasyon Merkezi** | ALLE Termine: ansehen, vollständig bearbeiten, neu anlegen, No-Show, CSV-Export · **automatische Erinnerungs-Warteschlange** (48 h) mit 1-Klick-WhatsApp/SMS |
+| **Bekleme Listesi** ⭐ NEU V5.4 | **Warteliste mit Backfill**: ausgebuchte Tage → Kundinnen-Wünsche; Absage → Tag öffnen → «Randevu Oluştur» mit freier Stunde + **WhatsApp-Angebot** — der Kalender bleibt voll (No-Show-Schutz № 4 laut Branchenstudien) |
+| **Hediye Kartları** ⭐ NEU V5.4 | **Digitale Geschenkkarten-Verwaltung**: Zahlungseingänge aktivieren, Guthaben pro Termin abbuchen (Teilbeträge möglich), Statuslebenszyklus (Anfrage → aktiv → verbraucht), Statistken + Käufer-WhatsApp-Benachrichtigung |
 | **Bildirimler** | Protokoll aller Kundenbenachrichtigungen (WhatsApp / SMS / E-Mail) mit 6 türkischen Vorlagen |
 | **Mesaj Merkezi** ⭐ NEU V5 | **Direkt-Kundenkontakt ohne Termin**: fertige türkische Vorlagen (Kampagne, Erinnerung, Geburtstag, Dank, frei) — Versand per WhatsApp, SMS, E-Mail (vorausgefüllt) oder Instagram-DM (Nachricht wird kopiert, DM-Postfach öffnet) — direkt aus der Kundenkarte |
 | **Envanter** ⭐ NEU V4 | **Materiallager**: Gele, Acryl, Wimpern, Öle — Mengen-±, Mindestbestand-Alarme, Lagerwert, Lieferanten |
@@ -41,10 +47,11 @@
 | **Ayarlar** | Studio-Daten, Öffnungszeiten, Team, System |
 
 ### 🔔 Benachrichtigungen & Rückstellung (Recherche-Best Practices)
+- ⭐ **V5.4 Vercel Cron**: `/api/v1/cron/reminders` läuft täglich 11:00 TSİ — versendet automatisch 24-h-Erinnerungen (E-Mail + WhatsApp) und protokolliert sie; mit `CRON_SECRET` absicherbar
 - **6 türkische Nachrichten-Vorlagen**: Bestätigung, Änderung, Stornierung, Erinnerung, Nachsorge, individuell
 - **Automatische Erinnerungs-Warteschlange**: alle Termine der nächsten 48 h ohne gesendete Erinnerung — 1 Klick öffnet WhatsApp mit fertiger Nachricht, Versand wird protokolliert (No-Show-Schutz № 1 laut Branchenstatistik)
 - **Anzahlung / Stornierungsschutz**: Anzahlungsbetrag + Zahlungswahlschalter pro Termin (No-Show-Schutz № 2)
-- Kanal-Deep-Links: `wa.me` (WhatsApp), `sms:`, `mailto:` — ohne API-Schlüssel produktiv nutzbar; Twilio/Meta-Anbindung vorbereitet
+- Kanal-Deep-Links: `wa.me` (WhatsApp), `sms:`, `mailto:` — ohne API-Schlüssel produktiv nutzbar; Twilio/SMTP-Anbindung aktiv konfigurierbar (V5.3)
 
 ### 🛡️ Sicherheit & Qualität
 - **IP-basiertes Rate-Limiting** (Sliding Window) auf allen Schreib-Endpunkten (26 Stellen) mit türkischen 429-Meldungen
@@ -205,6 +212,20 @@ public/gallery/real/          # echte Studio-Fotos
 ---
 
 ## 📋 Changelog
+
+### V5.4 — «EŞSİZ» (Marktanalyse-Upgrade: Geschenkkarten · Warteliste · Cron)
+- 🎁 **Hediye Kartı (Digitale Geschenkkarten)**: Buchsy/Mangomint-Standard — Kundinnen erstellen auf der Webseite eine Kartenanfrage (Betrag, Empfängerin, Notiz) → Studio aktiviert nach Zahlungseingang → Guthaben wird pro Termin (auch Teilbeträge) abgebucht; öffentliche Bakiye-Abfrage per Code `MELEK-XXXX-XXXX`; Admin-Modul mit Statistiken + WhatsApp-Aktivierungsbenachrichtigung
+- 📋 **Bekleme Listesi (Warteliste mit Backfill)**: Einer der vier nachweislich wirksamsten No-Show-Gegenmaßnahmen — ausgebuchte Tage bieten der Kundin automatisch die Warteliste an (Duplikat- & Vergangenheits-Schutz); das Team sieht offene Wünsche, erstellt mit einem Klick eine Buchung in einer freien Stunde und versendet ein WhatsApp-Angebot
+- ⏰ **Automatische Erinnerungen via Vercel Cron**: neuer Endpunkt `/api/v1/cron/reminders` (täglich 08:00 UTC = 11:00 TSİ) versendet 24-h-Erinnerungen über die bestehende Infrastruktur (SMTP + Twilio) und protokolliert sie in `NotificationLog` — Wiederholversand wird verhindert; mit `CRON_SECRET` gegen Fremdaufrufe absicherbar
+- 📦 **Paketler (Kombi-Angebote)**: 3 günstige Service-Bundles (Manikür+Pedikür, Kalıcı Oje+Kaş/Kirpik, Jel Uzatma+Lash Lift) mit ausgewiesener Ersparnis — eigene Kategorie 🎁 auf Webseite & im Buchungsfluss
+- 📜 **Transparente Stornierungspolitik**: 24-h-Regel wird der Kundin vor dem Absenden des Formulars angezeigt
+- 🗄️ **Schema V5.4**: neue Modelle `GiftCard` + `WaitlistEntry` (SQLite + PostgreSQL); Cloud-Bootstrap ergänzt Bestandsdatenbanken automatisch (idempotente DDL + Nachzimmerung der Pakete)
+- ✅ **21/21 E2E-Tests** für die neuen Endpunkte, ESLint 0 / TSC 0, Production-Build sauber
+
+### V5.3 — «Echte Routen & Benachrichtigungen»
+- 🛣️ Echte URL-Routen `/randevu` + `/yorumlar` (statt reiner Hash-Navigation) inkl. SEO-Sitemap (3 URLs) und Seiten-Metadaten
+- 📧 **Echtes Benachrichtigungssystem V2**: `notify-send.ts` mit SMTP-E-Mail (nodemailer) + Twilio-WhatsApp-REST-API — konfigurierbar über Umgebungsvariablen, ohne Konfiguration läuft alles wie bisher mit Deep-Links
+- 🖼️ Instagram-Markenfoto importiert (Galerie 23), robots.txt-Konflikt behoben, verwaiste Mock-Datei entfernt
 
 ### V5.2 — «Serverless-Härtung» (Supabase-Pooler-Fix)
 - 🔧 **EMAXCONNSESSION-Fehler behoben**: Der Session-Pooler (Port 5432) erlaubt nur ~15 Clients — mit je ~12 API-Routen als eigenen Vercel-Funktionen war das Limit sofort erschöpft. Die URL-Normalisierung in `db.ts` schreibt Supabase-Pooler-Adressen jetzt automatisch auf den **Transaction-Pooler (Port 6543)** um (`pgbouncer=true`, `connection_limit=1`) — unlimitierte parallele Clients, keine blockierten Server-Sessions

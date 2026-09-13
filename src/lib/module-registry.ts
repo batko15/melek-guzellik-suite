@@ -5,7 +5,7 @@
 
 import type { ElementType } from "react"
 import {
-  LayoutDashboard, CalendarDays, ClipboardList, Users, Sparkles, Image as ImageIcon, Settings, Star, Boxes, Users2,
+  LayoutDashboard, CalendarDays, ClipboardList, Users, Sparkles, Image as ImageIcon, Settings, Star, Boxes, Users2, Gift, Hourglass,
 } from "lucide-react"
 import { DashboardView } from "@/components/staff/dashboard-view"
 import { KalenderView } from "@/components/staff/kalender-view"
@@ -17,6 +17,8 @@ import { GaleriView } from "@/components/staff/galeri-view"
 import { AyarlarView } from "@/components/staff/ayarlar-view"
 import { EnvanterView } from "@/components/staff/envanter-view"
 import { EkipView } from "@/components/staff/ekip-view"
+import { HediyeKartlariView } from "@/components/staff/hediye-kartlari-view"
+import { BeklemeView } from "@/components/staff/bekleme-view"
 import { ENABLED_MODULES, BRANDING, type ModuleConfig } from "@/config/branding"
 
 // İkon ataması (branding.ts içindeki ikon adları)
@@ -31,6 +33,8 @@ const ICONS: Record<string, ElementType> = {
   star: Star,
   boxes: Boxes,
   "users-2": Users2,
+  gift: Gift,
+  hourglass: Hourglass,
 }
 
 // Görünüm bileşenleri ataması (modül kimliği → bileşen)
@@ -45,6 +49,8 @@ const VIEWS: Record<string, ElementType> = {
   ayarlar: AyarlarView,
   envanter: EnvanterView, // V4: malzeme & stok takibi
   ekip: EkipView,          // V4: ekip üyeleri + prim hesaplayıcı
+  hediyekartlari: HediyeKartlariView, // V5.4: dijital hediye kartı yönetimi
+  bekleme: BeklemeView,             // V5.4: bekleme listesi + iptal geri doldurma
 }
 
 export interface RegisteredModule extends ModuleConfig {
