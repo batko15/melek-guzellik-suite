@@ -6,7 +6,7 @@
 import { db } from "@/lib/db"
 import { rateLimit, clientIp, tooManyRequests } from "@/lib/rate-limit"
 
-const CHANNELS = ["whatsapp", "sms", "email"]
+const CHANNELS = ["whatsapp", "sms", "email", "instagram"]
 const KINDS = ["onay", "degisiklik", "iptal", "hatirlatma", "tamamlandi", "ozel"]
 
 export async function GET(request: Request) {

@@ -38,19 +38,13 @@ export function LoginScreen({
       (u) => u.username === username.trim().toLowerCase() && u.password === password,
     )
     if (!found) {
-      setError("Kullanıcı adı veya şifre hatalı — aşağıdaki demo girişine dokunun.")
+      setError("Kullanıcı adı veya şifre hatalı.")
       return
     }
     setLoading(true)
     setTimeout(() => {
       onStaffLogin({ role: "staff", username: found.username, name: found.name, roleLabel: found.role, initials: found.initials })
     }, 400)
-  }
-
-  const autofillStaff = (u: BrandUser) => {
-    setUsername(u.username)
-    setPassword(u.password)
-    setError("")
   }
 
   return (
@@ -113,7 +107,7 @@ export function LoginScreen({
                 <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="staff-user"
-                  placeholder={`örn. ${BRANDING.users[0]?.username ?? "melek"}`}
+                  placeholder="Kullanıcı adınız"
                   autoComplete="username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
@@ -162,30 +156,6 @@ export function LoginScreen({
               )}
             </Button>
           </form>
-
-          {BRANDING.users.length > 0 && (
-            <div className="mt-6 border-t border-border/70 pt-5">
-              <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
-                Demo girişleri — doldurmak için dokunun
-              </div>
-              <div className="mt-3 grid gap-2 min-[420px]:grid-cols-2">
-                {BRANDING.users.map((u) => (
-                  <button
-                    key={u.username}
-                    type="button"
-                    onClick={() => autofillStaff(u)}
-                    className="mk-focus group flex items-center gap-2 rounded-lg border border-border bg-secondary/60 px-3 py-2 text-xs font-medium transition-colors hover:border-primary/50 hover:bg-primary/10"
-                  >
-                    <span className="flex h-5 w-5 items-center justify-center rounded bg-primary/15 text-[9px] font-bold text-brand-text">
-                      {u.initials}
-                    </span>
-                    <span className="truncate text-foreground/90">{u.username}</span>
-                    <ChevronRight className="ml-auto hidden h-3 w-3 shrink-0 text-primary group-hover:block" />
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
 
           <p className="mt-5 border-t border-border/70 pt-4 text-center text-[11px] text-muted-foreground">
             Misafir misiniz? Randevu almak ve değerlendirme yazmak için <span className="font-semibold text-brand-text">giriş gerekmez</span>.

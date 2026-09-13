@@ -1,0 +1,186 @@
+// MELEK'ÇE GÜZELLİK — Güzellik & Tırnak Stüdyosu — Veri Modeli V4 ULTIMATE
+// White-Label şablon: Hizmetler, Müşteriler, Randevular, Yorumlar, Galeri
+// V2: Misafir randevusu (telefon ile, giriş gerekmez) + herkese açık değerlendirme
+// V3: Rezervasyon Merkezi — tam randevu düzenleme, durum 'gelmedi' (no-show),
+//     iç personel notu, güncelleme zamanı + Bildirim Günlüğü (müşteri bilgilendirme)
+// V4 ULTIMATE (salon yazılımı araştırmasından — Booksy/Vagaro/Mangomint standardı):
+//     • Müşteri kartı: alerjiler, hassasiyet, tercih edilen form/jel tipi/renkler
+//     • Sadakat programı: puanlar + işlem günlüğü (dijital damgalı kart)
+//     • Randevu: depozito (no-show koruması) + ekip ataması (prim hesabı için)
+//     • Envanter: malzeme stok takibi (jel, akrilik, kirpik, yağlar) + min stok alarmı
+//     • Ekip üyeleri: komisyon oranı → prim/ciro hesaplayıcı
+//     • Müşteri portfolyo: galeri öğeleri müşteriye bağlanabilir
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Hizmetler (Tırnak, Güzellik, Kirpik) ───────────────────────────────────
+model Service {
+  id          String    @id @default(cuid())
+  name        String    // örn. «Jel Uzatma»
+  category    String    // tirnak | guzellik | kirpik
+  description String?   // açılış sayfası için kısa açıklama
+  durationMin Int       // uygulama süresi (dakika)
+  priceChf    Float     // fiyat (yerel para birimi)
+  popular     Boolean   @default(false) // «Popüler» rozeti
+  active      Boolean   @default(true)
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+
+  bookings Booking[]
+  reviews  Review[]
+}
+
+// ─── Müşteriler (girişsiz randevu: telefon ile otomatik oluşturulur) ─────────
+model SalonCustomer {
+  id          String    @id @default(cuid())
+  name        String
+  phone       String    @unique // misafir randevularının anahtarı
+  email       String?
+  notes       String?   // iç notlar
+  // V4: Müşteri kartı — alerji & hassasiyet beyanı (daltoninstitute/etsy standardı)
+  allergies   String?   // örn. «Jel çözücülere hassasiyet, HEMA alerjisi»
+  sensitive   Boolean   @default(false) // hassas cilt / tırnak yatağı
+  // V4: Tercihler (kişiselleştirilmiş ziyaret — stellabots vakası)
+  prefShape   String?   // tercih edilen tırnak formu: badem | oval | kare | yuvarlak | stiletto
+  prefGel     String?   // enhancement tercihi: jel | akrilik | dip | kalıcı oje | doğal
+  prefColors  String?   // favori renkler: «bordo, pudra pembe, şampanya altın»
+  // V4: Sadakat programı (dijital damgalı kart — 10 damga = indirim)
+  loyaltyPoints Int     @default(0)
+  createdAt   DateTime  @default(now())
+
+  bookings     Booking[]
+  loyaltyLogs  LoyaltyLog[]
+  galleryItems GalleryItem[]
+}
+
+// ─── Randevular ─────────────────────────────────────────────────────────────
+model Booking {
+  id          String        @id @default(cuid())
+  customerId  String
+  customer    SalonCustomer @relation(fields: [customerId], references: [id])
+  serviceId   String
+  service     Service       @relation(fields: [serviceId], references: [id])
+  startAt     DateTime      // randevu başlangıcı
+  durationMin Int           // hizmetten kopyalanır (anlık görüntü)
+  priceChf    Float         // hizmetten kopyalanır (anlık görüntü)
+  status      String        @default("bekliyor") // bekliyor | onaylandi | tamamlandi | iptal | gelmedi
+  notes       String?       // müşteri isteği (örn. «Fransız + altın parıltı»)
+  staffNote   String?       // iç not (yalnızca ekip görür — müşteriye bildirilmez)
+  // V4: Depozito — no-show koruması (youcanbook/stxsoftware önerisi)
+  deposit     Float         @default(0) // talep edilen depozito tutarı
+  depositPaid Boolean       @default(false) // depozito alındı mı
+  // V4: Ekip ataması — prim/ciro hesaplayıcı için
+  staffId     String?       // hangi ekip üyesi hizmeti verecek
+  staff       StaffMember?  @relation(fields: [staffId], references: [id])
+  // V4: Sadakat puanı bu randevudan kazanıldı mı (çift sayımı önler)
+  loyaltyAwarded Boolean    @default(false)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  notifications NotificationLog[]
+
+  @@index([startAt])
+  @@index([customerId])
+  @@index([status])
+  @@index([staffId])
+}
+
+// ─── Değerlendirmeler (herkese açık, moderasyonlu) ──────────────────────────
+model Review {
+  id          String   @id @default(cuid())
+  authorName  String   // değerlendirmeyi yazan kişinin adı
+  rating      Int      // 1–5 yıldız
+  comment     String   // yorum metni
+  serviceId   String?  // isteğe bağlı: hangi hizmetle ilgili
+  service     Service? @relation(fields: [serviceId], references: [id])
+  status      String   @default("bekliyor") // bekliyor | onaylandi | reddedildi
+  createdAt   DateTime @default(now())
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ─── Bildirim Günlüğü (ekip → müşteri bilgilendirmeleri) ───────────────────
+model NotificationLog {
+  id        String   @id @default(cuid())
+  bookingId String?
+  booking   Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  customer  String   // müşteri adı (bilgi amaçlı kopya)
+  phone     String   // hedef telefon (WhatsApp/SMS)
+  channel   String   // whatsapp | sms | email
+  kind      String   // onay | degisiklik | iptal | hatirlatma | tamamlandi | ozel
+  message   String   // gönderilen mesaj metni
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([bookingId])
+}
+
+// ─── Galeri (açılış sayfası + müşteri portfolyosu) ──────────────────────────
+model GalleryItem {
+  id         String         @id @default(cuid())
+  title      String         // örn. «Altın Barok»
+  category   String         // tirnak | guzellik | kirpik | studyo
+  imagePath  String         // /gallery/nails-gold.png
+  sortOrder  Int            @default(0)
+  active     Boolean        @default(true)
+  // V4: portfolyo — bu çalışma hangi müşterinin? (null = genel galeri)
+  customerId String?
+  customer   SalonCustomer? @relation(fields: [customerId], references: [id])
+  createdAt  DateTime       @default(now())
+
+  @@index([customerId])
+}
+
+// ─── V4: Envanter — malzeme & stok takibi (Salonkee/eloerp standardı) ──────
+model InventoryItem {
+  id          String   @id @default(cuid())
+  name        String   // örn. «UV Jel — Bordo», «Volume Kirpik Seti»
+  category    String   // jel | akrilik | kirpik | bakim | alet | diger
+  unit        String   // gr | ml | adet | set
+  quantity    Float    // mevcut miktar
+  minQuantity Float    // minimum stok — altına düşünce uyarı
+  unitCost    Float    // birim maliyet (yerel para birimi)
+  supplier    String?  // tedarikçi
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category])
+}
+
+// ─── V4: Ekip üyeleri — komisyon oranı ile prim hesaplayıcı ────────────────
+model StaffMember {
+  id             String   @id @default(cuid())
+  name           String   // örn. «Melek Hanım»
+  role           String   // örn. «Tırnak Sanatçısı», «Kirpik Uzmanı»
+  commissionRate Float    // prim oranı % (cirodan)
+  phone          String?
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  bookings Booking[]
+
+  @@index([active])
+}
+
+// ─── V4: Sadakat işlem günlüğü (puan kazanma/harcama denetimi) ─────────────
+model LoyaltyLog {
+  id        String        @id @default(cuid())
+  customerId String
+  customer  SalonCustomer @relation(fields: [customerId], references: [id])
+  points    Int           // +kazanım / -harcama (delta)
+  reason    String        // örn. «Randevu tamamlandı», «10. damga ödülü»
+  bookingId String?       // ilgili randevu (varsa)
+  createdAt DateTime      @default(now())
+
+  @@index([customerId])
+  @@index([createdAt])
+}

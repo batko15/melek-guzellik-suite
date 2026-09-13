@@ -1,0 +1,37 @@
+// AUTO-GENERIERT aus prisma/schema.postgres.prisma (scripts/build-pg-ddl.mjs)
+// PostgreSQL-DDL für Supabase-Bootstrap — idempotent (IF NOT EXISTS).
+// NICHT von Hand bearbeiten — stattdessen Schema ändern und Skript neu ausführen.
+
+export const PG_DDL: string[] = [
+  "CREATE SCHEMA IF NOT EXISTS \"public\";",
+  "CREATE TABLE IF NOT EXISTS \"Service\" (\n    \"id\" TEXT NOT NULL,\n    \"name\" TEXT NOT NULL,\n    \"category\" TEXT NOT NULL,\n    \"description\" TEXT,\n    \"durationMin\" INTEGER NOT NULL,\n    \"priceChf\" DOUBLE PRECISION NOT NULL,\n    \"popular\" BOOLEAN NOT NULL DEFAULT false,\n    \"active\" BOOLEAN NOT NULL DEFAULT true,\n    \"sortOrder\" INTEGER NOT NULL DEFAULT 0,\n    \"createdAt\" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,\n\n    CONSTRAINT \"Service_pkey\" PRIMARY KEY (\"id\")\n);",
+  "CREATE TABLE IF NOT EXISTS \"SalonCustomer\" (\n    \"id\" TEXT NOT NULL,\n    \"name\" TEXT NOT NULL,\n    \"phone\" TEXT NOT NULL,\n    \"email\" TEXT,\n    \"notes\" TEXT,\n    \"allergies\" TEXT,\n    \"sensitive\" BOOLEAN NOT NULL DEFAULT false,\n    \"prefShape\" TEXT,\n    \"prefGel\" TEXT,\n    \"prefColors\" TEXT,\n    \"loyaltyPoints\" INTEGER NOT NULL DEFAULT 0,\n    \"createdAt\" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,\n\n    CONSTRAINT \"SalonCustomer_pkey\" PRIMARY KEY (\"id\")\n);",
+  "CREATE TABLE IF NOT EXISTS \"Booking\" (\n    \"id\" TEXT NOT NULL,\n    \"customerId\" TEXT NOT NULL,\n    \"serviceId\" TEXT NOT NULL,\n    \"startAt\" TIMESTAMP(3) NOT NULL,\n    \"durationMin\" INTEGER NOT NULL,\n    \"priceChf\" DOUBLE PRECISION NOT NULL,\n    \"status\" TEXT NOT NULL DEFAULT 'bekliyor',\n    \"notes\" TEXT,\n    \"staffNote\" TEXT,\n    \"deposit\" DOUBLE PRECISION NOT NULL DEFAULT 0,\n    \"depositPaid\" BOOLEAN NOT NULL DEFAULT false,\n    \"staffId\" TEXT,\n    \"loyaltyAwarded\" BOOLEAN NOT NULL DEFAULT false,\n    \"createdAt\" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    \"updatedAt\" TIMESTAMP(3) NOT NULL,\n\n    CONSTRAINT \"Booking_pkey\" PRIMARY KEY (\"id\")\n);",
+  "CREATE TABLE IF NOT EXISTS \"Review\" (\n    \"id\" TEXT NOT NULL,\n    \"authorName\" TEXT NOT NULL,\n    \"rating\" INTEGER NOT NULL,\n    \"comment\" TEXT NOT NULL,\n    \"serviceId\" TEXT,\n    \"status\" TEXT NOT NULL DEFAULT 'bekliyor',\n    \"createdAt\" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,\n\n    CONSTRAINT \"Review_pkey\" PRIMARY KEY (\"id\")\n);",
+  "CREATE TABLE IF NOT EXISTS \"NotificationLog\" (\n    \"id\" TEXT NOT NULL,\n    \"bookingId\" TEXT,\n    \"customer\" TEXT NOT NULL,\n    \"phone\" TEXT NOT NULL,\n    \"channel\" TEXT NOT NULL,\n    \"kind\" TEXT NOT NULL,\n    \"message\" TEXT NOT NULL,\n    \"createdAt\" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,\n\n    CONSTRAINT \"NotificationLog_pkey\" PRIMARY KEY (\"id\")\n);",
+  "CREATE TABLE IF NOT EXISTS \"GalleryItem\" (\n    \"id\" TEXT NOT NULL,\n    \"title\" TEXT NOT NULL,\n    \"category\" TEXT NOT NULL,\n    \"imagePath\" TEXT NOT NULL,\n    \"sortOrder\" INTEGER NOT NULL DEFAULT 0,\n    \"active\" BOOLEAN NOT NULL DEFAULT true,\n    \"customerId\" TEXT,\n    \"createdAt\" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,\n\n    CONSTRAINT \"GalleryItem_pkey\" PRIMARY KEY (\"id\")\n);",
+  "CREATE TABLE IF NOT EXISTS \"InventoryItem\" (\n    \"id\" TEXT NOT NULL,\n    \"name\" TEXT NOT NULL,\n    \"category\" TEXT NOT NULL,\n    \"unit\" TEXT NOT NULL,\n    \"quantity\" DOUBLE PRECISION NOT NULL,\n    \"minQuantity\" DOUBLE PRECISION NOT NULL,\n    \"unitCost\" DOUBLE PRECISION NOT NULL,\n    \"supplier\" TEXT,\n    \"active\" BOOLEAN NOT NULL DEFAULT true,\n    \"createdAt\" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    \"updatedAt\" TIMESTAMP(3) NOT NULL,\n\n    CONSTRAINT \"InventoryItem_pkey\" PRIMARY KEY (\"id\")\n);",
+  "CREATE TABLE IF NOT EXISTS \"StaffMember\" (\n    \"id\" TEXT NOT NULL,\n    \"name\" TEXT NOT NULL,\n    \"role\" TEXT NOT NULL,\n    \"commissionRate\" DOUBLE PRECISION NOT NULL,\n    \"phone\" TEXT,\n    \"active\" BOOLEAN NOT NULL DEFAULT true,\n    \"createdAt\" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,\n\n    CONSTRAINT \"StaffMember_pkey\" PRIMARY KEY (\"id\")\n);",
+  "CREATE TABLE IF NOT EXISTS \"LoyaltyLog\" (\n    \"id\" TEXT NOT NULL,\n    \"customerId\" TEXT NOT NULL,\n    \"points\" INTEGER NOT NULL,\n    \"reason\" TEXT NOT NULL,\n    \"bookingId\" TEXT,\n    \"createdAt\" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,\n\n    CONSTRAINT \"LoyaltyLog_pkey\" PRIMARY KEY (\"id\")\n);",
+  "CREATE UNIQUE INDEX IF NOT EXISTS \"SalonCustomer_phone_key\" ON \"SalonCustomer\"(\"phone\");",
+  "CREATE INDEX IF NOT EXISTS \"Booking_startAt_idx\" ON \"Booking\"(\"startAt\");",
+  "CREATE INDEX IF NOT EXISTS \"Booking_customerId_idx\" ON \"Booking\"(\"customerId\");",
+  "CREATE INDEX IF NOT EXISTS \"Booking_status_idx\" ON \"Booking\"(\"status\");",
+  "CREATE INDEX IF NOT EXISTS \"Booking_staffId_idx\" ON \"Booking\"(\"staffId\");",
+  "CREATE INDEX IF NOT EXISTS \"Review_status_idx\" ON \"Review\"(\"status\");",
+  "CREATE INDEX IF NOT EXISTS \"Review_createdAt_idx\" ON \"Review\"(\"createdAt\");",
+  "CREATE INDEX IF NOT EXISTS \"NotificationLog_createdAt_idx\" ON \"NotificationLog\"(\"createdAt\");",
+  "CREATE INDEX IF NOT EXISTS \"NotificationLog_bookingId_idx\" ON \"NotificationLog\"(\"bookingId\");",
+  "CREATE INDEX IF NOT EXISTS \"GalleryItem_customerId_idx\" ON \"GalleryItem\"(\"customerId\");",
+  "CREATE INDEX IF NOT EXISTS \"InventoryItem_category_idx\" ON \"InventoryItem\"(\"category\");",
+  "CREATE INDEX IF NOT EXISTS \"StaffMember_active_idx\" ON \"StaffMember\"(\"active\");",
+  "CREATE INDEX IF NOT EXISTS \"LoyaltyLog_customerId_idx\" ON \"LoyaltyLog\"(\"customerId\");",
+  "CREATE INDEX IF NOT EXISTS \"LoyaltyLog_createdAt_idx\" ON \"LoyaltyLog\"(\"createdAt\");",
+  "ALTER TABLE \"Booking\" ADD CONSTRAINT \"Booking_customerId_fkey\" FOREIGN KEY (\"customerId\") REFERENCES \"SalonCustomer\"(\"id\") ON DELETE RESTRICT ON UPDATE CASCADE;",
+  "ALTER TABLE \"Booking\" ADD CONSTRAINT \"Booking_serviceId_fkey\" FOREIGN KEY (\"serviceId\") REFERENCES \"Service\"(\"id\") ON DELETE RESTRICT ON UPDATE CASCADE;",
+  "ALTER TABLE \"Booking\" ADD CONSTRAINT \"Booking_staffId_fkey\" FOREIGN KEY (\"staffId\") REFERENCES \"StaffMember\"(\"id\") ON DELETE SET NULL ON UPDATE CASCADE;",
+  "ALTER TABLE \"Review\" ADD CONSTRAINT \"Review_serviceId_fkey\" FOREIGN KEY (\"serviceId\") REFERENCES \"Service\"(\"id\") ON DELETE SET NULL ON UPDATE CASCADE;",
+  "ALTER TABLE \"NotificationLog\" ADD CONSTRAINT \"NotificationLog_bookingId_fkey\" FOREIGN KEY (\"bookingId\") REFERENCES \"Booking\"(\"id\") ON DELETE SET NULL ON UPDATE CASCADE;",
+  "ALTER TABLE \"GalleryItem\" ADD CONSTRAINT \"GalleryItem_customerId_fkey\" FOREIGN KEY (\"customerId\") REFERENCES \"SalonCustomer\"(\"id\") ON DELETE SET NULL ON UPDATE CASCADE;",
+  "ALTER TABLE \"LoyaltyLog\" ADD CONSTRAINT \"LoyaltyLog_customerId_fkey\" FOREIGN KEY (\"customerId\") REFERENCES \"SalonCustomer\"(\"id\") ON DELETE RESTRICT ON UPDATE CASCADE;",
+]

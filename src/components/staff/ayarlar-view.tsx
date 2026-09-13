@@ -164,13 +164,13 @@ export function AyarlarView() {
               <div className="flex items-start gap-3">
                 <Database className="mt-0.5 h-4 w-4 shrink-0 text-brand-text/70" />
                 <div className="text-xs leading-relaxed text-muted-foreground">
-                  <span className="font-bold text-foreground">Veritabanı:</span> SQLite, yerel (hizmetler, müşteriler, randevular, yorumlar, galeri) — bulut zorunluluğu yok, tüm veriler kendi sunucunuzda kalır.
+                  <span className="font-bold text-foreground">Veritabanı:</span> Prisma ORM — yerelde SQLite, bulutta PostgreSQL (Supabase) ile uyumlu. Hizmetler, müşteriler, randevular, yorumlar ve galeri verileri DATABASE_URL ile belirtilen veritabanında saklanır.
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-text/70" />
                 <div className="text-xs leading-relaxed text-muted-foreground">
-                  <span className="font-bold text-foreground">Demo modu:</span> Ekip girişleri demo hesaplarıdır. Gerçek kullanım için gerçek bir kimlik doğrulama sistemine bağlayın (bkz. TEMPLATE-GUIDE.md).
+                  <span className="font-bold text-foreground">Güvenlik:</span> Ekip girişi kullanıcı adı + şifre ile yapılır. Şifreler yalnızca salon sahibine aittir ve ekranda gösterilmez — yönetici panelini başkalarıyla paylaşmayın.
                 </div>
               </div>
               <Separator />

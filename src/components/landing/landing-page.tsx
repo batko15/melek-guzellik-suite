@@ -9,7 +9,7 @@
 
 import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { Instagram, MapPin, Phone, Clock, CalendarCheck, ChevronRight, MessageSquareHeart, ArrowRight, MessageCircle, Navigation, Sparkles, Heart, Crown } from "lucide-react"
+import { Instagram, MapPin, Phone, Clock, CalendarCheck, ChevronRight, MessageSquareHeart, ArrowRight, MessageCircle, Navigation, Sparkles, Heart, Crown, Mail } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -540,7 +540,9 @@ export function LandingPage({
                 </div>
                 <div className="flex items-center gap-3">
                   <Phone className="h-4 w-4 shrink-0 text-brand-text/70" />
-                  <span className="text-muted-foreground">{company.phone}</span>
+                  <a href={`tel:${company.phone.replace(/\s/g, "")}`} className="text-muted-foreground hover:text-foreground hover:underline">
+                    {company.phone}
+                  </a>
                 </div>
                 <div className="flex items-center gap-3">
                   <MessageCircle className="h-4 w-4 shrink-0 text-brand-text/70" />
@@ -559,6 +561,14 @@ export function LandingPage({
                     @{company.instagram}
                   </a>
                 </div>
+                {(company as { email?: string }).email && (
+                  <div className="flex items-center gap-3">
+                    <Mail className="h-4 w-4 shrink-0 text-brand-text/70" />
+                    <a href={`mailto:${(company as { email?: string }).email}`} className="text-brand-text hover:underline">
+                      {(company as { email?: string }).email}
+                    </a>
+                  </div>
+                )}
               </div>
               <div className="mt-6 border-t border-border/60 pt-5">
                 <Button

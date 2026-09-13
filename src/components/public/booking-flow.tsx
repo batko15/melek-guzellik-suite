@@ -596,7 +596,7 @@ function MyBookings() {
             <Phone className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="tel"
-              placeholder={guestBooking.demoPhone}
+              placeholder="örn. 05XX XXX XX XX"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               className="mk-focus h-11 rounded-xl pl-10"
@@ -607,15 +607,6 @@ function MyBookings() {
             Ara
           </Button>
         </form>
-
-        {/* Demo ipucu */}
-        <button
-          type="button"
-          onClick={() => { setPhone(guestBooking.demoPhone); setSearched(guestBooking.demoPhone) }}
-          className="mk-focus mt-3 w-full rounded-lg border border-dashed border-border/70 px-3 py-2 text-[11px] text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
-        >
-          Demo: {guestBooking.demoPhone} numarasıyla deneyin
-        </button>
 
         {error && (
           <p role="alert" className="mt-4 rounded-lg border border-destructive/40 bg-destructive/10 px-3.5 py-2.5 text-xs font-medium text-destructive">

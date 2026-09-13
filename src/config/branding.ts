@@ -45,7 +45,7 @@ export interface ModuleConfig {
 
 export const BRANDING = {
   // ─── Sürüm (her yerde görünür şekilde işaretlenir) ───────────────────────
-  version: "4.0.0",
+  version: "5.0.0",
 
   // ─── Marka ────────────────────────────────────────────────────────────────
   // nameParts: 1. kısım normal, 2. kısım altın (vurgu rengi) yazılır.
@@ -65,10 +65,11 @@ export const BRANDING = {
   // ─── Stüdyo / Resmi Bilgiler ──────────────────────────────────────────────
   company: {
     legalName: "Melek'çe Güzellik",
-    street: "Yalı Caddesi 12", // ← Gerçek adresi buraya girin
+    street: "Hoca Hamza Mah. 1023. Sokak No: 2 (Villa Tunçaydın)",
     city: "17500 Gelibolu / Çanakkale",
-    phone: "+90 530 000 00 00", // ← Gerçek telefon numarasını buraya girin
-    whatsapp: "+90 530 000 00 00", // ← WhatsApp bildirimleri için numara (ülke koduyla)
+    phone: "+90 542 633 15 70",
+    whatsapp: "+90 542 633 15 70", // WhatsApp bildirimleri için numara (ülke koduyla)
+    email: "", // Salon e-postası (boş = iletişim bölümünde görünmez) — örn. "randevu@melekce.com"
     instagram: "melekce_guzellik17",
     website: "Gelibolu · Çanakkale · Türkiye",
     footerClaim: "Tırnak Sanatı · Güzellik · Kirpik — 2022'den beri",
@@ -78,18 +79,18 @@ export const BRANDING = {
   map: {
     enabled: true,
     label: "Melek'çe Güzellik — Gelibolu",
-    latitude: 40.4125,
-    longitude: 26.6672,
-    zoom: 15,
-    googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=Melek%27%C3%A7e+G%C3%BCzellik+Gelibolu",
+    latitude: 40.430461,
+    longitude: 26.690142,
+    zoom: 17,
+    googleMapsUrl: "https://www.google.com/maps/place/Villa+Tun%C3%A7ayd%C4%B1n,+Hoca+Hamza,+1023.+Sk+No:2,+17500+Gelibolu%2F%C3%87anakkale/data=!4m2!3m1!1s0x14b16500733c9467:0xee564cd8c1e2a587",
   },
 
   // ─── Canlı Hava Durumu (Open-Meteo, ücretsiz, anahtar gerekmez) ──────────
   weather: {
     enabled: true,
     cityName: "Gelibolu",
-    latitude: 40.4125,
-    longitude: 26.6672,
+    latitude: 40.430461,
+    longitude: 26.690142,
     timezone: "Europe/Istanbul",
   },
 
@@ -139,7 +140,7 @@ export const BRANDING = {
     myBookingsHint: "Telefon numaranızı girin — randevularınızı görün ve gerekirse iptal edin",
     successTitle: "Randevunuz alındı!",
     successText: "En kısa sürede onaylanacak. Sizi görmek için sabırsızlanıyoruz!",
-    demoPhone: "+90 532 111 22 33",
+    demoPhone: "+90 542 633 15 70",
   },
 
   // ─── Değerlendirmeler (herkese açık) ──────────────────────────────────────
@@ -153,8 +154,8 @@ export const BRANDING = {
 
   // ─── Ekip Girişleri (Ekip portalı için giriş bilgileri) ───────────────────
   users: [
-    { username: "melek", password: "melek123", name: "Melek", role: "İşletme Sahibi", initials: "MK" },
-    { username: "admin", password: "admin123", name: "Yönetici", role: "Stüdyo Yöneticisi", initials: "AD" },
+    { username: "melek", password: "Melekce!2022", name: "Melek", role: "İşletme Sahibi", initials: "MK" },
+    { username: "admin", password: "Salon!2022", name: "Yönetici", role: "Stüdyo Yöneticisi", initials: "AD" },
   ] as BrandUser[],
 
   // ─── Alt Bilgi ────────────────────────────────────────────────────────────

@@ -81,12 +81,14 @@ npx prisma db push
 npx tsx scripts/seed-beauty.ts
 ```
 
-### Schritt 5 — Team-Zugänge & Demo-Kundinnen: `branding.ts`
+### Schritt 5 — Team-Zugänge: `branding.ts`
 
 ```ts
-users: [{ username: "luna", password: "luna123", name: "Luna", role: "Inhaberin", initials: "LU" }],
-customerPortal: { demoCustomers: [{ name: "Muster Kundin", email: "…" }] },
+users: [{ username: "luna", password: "Sicheres!Passwort", name: "Luna", role: "Inhaberin", initials: "LU" }],
 ```
+
+> Zugänge erscheinen nirgends auf der Oberfläche — nur die Inhaberin kennt sie.
+> Für den Live-Betrieb starkes Passwort wählen und nicht weitergeben.
 
 ### Schritt 6 — Bilder: `public/gallery/`
 
@@ -114,7 +116,7 @@ anpassen.
 - **Domain-Logik:** Buchungs-Kollisionsprüfung, Slots, Statistiken sind auf
   Salon-Abläufe ausgelegt (30-Min.-Raster, eine Behandlerin). Für mehrere
   Mitarbeiter parallel die Modelle um ein `staffId`-Feld erweitern.
-- **Authentifizierung:** Demo-Modus (siehe README, Abschnitt 6).
+- **Authentifizierung:** Einfacher Benutzername-Password-Login ohne Server-Session (White-Label-Ansatz, siehe README). Für höhere Ansprüche an NextAuth/Supabase Auth anbinden.
 - **Zahlungen:** Es gibt keine Zahlungs-Integration — die Suite verwaltet
   Termine und Umsatz-Statistiken, kassiert aber nichts online.
 - **Benachrichtigungen:** Versand über Deep-Links (WhatsApp/SMS/E-Mail öffnen

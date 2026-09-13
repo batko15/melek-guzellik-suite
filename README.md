@@ -1,4 +1,4 @@
-# 💅 Melek'çe Güzellik Suite — V4.0.0 ULTIMATE
+# 💅 Melek'çe Güzellik Suite — V5.0.0 CLOUD
 
 **Die komplette Salon-Software für Nagelstudios & Beauty-Studios — öffentliche Webseite, Kundinnen-Buchungsportal und Team-Verwaltung in einer Anwendung.**
 
@@ -6,10 +6,13 @@
 
 ---
 
-## ✨ Feature-Highlights (V4.0.0 ULTIMATE)
+## ✨ Feature-Highlights (V5.0.0 CLOUD)
 
 ### 🌐 Öffentliche Webseite (ohne Login)
 - **Luxury-Design** «Black-Gold-Champagner» mit echtem Studio-Logo (Engelsflügel), Gold-Eck-Ornamenten und Rauten-Trennern — mobil, Tablet & Desktop optimiert
+- ⭐ **V5 CLOUD**: Komplett Vercel- + Supabase-fähig — PostgreSQL-Unterstützung mit **vollautomatischem Datenbank-Setup** (Tabellen + Grunddaten beim ersten Aufruf, ohne CLI/Migrationen)
+- ⭐ **V5 ECHT-DATEN**: echte Adresse (Hoca Hamza Mah. 1023. Sk No: 2, Gelibolu), echte Telefon-/WhatsApp-Nummer (+90 542 633 15 70), exakte Karten-Koordinaten + Google-Maps-Ortslink
+- ⭐ **V5 GALERIE**: 22 echte Instagram-Fotos des Studios (die 6 neuesten Arbeiten direkt von @melekce_guzellik17 übernommen)
 - Leistungen & Preise im **Menü-Stil** (punktierte Preisführung), **Galerie mit Kategorie-Filter** (Tırnak / Güzellik / Kirpik / Stüdyo)
 - Live-**Wetter-Widget** mit türkischen Pflege-Tipps (Open-Meteo, schlüssellos), **interaktive Karte** (Leaflet, dunkle CARTO-Tiles)
 - Gästebewertungen mit Sternen — jeder darf ohne Login bewerten (moderiert)
@@ -26,6 +29,7 @@
 | **Takvim** | 2-Wochen-Kalender, klickbare Karten → gemeinsames Formular zum Bearbeiten |
 | **Rezervasyon Merkezi** | ALLE Termine: ansehen, vollständig bearbeiten, neu anlegen, No-Show, CSV-Export · **automatische Erinnerungs-Warteschlange** (48 h) mit 1-Klick-WhatsApp/SMS |
 | **Bildirimler** | Protokoll aller Kundenbenachrichtigungen (WhatsApp / SMS / E-Mail) mit 6 türkischen Vorlagen |
+| **Mesaj Merkezi** ⭐ NEU V5 | **Direkt-Kundenkontakt ohne Termin**: fertige türkische Vorlagen (Kampagne, Erinnerung, Geburtstag, Dank, frei) — Versand per WhatsApp, SMS, E-Mail (vorausgefüllt) oder Instagram-DM (Nachricht wird kopiert, DM-Postfach öffnet) — direkt aus der Kundenkarte |
 | **Envanter** ⭐ NEU V4 | **Materiallager**: Gele, Acryl, Wimpern, Öle — Mengen-±, Mindestbestand-Alarme, Lagerwert, Lieferanten |
 | **Müşteriler** ⭐ V4 | **Digitale Kundenkarte**: Allergie- & Empfindlichkeits-Erklärung (rot markiert), Präferenzen (Form / Gel-Typ / Lieblingsfarben), **Treue-Stempelkarte** (10 Stempel = Belohnung), Portfolio-Fotos pro Kundin, Punkthistorie |
 | **Ekip & Prim** ⭐ NEU V4 | **Provisionsrechner**: Umsatz & abgeschlossene Termine pro Mitarbeiter × Provisionsquote → fällige Provision, Monatsansicht |
@@ -120,29 +124,29 @@ npm run dev            # → http://localhost:3000
 
 **Produktions-Build:** `npm run build && npm start`
 
-### Variante B: Docker (Studio-Betrieb)
+### Variante B: Vercel + Supabase (Kostenlos & Dauerhaft Online) ⭐ EMPFOHLEN FÜR DEN LIVE-BETRIEB
 
-```bash
-docker compose up -d                       # Suite läuft auf http://<studio-ip>:3000
-docker compose exec app npx tsx scripts/seed-beauty.ts       # Demo-Daten (einmalig)
-docker compose exec app npx tsx scripts/seed-v4-upgrade.ts
-```
+1. **Supabase-Projekt** anlegen → [supabase.com](https://supabase.com) → New Project (Region Frankfurt) → unter *Project Settings → Database → Connection String → URI* kopieren und `[YOUR-PASSWORD]` ersetzen → das ist die `DATABASE_URL`
+2. **Repository** auf GitHub pushen (`.env` bleibt lokal — steht in `.gitignore`)
+3. **Vercel**: [vercel.com](https://vercel.com) → Sign up with GitHub → *Add New Project* → Repository importieren
+4. **Environment Variables**: `DATABASE_URL` = die Supabase-URI aus Schritt 1 eintragen → **Deploy**
+5. **Fertig** — beim ersten Aufruf richtet sich die Cloud-Datenbank **vollautomatisch** ein (Tabellen + 17 Leistungen + 22 Galerie-Fotos + Team). Keine Migrationen, kein CLI, kein weiteres Setup nötig.
 
-Daten (SQLite) liegen im Volume `melek-data` und überleben Neustarts. Backup = Volume sichern.
+> Die App erkennt am `DATABASE_URL`-Protokoll selbstständig, ob SQLite (lokal) oder PostgreSQL (Supabase) genutzt wird — derselbe Code, beide Welten.
 
-> **Hinweis:** Für den Studio-Empfangstresen ist die Tablet-Ansicht optimiert (Seitenleiste ab 768 px, vergrößerte Touch-Ziele).
+### Variante C: Docker (Studio-Betrieb)
 
 ---
 
-## 🔑 Demo-Zugänge
+## 🔑 Zugänge
 
 | Bereich | Zugang |
 |---|---|
 | Öffentliche Seite & Buchung | Kein Login — «Randevu Al» klicken |
-| Randevularım | Telefonnummer eingeben (Demo: `+90 532 111 22 33`) |
-| Team-Portal | `melek` / `melek123` (Inhaberin) · `admin` / `admin123` |
+| Randevularım | Eigene Telefonnummer eingeben |
+| Team-Portal | Benutzername + Passwort — Zugangsdaten liegen privat bei der Inhaberin (`src/config/branding.ts`) |
 
-> ⚠️ **Vor echtem Betrieb:** Zugänge in `src/config/branding.ts` ändern und das Studio lokal/LAN betreiben (das Portal ist bewusst ohne Server-Auth für den LAN-Einsatz ausgelegt).
+> ⚠️ **Sicherheit:** Zugänge werden nirgends auf der Seite angezeigt. Passwörter nur der Inhaberin bekannt geben und bei Bedarf in `src/config/branding.ts` ändern.
 
 ---
 
@@ -199,6 +203,17 @@ public/gallery/real/          # echte Studio-Fotos
 ---
 
 ## 📋 Changelog
+
+### V5.0.0 CLOUD — «Kunden-Lieferung»
+- ⭐ **Vercel + Supabase ready**: dual Prisma-Schema (SQLite lokal / PostgreSQL Cloud) mit automatischer Auswahl; `postinstall` + Build-Hook generieren den passenden Client
+- ⭐ **Auto-Datenbank-Setup**: beim ersten API-Aufruf werden Tabellen (idempotente DDL) UND Grunddaten (17 Leistungen, 22 Galerie-Fotos, Ekip) automatisch in Supabase angelegt — keine Migrationen, kein CLI, kein Setup für die Kundin
+- ⭐ **Echte Betriebsdaten**: korrekte Adresse (Hoca Hamza Mah. 1023. Sk No: 2, Villa Tunçaydın, 17500 Gelibolu/Çanakkale), echte Telefon-/WhatsApp-Nummer **+90 542 633 15 70**, exakte Koordinaten (40.430461, 26.690142) + Google-Maps-Ortslink, SSL- und Pool-Parameternormalisierung für Supabase
+- ⭐ **Zugangsdaten entfernt**: Login-Screen ohne Demo-Hinweise, keine Demo-Telefonnummer im Buchungsfluss, neue starke Passwörter (nur der Inhaberin bekannt), README bereinigt
+- ⭐ **Instagram-Fotos**: 6 neueste Arbeiten von @melekce_guzellik17 (9.947 Follower) in die Galerie übernommen — jetzt 22 echte Fotos
+- ⭐ **Mesaj Merkezi** (Müşteriler): Kunden direkt anschreiben — WhatsApp/SMS/E-Mail mit vorausgefüllten türkischen Vorlagen (Kampagne, Erinnerung, Geburtstag, Dank) + Instagram-DM-Kanal mit Kopier-Hilfe; jeder Versand wird protokolliert
+- ⭐ **Kontakt-Sektion**: anklickbare Telefonnummer (tel:), optionale E-Mail-Zeile (konfigurierbar in `branding.ts → company.email`)
+- 🧹 **Altversionen entfernt**: AutoFaszimation-Altbestände (V3-Backend-Ordner, alte Parser/Seeds/Screenshots) komplett gelöscht
+- 🔧 `metadataBase` für korrekte OG-Bilder in der Cloud, HTTPS-fähige Build-Pipeline
 
 ### V4.0.0 ULTIMATE
 - ⭐ **Envanter**: Materiallager mit Mindestbestand-Alarmen und Lagerwert

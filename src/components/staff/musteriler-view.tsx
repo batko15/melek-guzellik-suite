@@ -6,7 +6,7 @@
 
 import { useMemo, useState } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { Users, Search, Phone, Mail, CalendarDays, Crown, AlertTriangle, Pencil, Gift, Plus, Minus, Image as ImageIcon } from "lucide-react"
+import { Users, Search, Phone, Mail, CalendarDays, Crown, AlertTriangle, Pencil, Gift, Plus, Minus, Image as ImageIcon, MessageCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -16,6 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
+import { CustomerMessageDialog } from "@/components/staff/customer-message-dialog"
 import {
   type SalonCustomerRow, type SalonBooking, BOOKING_STATUS, para, para2, dateStr, timeStr,
   SHAPE_LABELS, GEL_TYPE_LABELS, LOYALTY_REWARD_AT,
@@ -75,6 +76,7 @@ export function MusterilerView() {
   const [selected, setSelected] = useState<SalonCustomerRow | null>(null)
   const [cardOpen, setCardOpen] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [msgOpen, setMsgOpen] = useState(false)
   const [card, setCard] = useState({ allergies: "", sensitive: false, prefShape: "", prefGel: "", prefColors: "" })
 
   const { data, isLoading } = useQuery({
@@ -326,6 +328,14 @@ export function MusterilerView() {
                       <span className="truncate" title={selected.email}>{selected.email}</span>
                     </div>
                   )}
+                {/* V5: Direkt mesajlasma - WhatsApp / SMS / E-Mail / Instagram */}
+                <Button
+                  onClick={() => setMsgOpen(true)}
+                  className="mk-gold-glow mt-1 h-10 w-full rounded-xl bg-primary text-xs font-bold text-primary-foreground"
+                >
+                  <MessageCircle className="mr-1.5 h-4 w-4" />
+                  Mesaj Gönder — WhatsApp · SMS · E-Mail · Instagram
+                </Button>
                 </div>
 
                 {/* V4: Alerji beyanı — KIRMIZI uyarı */}
@@ -535,6 +545,16 @@ export function MusterilerView() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* V5: Müşteri Mesaj Merkezi — WhatsApp / SMS / E-Mail / Instagram */}
+      {selected && (
+        <CustomerMessageDialog
+          key={selected.phone}
+          customer={{ name: selected.name, phone: selected.phone, email: selected.email }}
+          open={msgOpen}
+          onOpenChange={setMsgOpen}
+        />
+      )}
     </div>
   )
 }

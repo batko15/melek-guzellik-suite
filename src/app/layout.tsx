@@ -13,6 +13,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://melek-guzellik-suite.vercel.app"),
   title: `${brandName} — ${BRANDING.brand.tagline}`,
   description: `${BRANDING.landing.heroDescription}`,
   keywords: [BRAND_DISPLAY.part2, "Tırnak Sanatı", "Güzellik Stüdyosu", "Manikür", "Kirpik", BRANDING.company.city, "Randevu Al", BRANDING.locale.currency],
