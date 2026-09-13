@@ -1,5 +1,21 @@
 // GET /api/v1/salon/stats — Stüdyo KPI'ları (Ekip portalı) + yorum istatistikleri
 import { db } from "@/lib/db"
+import { BRANDING } from "@/config/branding"
+
+/** Açılış saatlerinden gerçek haftalık kapasite (dakika) — V3 düzeltmesi:
+ *  sabit «6 gün × 8 sa» yerine branding.ts saatleri sayılır (örn. Cmt 09–16 = 7 sa). */
+function weeklyCapacityMin(): number {
+  let total = 0
+  for (const h of BRANDING.openingHours) {
+    if (h.closed) continue
+    const m = h.hours.match(/(\d{2}):(\d{2})\s*[–-]\s*(\d{2}):(\d{2})/)
+    if (!m) continue
+    const start = Number(m[1]) * 60 + Number(m[2])
+    const end = Number(m[3]) * 60 + Number(m[4])
+    if (end > start) total += end - start
+  }
+  return total
+}
 
 export async function GET() {
   const now = new Date()
@@ -35,10 +51,10 @@ export async function GET() {
     db.review.findMany({ select: { rating: true, status: true } }),
   ])
 
-  // Haftalık doluluk: ayrılan dakika / açık dakika (Sal–Cmt, 6 gün × 480 dk)
+  // Haftalık doluluk: ayrılan dakika / gerçek kapasite (açılış saatlerinden)
   const bookedMin = weekBookings.reduce((s, b) => s + b.durationMin, 0)
-  const capacityMin = 6 * 8 * 60
-  const utilization = Math.min(100, Math.round((bookedMin / capacityMin) * 100))
+  const capacityMin = weeklyCapacityMin()
+  const utilization = capacityMin > 0 ? Math.min(100, Math.round((bookedMin / capacityMin) * 100)) : 0
 
   const weekRevenue = weekBookings.reduce((s, b) => s + b.priceChf, 0)
 
@@ -106,6 +122,7 @@ export async function GET() {
       bookings: allBookings.length,
       completed: allBookings.filter((b) => b.status === "tamamlandi").length,
       cancelled: allBookings.filter((b) => b.status === "iptal").length,
+      noShow: allBookings.filter((b) => b.status === "gelmedi").length,
       customers,
       services: services.length,
       revenueChf: Math.round(allBookings.filter((b) => b.status === "tamamlandi").reduce((s, b) => s + b.priceChf, 0)),

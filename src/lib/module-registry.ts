@@ -9,7 +9,7 @@ import {
 } from "lucide-react"
 import { DashboardView } from "@/components/staff/dashboard-view"
 import { KalenderView } from "@/components/staff/kalender-view"
-import { RandevularView } from "@/components/staff/randevular-view"
+import { RezervasyonView } from "@/components/staff/rezervasyon-view"
 import { YorumlarView } from "@/components/staff/yorumlar-view"
 import { MusterilerView } from "@/components/staff/musteriler-view"
 import { HizmetlerView } from "@/components/staff/hizmetler-view"
@@ -33,7 +33,7 @@ const ICONS: Record<string, ElementType> = {
 const VIEWS: Record<string, ElementType> = {
   dashboard: DashboardView,
   kalender: KalenderView,
-  randevular: RandevularView,
+  randevular: RezervasyonView, // V3: Rezervasyon Merkezi (tam yönetim)
   yorumlar: YorumlarView,
   musteriler: MusterilerView,
   hizmetler: HizmetlerView,

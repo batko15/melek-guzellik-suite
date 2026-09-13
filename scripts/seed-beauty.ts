@@ -1,6 +1,8 @@
-// Melek'çe Güzellik Suite V2 — Türkçe demo verileri
-// Hizmetler (CHF fiyatlarla), müşteriler (telefon anahtarlı), randevular (2 hafta),
+// Melek'çe Güzellik Suite V3 — Türkçe demo verileri
+// Hizmetler (₺ fiyatlarla), müşteriler (telefon anahtarlı), randevular (2 hafta),
 // misafir değerlendirmeleri (onaylı + incelemede) + galeri
+// V3: randevu fiyatları HİZMETTEN otomatik kopyalanır (₺ tutarlılığı),
+//     no-show (gelmedi) örnekleri, iç personel notu + bildirim günlüğü
 
 import { PrismaClient } from "@prisma/client"
 
@@ -150,30 +152,51 @@ async function main() {
     }
 
     // Bugün
-    await db.booking.create({ data: { customerId: byPhone("+90 532 111 22 33").id, serviceId: bySvc("Kalıcı Oje (Shellac)").id, startAt: day(0, 10, 0), durationMin: 45, priceChf: 50, status: "onaylandi", notes: "Nude + altın taşlar" } })
-    await db.booking.create({ data: { customerId: byPhone("+90 533 222 33 44").id, serviceId: bySvc("Jel Manikür").id, startAt: day(0, 14, 0), durationMin: 75, priceChf: 65, status: "onaylandi", notes: null } })
+    await db.booking.create({ data: { customerId: byPhone("+90 532 111 22 33").id, serviceId: bySvc("Kalıcı Oje (Shellac)").id, startAt: day(0, 10, 0), durationMin: 45, priceChf: bySvc("Kalıcı Oje (Shellac)").priceChf, status: "onaylandi", notes: "Nude + altın taşlar", staffNote: "Sıkı müşteri — 10 dk önce gelsin" } })
+    await db.booking.create({ data: { customerId: byPhone("+90 533 222 33 44").id, serviceId: bySvc("Jel Manikür").id, startAt: day(0, 14, 0), durationMin: 75, priceChf: bySvc("Jel Manikür").priceChf, status: "onaylandi", notes: null } })
 
     // Talepler (bekliyor)
-    await db.booking.create({ data: { customerId: byPhone("+90 539 888 99 00").id, serviceId: bySvc("Kirpik Uzatma 1:1").id, startAt: day(1, 9, 30), durationMin: 90, priceChf: 120, status: "bekliyor", notes: "İlk uzatma — danışma istiyorum" } })
-    await db.booking.create({ data: { customerId: byPhone("+90 535 444 55 66").id, serviceId: bySvc("Özel Tırnak Tasarımı").id, startAt: day(2, 16, 0), durationMin: 45, priceChf: 40, status: "bekliyor", notes: "Doğum günü için kalp deseni" } })
+    await db.booking.create({ data: { customerId: byPhone("+90 539 888 99 00").id, serviceId: bySvc("Kirpik Uzatma 1:1").id, startAt: day(1, 9, 30), durationMin: 90, priceChf: bySvc("Kirpik Uzatma 1:1").priceChf, status: "bekliyor", notes: "İlk uzatma — danışma istiyorum" } })
+    await db.booking.create({ data: { customerId: byPhone("+90 535 444 55 66").id, serviceId: bySvc("Özel Tırnak Tasarımı").id, startAt: day(2, 16, 0), durationMin: 45, priceChf: bySvc("Özel Tırnak Tasarımı").priceChf, status: "bekliyor", notes: "Doğum günü için kalp deseni" } })
 
     // Gelecek hafta
-    await db.booking.create({ data: { customerId: byPhone("+90 534 333 44 55").id, serviceId: bySvc("Kirpik Dolgusu").id, startAt: day(3, 10, 0), durationMin: 60, priceChf: 70, status: "onaylandi", notes: null } })
-    await db.booking.create({ data: { customerId: byPhone("+90 536 555 66 77").id, serviceId: bySvc("Delüks Cilt Bakımı").id, startAt: day(4, 11, 0), durationMin: 60, priceChf: 90, status: "onaylandi", notes: "Hassas cilt" } })
-    await db.booking.create({ data: { customerId: byPhone("+90 537 666 77 88").id, serviceId: bySvc("Kaş & Kirpik Boyama").id, startAt: day(5, 9, 0), durationMin: 30, priceChf: 35, status: "onaylandi", notes: null } })
-    await db.booking.create({ data: { customerId: byPhone("+90 538 777 88 99").id, serviceId: bySvc("Jel Uzatma").id, startAt: day(6, 14, 0), durationMin: 120, priceChf: 110, status: "bekliyor", notes: "Badem şekli" } })
-    await db.booking.create({ data: { customerId: byPhone("+90 532 111 22 33").id, serviceId: bySvc("Özel Tırnak Tasarımı").id, startAt: day(8, 15, 30), durationMin: 45, priceChf: 40, status: "onaylandi", notes: "Altın parıltı" } })
-    await db.booking.create({ data: { customerId: byPhone("+90 533 222 33 44").id, serviceId: bySvc("Dolgu (Refil)").id, startAt: day(9, 13, 0), durationMin: 90, priceChf: 85, status: "onaylandi", notes: null } })
-    await db.booking.create({ data: { customerId: byPhone("+90 539 888 99 00").id, serviceId: bySvc("Lash Lift + Boyama").id, startAt: day(10, 10, 30), durationMin: 45, priceChf: 75, status: "bekliyor", notes: null } })
-    await db.booking.create({ data: { customerId: byPhone("+90 535 444 55 66").id, serviceId: bySvc("Klasik Manikür").id, startAt: day(11, 16, 30), durationMin: 40, priceChf: 35, status: "onaylandi", notes: null } })
+    await db.booking.create({ data: { customerId: byPhone("+90 534 333 44 55").id, serviceId: bySvc("Kirpik Dolgusu").id, startAt: day(3, 10, 0), durationMin: 60, priceChf: bySvc("Kirpik Dolgusu").priceChf, status: "onaylandi", notes: null } })
+    await db.booking.create({ data: { customerId: byPhone("+90 536 555 66 77").id, serviceId: bySvc("Delüks Cilt Bakımı").id, startAt: day(4, 11, 0), durationMin: 60, priceChf: bySvc("Delüks Cilt Bakımı").priceChf, status: "onaylandi", notes: "Hassas cilt", staffNote: "Parfümsüz ürünler kullan" } })
+    await db.booking.create({ data: { customerId: byPhone("+90 537 666 77 88").id, serviceId: bySvc("Kaş & Kirpik Boyama").id, startAt: day(5, 9, 0), durationMin: 30, priceChf: bySvc("Kaş & Kirpik Boyama").priceChf, status: "onaylandi", notes: null } })
+    await db.booking.create({ data: { customerId: byPhone("+90 538 777 88 99").id, serviceId: bySvc("Jel Uzatma").id, startAt: day(6, 14, 0), durationMin: 120, priceChf: bySvc("Jel Uzatma").priceChf, status: "bekliyor", notes: "Badem şekli" } })
+    await db.booking.create({ data: { customerId: byPhone("+90 532 111 22 33").id, serviceId: bySvc("Özel Tırnak Tasarımı").id, startAt: day(8, 15, 30), durationMin: 45, priceChf: bySvc("Özel Tırnak Tasarımı").priceChf, status: "onaylandi", notes: "Altın parıltı" } })
+    await db.booking.create({ data: { customerId: byPhone("+90 533 222 33 44").id, serviceId: bySvc("Dolgu (Refil)").id, startAt: day(9, 13, 0), durationMin: 90, priceChf: bySvc("Dolgu (Refil)").priceChf, status: "onaylandi", notes: null } })
+    await db.booking.create({ data: { customerId: byPhone("+90 539 888 99 00").id, serviceId: bySvc("Lash Lift + Boyama").id, startAt: day(10, 10, 30), durationMin: 45, priceChf: bySvc("Lash Lift + Boyama").priceChf, status: "bekliyor", notes: null } })
+    await db.booking.create({ data: { customerId: byPhone("+90 535 444 55 66").id, serviceId: bySvc("Klasik Manikür").id, startAt: day(11, 16, 30), durationMin: 40, priceChf: bySvc("Klasik Manikür").priceChf, status: "onaylandi", notes: null } })
 
     // İptal (örnek)
-    await db.booking.create({ data: { customerId: byPhone("+90 538 777 88 99").id, serviceId: bySvc("Delüks Pedikür").id, startAt: day(-1, 15, 0), durationMin: 60, priceChf: 70, status: "iptal", notes: "Hastalık — ertelendi" } })
+    await db.booking.create({ data: { customerId: byPhone("+90 538 777 88 99").id, serviceId: bySvc("Delüks Pedikür").id, startAt: day(-1, 15, 0), durationMin: 60, priceChf: bySvc("Delüks Pedikür").priceChf, status: "iptal", notes: "Hastalık — ertelendi" } })
+
+    // No-show (gelmedi) örnekleri — V3
+    await db.booking.create({ data: { customerId: byPhone("+90 538 777 88 99").id, serviceId: bySvc("Klasik Manikür").id, startAt: day(-4, 11, 0), durationMin: 40, priceChf: bySvc("Klasik Manikür").priceChf, status: "gelmedi", notes: null, staffNote: "Arandı, ulaşılamadı — yeniden randevu planlanacak" } })
+    await db.booking.create({ data: { customerId: byPhone("+90 536 555 66 77").id, serviceId: bySvc("Kaş Şekillendirme").id, startAt: day(-2, 14, 0), durationMin: 20, priceChf: bySvc("Kaş Şekillendirme").priceChf, status: "gelmedi", notes: null, staffNote: "Habersiz gelmedi" } })
+  }
+
+  // Bildirim günlüğü (örnek kayıtlar) — V3
+  if ((await db.notificationLog.count()) === 0) {
+    const confirmed = await db.booking.findFirst({ where: { status: "onaylandi" }, orderBy: { updatedAt: "desc" } })
+    if (confirmed) {
+      await db.notificationLog.create({
+        data: {
+          bookingId: confirmed.id,
+          customer: "Elif Yılmaz",
+          phone: "+90 532 111 22 33",
+          channel: "whatsapp",
+          kind: "onay",
+          message: `✨ Melek'çe Güzellik — Randevunuz Onaylandı\n💅 Kalıcı Oje (Shellac)\n📅 Bugün 10:00\n\nSizi görmek için sabırsızlanıyoruz! 🌸`,
+        },
+      })
+    }
   }
 
   console.log(
     `Seed OK: ${(await db.service.count())} hizmet, ${(await db.salonCustomer.count())} müşteri, ` +
-    `${(await db.booking.count())} randevu, ${(await db.review.count())} değerlendirme, ${(await db.galleryItem.count())} galeri görseli`,
+    `${(await db.booking.count())} randevu, ${(await db.review.count())} değerlendirme, ${(await db.galleryItem.count())} galeri görseli, ${(await db.notificationLog.count())} bildirim kaydı`,
   )
 }
 

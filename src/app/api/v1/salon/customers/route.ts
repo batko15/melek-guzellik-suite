@@ -15,7 +15,7 @@ export async function GET() {
   const now = new Date()
   const rows = customers.map((c) => {
     const completed = c.bookings.filter((b) => b.status === "tamamlandi")
-    const upcoming = c.bookings.filter((b) => new Date(b.startAt) >= now && b.status !== "iptal")
+    const upcoming = c.bookings.filter((b) => new Date(b.startAt) >= now && b.status !== "iptal" && b.status !== "gelmedi")
     const volume = completed.reduce((sum, b) => sum + b.priceChf, 0)
     return {
       id: c.id,

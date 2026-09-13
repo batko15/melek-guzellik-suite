@@ -1,6 +1,8 @@
-// MELEK'ÇE GÜZELLİK — Güzellik & Tırnak Stüdyosu — Veri Modeli V2
+// MELEK'ÇE GÜZELLİK — Güzellik & Tırnak Stüdyosu — Veri Modeli V3
 // White-Label şablon: Hizmetler, Müşteriler, Randevular, Yorumlar, Galeri
 // V2: Misafir randevusu (telefon ile, giriş gerekmez) + herkese açık değerlendirme
+// V3: Rezervasyon Merkezi — tam randevu düzenleme, durum 'gelmedi' (no-show),
+//     iç personel notu, güncelleme zamanı + Bildirim Günlüğü (müşteri bilgilendirme)
 
 generator client {
   provider = "prisma-client-js"
@@ -50,12 +52,17 @@ model Booking {
   startAt     DateTime      // randevu başlangıcı
   durationMin Int           // hizmetten kopyalanır (anlık görüntü)
   priceChf    Float         // hizmetten kopyalanır (anlık görüntü)
-  status      String        @default("bekliyor") // bekliyor | onaylandi | tamamlandi | iptal
+  status      String        @default("bekliyor") // bekliyor | onaylandi | tamamlandi | iptal | gelmedi
   notes       String?       // müşteri isteği (örn. «Fransız + altın parıltı»)
+  staffNote   String?       // iç not (yalnızca ekip görür — müşteriye bildirilmez)
   createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  notifications NotificationLog[]
 
   @@index([startAt])
   @@index([customerId])
+  @@index([status])
 }
 
 // ─── Değerlendirmeler (herkese açık, moderasyonlu) ──────────────────────────
@@ -71,6 +78,22 @@ model Review {
 
   @@index([status])
   @@index([createdAt])
+}
+
+// ─── Bildirim Günlüğü (ekip → müşteri bilgilendirmeleri) ───────────────────
+model NotificationLog {
+  id        String   @id @default(cuid())
+  bookingId String?
+  booking   Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  customer  String   // müşteri adı (bilgi amaçlı kopya)
+  phone     String   // hedef telefon (WhatsApp/SMS)
+  channel   String   // whatsapp | sms | email
+  kind      String   // onay | degisiklik | iptal | hatirlatma | tamamlandi | ozel
+  message   String   // gönderilen mesaj metni
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([bookingId])
 }
 
 // ─── Galeri (açılış sayfası için çalışmalar) ────────────────────────────────

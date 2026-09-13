@@ -45,7 +45,7 @@ export interface ModuleConfig {
 
 export const BRANDING = {
   // ─── Sürüm (her yerde görünür şekilde işaretlenir) ───────────────────────
-  version: "2.1.0",
+  version: "3.0.0",
 
   // ─── Marka ────────────────────────────────────────────────────────────────
   // nameParts: 1. kısım normal, 2. kısım altın (vurgu rengi) yazılır.
@@ -163,7 +163,7 @@ export const BRANDING = {
   modules: [
     { id: "dashboard", group: "genelBakis", label: "Genel Bakış", hint: "Bugün & KPI'lar", title: "Stüdyo Genel Bakış", subtitle: "Bugünkü randevular · Talepler · Doluluk · Hava durumu", icon: "layout-dashboard", enabled: true },
     { id: "kalender", group: "isletme", label: "Takvim", hint: "Haftalık görünüm", title: "Randevu Takvimi", subtitle: "Önümüzdeki 2 haftanın tüm randevuları", icon: "calendar-days", enabled: true },
-    { id: "randevular", group: "isletme", label: "Randevular", hint: "Talepler & durum", title: "Randevu Yönetimi", subtitle: "Talepleri onayla · tamamla · iptal et", icon: "clipboard-list", enabled: true },
+    { id: "randevular", group: "isletme", label: "Rezervasyon Merkezi", hint: "Tüm randevu yönetimi", title: "Rezervasyon Merkezi", subtitle: "Görüntüle · düzenle · oluştur · müşteriyi bilgilendir", icon: "clipboard-list", enabled: true },
     { id: "yorumlar", group: "isletme", label: "Yorumlar", hint: "Değerlendirme moderasyonu", title: "Değerlendirme Yönetimi", subtitle: "Onayla · reddet · yayındaki yorumlar", icon: "star", enabled: true },
     { id: "musteriler", group: "kayitlar", label: "Müşteriler", hint: "CRM & geçmiş", title: "Müşteri Yönetimi", subtitle: "Sık gelen müşteriler · ciro · notlar", icon: "users", enabled: true },
     { id: "hizmetler", group: "kayitlar", label: "Hizmetler", hint: "Fiyat listesi", title: "Hizmetler & Fiyatlar", subtitle: "Tırnak · Güzellik · Kirpik — süre ve fiyat", icon: "sparkles", enabled: true },

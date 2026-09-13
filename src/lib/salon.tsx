@@ -18,8 +18,12 @@ export interface SalonBooking {
   startAt: string
   durationMin: number
   priceChf: number
-  status: "bekliyor" | "onaylandi" | "tamamlandi" | "iptal" | string
+  status: "bekliyor" | "onaylandi" | "tamamlandi" | "iptal" | "gelmedi" | string
   notes: string | null
+  staffNote: string | null
+  serviceId: string
+  createdAt: string
+  updatedAt: string
   service: { name: string; category: string }
   customer: { name: string; phone: string; email: string | null }
 }
@@ -43,6 +47,18 @@ export interface GalleryEntry {
   title: string
   category: string
   imagePath: string
+}
+
+// ─── Bildirim günlüğü satırı (V3 — Rezervasyon Merkezi) ─────────────────────
+export interface NotificationLogRow {
+  id: string
+  bookingId: string | null
+  customer: string
+  phone: string
+  channel: "whatsapp" | "sms" | "email" | string
+  kind: string
+  message: string
+  createdAt: string
 }
 
 export interface ReviewRow {
@@ -136,6 +152,7 @@ export const BOOKING_STATUS: Record<string, { label: string; cls: string }> = {
   bekliyor: { label: "Bekliyor", cls: "bg-amber-950/60 text-amber-300 border-amber-800/50" },
   onaylandi: { label: "Onaylandı", cls: "bg-emerald-950/60 text-emerald-300 border-emerald-800/50" },
   tamamlandi: { label: "Tamamlandı", cls: "bg-secondary text-muted-foreground border-border" },
+  gelmedi: { label: "Gelmedi", cls: "bg-purple-950/60 text-purple-300 border-purple-800/50" },
   iptal: { label: "İptal edildi", cls: "bg-red-950/60 text-red-300 border-red-800/50" },
 }
 

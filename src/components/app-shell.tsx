@@ -232,6 +232,16 @@ export function AppShell() {
     return () => window.removeEventListener("keydown", onKey)
   }, [])
 
+  // Görünümler arası gezinme olayı (örn. gösterge tablosu → Rezervasyon Merkezi)
+  useEffect(() => {
+    const onGoto = (e: Event) => {
+      const view = (e as CustomEvent<string>).detail
+      if (typeof view === "string" && MODULE_MAP.has(view)) setView(view)
+    }
+    window.addEventListener("mk-goto", onGoto)
+    return () => window.removeEventListener("mk-goto", onGoto)
+  }, [])
+
   // Tarayıcı geçmişi: herkese açık görünümler için hash kullan
   useEffect(() => {
     const onHash = () => {

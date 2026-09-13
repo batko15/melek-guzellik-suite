@@ -545,8 +545,8 @@ function MyBookings() {
 
   const bookings = myData?.bookings ?? []
   const now = Date.now()
-  const upcoming = bookings.filter((b) => new Date(b.startAt).getTime() >= now && b.status !== "iptal")
-  const past = bookings.filter((b) => new Date(b.startAt).getTime() < now || b.status === "iptal")
+  const upcoming = bookings.filter((b) => new Date(b.startAt).getTime() >= now && b.status !== "iptal" && b.status !== "gelmedi")
+  const past = bookings.filter((b) => new Date(b.startAt).getTime() < now || b.status === "iptal" || b.status === "gelmedi")
 
   const search = (e: React.FormEvent) => {
     e.preventDefault()

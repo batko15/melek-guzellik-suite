@@ -1,15 +1,17 @@
 // Ekip Portalı — Randevu Takvimi: 2 haftalık ızgara (pazartesi–pazar), bugün vurgulu
+// V3: Bir randevuya tıklayın → doğrudan düzenleme penceresi açılır (Rezervasyon Merkezi formu)
 
 "use client"
 
 import { useMemo, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react"
+import { ChevronLeft, ChevronRight, CalendarDays, Pencil } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { BOOKING_STATUS, type SalonBooking, timeStr, minutesLabel, para } from "@/lib/salon"
+import { BookingFormDialog } from "@/components/staff/booking-form-dialog"
 
 const DAY_MS = 86_400_000
 
@@ -23,6 +25,8 @@ function mondayOf(date: Date): Date {
 
 export function KalenderView() {
   const [weekOffset, setWeekOffset] = useState(0)
+  const [editBooking, setEditBooking] = useState<SalonBooking | null>(null)
+  const [editOpen, setEditOpen] = useState(false)
   const weekStart = useMemo(() => {
     const m = mondayOf(new Date())
     m.setDate(m.getDate() + weekOffset * 7)
@@ -68,7 +72,8 @@ export function KalenderView() {
             Randevu takvimi — <span className="mk-gold-text">{weekLabel}</span>
           </h1>
           <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-            Önümüzdeki 2 haftada {bookings.length} randevu · toplam değeri {para(totalRevenue)}
+            Önümüzdeki 2 haftada {bookings.length} randevu · toplam değeri {para(totalRevenue)} ·{" "}
+            <span className="inline-flex items-center gap-1"><Pencil className="h-3 w-3" /> bir karta tıklayın → düzenleyin</span>
           </p>
         </div>
       </section>
@@ -123,23 +128,33 @@ export function KalenderView() {
                   {dayBookings.map((b) => (
                     <div
                       key={b.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => { setEditBooking(b); setEditOpen(true) }}
+                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { setEditBooking(b); setEditOpen(true) } }}
+                      title={`${b.customer.name} — düzenlemek için tıklayın`}
                       className={cn(
-                        "rounded-md border p-2 text-xs",
+                        "mk-focus group cursor-pointer rounded-md border p-2 text-xs transition-transform hover:scale-[1.02]",
                         b.status === "iptal"
                           ? "border-red-900/40 bg-red-950/20 opacity-60"
                           : b.status === "bekliyor"
                             ? "border-amber-800/40 bg-amber-950/15"
-                            : "border-border/60 bg-secondary/40",
+                            : b.status === "gelmedi"
+                              ? "border-purple-800/40 bg-purple-950/20"
+                              : "border-border/60 bg-secondary/40",
                       )}
                     >
                       <div className="flex items-center justify-between">
                         <span className="font-mono font-bold text-brand-text">{timeStr(b.startAt)}</span>
-                        <span className="text-[9px] text-muted-foreground">{minutesLabel(b.durationMin)}</span>
+                        <Pencil className="h-2.5 w-2.5 text-muted-foreground/0 transition-colors group-hover:text-muted-foreground" />
                       </div>
                       <div className="mt-0.5 truncate font-semibold text-foreground">{b.customer.name}</div>
                       <div className="truncate text-[10px] text-muted-foreground">{b.service.name}</div>
                       {b.status === "bekliyor" && (
                         <div className="mt-1 text-[9px] font-bold uppercase tracking-wide text-amber-400">Talep</div>
+                      )}
+                      {b.status === "gelmedi" && (
+                        <div className="mt-1 text-[9px] font-bold uppercase tracking-wide text-purple-400">Gelmedi</div>
                       )}
                     </div>
                   ))}
@@ -149,6 +164,14 @@ export function KalenderView() {
           })}
         </div>
       </section>
+
+      {/* Düzenleme penceresi (kart tıklamasıyla açılır) */}
+      <BookingFormDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        booking={editBooking}
+        onSaved={() => { /* form kendi sorguları yeniler */ }}
+      />
     </div>
   )
 }

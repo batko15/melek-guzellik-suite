@@ -100,6 +100,14 @@ export function DashboardView() {
                   </Badge>
                 </div>
               ))}
+              {stats && stats.today.count > 0 && (
+                <button
+                  onClick={() => window.dispatchEvent(new CustomEvent("mk-goto", { detail: "randevular" }))}
+                  className="mk-focus mt-1 w-full rounded-lg border border-primary/30 bg-primary/10 px-3 py-2.5 text-xs font-semibold text-brand-text transition-colors hover:bg-primary/20"
+                >
+                  Rezervasyon Merkezi'nde yönet → düzenle · bilgilendir · CSV
+                </button>
+              )}
             </CardContent>
           </Card>
 
