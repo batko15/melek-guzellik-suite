@@ -3,8 +3,9 @@
 // Not: Fiyatlar sonraki randevularda otomatik geçerli olur (anlık görüntü sistemi).
 
 import { db } from "@/lib/db"
+import { requireStaff } from "@/lib/auth"
 import { rateLimit, clientIp, tooManyRequests } from "@/lib/rate-limit"
-import { dbUnavailable } from "@/lib/api-errors"
+import { dbUnavailable, isDbInitError } from "@/lib/api-errors"
 
 // GET /api/v1/salon/services — aktif hizmetler (açılış sayfası & randevu akışı)
 export async function GET() {
@@ -20,6 +21,9 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
+  const staff = await requireStaff(request)
+  if (!staff.ok) return staff.response
+
   // Hız sınırı: IP başına dakikada 20 güncelleme
   const rl = rateLimit(`service-patch:${clientIp(request)}`, 20, 60 * 1000)
   if (!rl.ok) return tooManyRequests(rl.retryAfterSec)
@@ -74,8 +78,12 @@ export async function PATCH(request: Request) {
         active: service.active,
       },
     })
-  } catch {
-    return Response.json({ error: "Hizmet bulunamadı veya güncellenemedi." }, { status: 404 })
+  } catch (e) {
+    if (String((e as { code?: string })?.code ?? "") === "P2025") {
+      return Response.json({ error: "Hizmet bulunamadı." }, { status: 404 })
+    }
+    console.error("[PATCH services]", e)
+    return Response.json({ error: "Hizmet güncellenemedi." }, { status: 500 })
   }
 }
 
@@ -85,6 +93,9 @@ export async function PATCH(request: Request) {
 //   { "mode": "percent", "value": 10 }          → alle Preise +10 %
 //   { "mode": "amount",  "value": -50, "category": "tirnak" } → Tırnak −50 ₺
 export async function PUT(request: Request) {
+  const staff = await requireStaff(request)
+  if (!staff.ok) return staff.response
+
   // Hız sınırı: IP başına dakikada 10 toplu güncelleme
   const rl = rateLimit(`service-bulk:${clientIp(request)}`, 10, 60 * 1000)
   if (!rl.ok) return tooManyRequests(rl.retryAfterSec)
@@ -141,6 +152,8 @@ export async function PUT(request: Request) {
       services: updated,
     })
   } catch (e) {
-    return dbUnavailable(String((e as Error)?.message ?? e))
+    if (isDbInitError(e)) return dbUnavailable(String((e as Error)?.message ?? e))
+    console.error("[PUT services]", e)
+    return Response.json({ error: "Toplu fiyat güncellemesi başarısız." }, { status: 500 })
   }
 }

@@ -7,6 +7,7 @@
 // DELETE /api/v1/salon/waitlist?id=…        — ekip: kaydı kalıcı sil
 
 import { db } from "@/lib/db"
+import { requireStaff } from "@/lib/auth"
 import { rateLimit, clientIp, tooManyRequests } from "@/lib/rate-limit"
 import { phoneDigits, canonicalPhone } from "@/lib/phone"
 import { BRANDING } from "@/config/branding"
@@ -45,6 +46,9 @@ function toRow(w: {
 const INCLUDE = { include: { service: { select: { name: true } } } }
 
 export async function GET(request: Request) {
+  const staff = await requireStaff(request)
+  if (!staff.ok) return staff.response
+
   const params = new URL(request.url).searchParams
   const date = params.get("date")
   const upcoming = params.get("upcoming")
@@ -52,6 +56,7 @@ export async function GET(request: Request) {
 
   const dayStart = date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? new Date(`${date}T00:00:00`) : null
 
+  try {
   const entries = await db.waitlistEntry.findMany({
     where: {
       ...(dayStart ? { desiredDate: dayStart } : {}),
@@ -66,6 +71,10 @@ export async function GET(request: Request) {
     entries: entries.map(toRow),
     count: entries.length,
   })
+  } catch (e) {
+    console.error("[GET waitlist]", e)
+    return Response.json({ error: "Bekleme listesi yüklenemedi." }, { status: 500 })
+  }
 }
 
 // ─── Listeye katıl — HERKES, giriş gerekmez ─────────────────────────────────
@@ -175,6 +184,9 @@ export async function POST(request: Request) {
 // ─── Durum güncelle (PATCH) — ekip ──────────────────────────────────────────
 // { id, status } — teklif verildi / randevu oluştu / iptal
 export async function PATCH(request: Request) {
+  const staff = await requireStaff(request)
+  if (!staff.ok) return staff.response
+
   const rl = rateLimit(`waitlist-patch:${clientIp(request)}`, 30, 60 * 1000)
   if (!rl.ok) return tooManyRequests(rl.retryAfterSec)
 
@@ -203,6 +215,9 @@ export async function PATCH(request: Request) {
 
 // ─── Kalıcı sil (DELETE) — ekip ─────────────────────────────────────────────
 export async function DELETE(request: Request) {
+  const staff = await requireStaff(request)
+  if (!staff.ok) return staff.response
+
   const rl = rateLimit(`waitlist-delete:${clientIp(request)}`, 30, 60 * 1000)
   if (!rl.ok) return tooManyRequests(rl.retryAfterSec)
 

@@ -5,12 +5,21 @@
 // DELETE /api/v1/salon/staff?id=…    — sil (randevuları önce serbest bırak)
 
 import { db } from "@/lib/db"
+import { requireStaff } from "@/lib/auth"
 import { rateLimit, clientIp, tooManyRequests } from "@/lib/rate-limit"
 
+function isRecordNotFound(e: unknown): boolean {
+  return String((e as { code?: string })?.code ?? "") === "P2025"
+}
+
 export async function GET(request: Request) {
+  const staff = await requireStaff(request)
+  if (!staff.ok) return staff.response
+
   const params = new URL(request.url).searchParams
   const month = params.get("month") // "YYYY-MM" — aylık prim görünümü (opsiyonel)
 
+  try {
   const members = await db.staffMember.findMany({
     include: {
       bookings: {
@@ -65,9 +74,16 @@ export async function GET(request: Request) {
     totalCommission: Math.round(rows.reduce((s, r) => s + r.stats.commissionChf, 0) * 100) / 100,
     range: month ?? "all",
   })
+  } catch (e) {
+    console.error("[GET staff]", e)
+    return Response.json({ error: "Ekip üyeleri yüklenemedi." }, { status: 500 })
+  }
 }
 
 export async function POST(request: Request) {
+  const staff = await requireStaff(request)
+  if (!staff.ok) return staff.response
+
   const rl = rateLimit(`staff-post:${clientIp(request)}`, 10, 60 * 1000)
   if (!rl.ok) return tooManyRequests(rl.retryAfterSec)
 
@@ -101,6 +117,9 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
+  const staff = await requireStaff(request)
+  if (!staff.ok) return staff.response
+
   const rl = rateLimit(`staff-put:${clientIp(request)}`, 20, 60 * 1000)
   if (!rl.ok) return tooManyRequests(rl.retryAfterSec)
 
@@ -140,12 +159,19 @@ export async function PUT(request: Request) {
       },
     })
     return Response.json({ staff: { id: member.id, name: member.name, commissionRate: member.commissionRate } })
-  } catch {
+  } catch (e) {
+    if (isRecordNotFound(e)) {
+      return Response.json({ error: "Ekip üyesi bulunamadı." }, { status: 404 })
+    }
+    console.error("[PUT staff]", e)
     return Response.json({ error: "Ekip üyesi güncellenemedi." }, { status: 500 })
   }
 }
 
 export async function DELETE(request: Request) {
+  const staff = await requireStaff(request)
+  if (!staff.ok) return staff.response
+
   const rl = rateLimit(`staff-delete:${clientIp(request)}`, 10, 60 * 1000)
   if (!rl.ok) return tooManyRequests(rl.retryAfterSec)
 
@@ -162,7 +188,11 @@ export async function DELETE(request: Request) {
     await db.booking.updateMany({ where: { staffId: id }, data: { staffId: null } })
     await db.staffMember.delete({ where: { id } })
     return Response.json({ deleted: true, id })
-  } catch {
+  } catch (e) {
+    if (isRecordNotFound(e)) {
+      return Response.json({ error: "Ekip üyesi bulunamadı." }, { status: 404 })
+    }
+    console.error("[DELETE staff]", e)
     return Response.json({ error: "Ekip üyesi silinemedi." }, { status: 500 })
   }
 }

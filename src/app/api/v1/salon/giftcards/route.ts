@@ -1,22 +1,28 @@
 // Hediye Kartı API'si (V5.4 — dijital hediye kartı, Booksy/Mangomint standardı)
-// GET    /api/v1/salon/giftcards            — ekip: tüm kartlar (stats ile)
+// GET    /api/v1/salon/giftcards            — ekip (oturum): tüm kartlar (stats ile)
 // GET    /api/v1/salon/giftcards?code=MELEK-XXXX-XXXX — herkese açık bakiye sorgusu
+//          → yalnızca { valid, remaining } döner (alıcı bilgisi sızdırılmaz)
 // POST   /api/v1/salon/giftcards            — HERKES kart talebi (ad + telefon + tutar)
+//          → talep «talep» olarak açılır; «aktif» yalnızca ekip PATCH'i ile (V5.7.1:
+//            istemcinin byStaff iddiasına güvenilmez — oturum yoksa hep «talep»)
 // PATCH  /api/v1/salon/giftcards            — ekip: aktifleştir / iptal et
-// PUT    /api/v1/salon/giftcards            — ekip: bakiyeden kullan (ödeme düş)
+// PUT    /api/v1/salon/giftcards            — ekip: bakiyeden kullan (ödeme düş) — atomik
 
 import { db } from "@/lib/db"
+import { requireStaff, getOptionalStaff } from "@/lib/auth"
 import { rateLimit, clientIp, tooManyRequests } from "@/lib/rate-limit"
 import { phoneDigits, canonicalPhone } from "@/lib/phone"
 import { BRANDING } from "@/config/branding"
+import { randomInt } from "node:crypto"
 
 const ALLOWED_STATUS = ["talep", "aktif", "kullanildi", "iptal"]
 
 // Hediye kartı kodu üret: MELEK-XXXX-XXXX (büyük harf+rakam, karışan karakterler yok)
+// V5.7.1: Math.random() yerine kriptografik randomInt — kodlar tahmin edilemez
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789" // I/1/O/0 çıkarıldı — okuma hatası olmasın
 function generateGiftCode(): string {
   const pick = () =>
-    Array.from({ length: 4 }, () => CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)]).join("")
+    Array.from({ length: 4 }, () => CODE_ALPHABET[randomInt(0, CODE_ALPHABET.length)]).join("")
   return `MELEK-${pick()}-${pick()}`
 }
 
@@ -50,42 +56,50 @@ export async function GET(request: Request) {
   const params = new URL(request.url).searchParams
   const code = params.get("code")?.trim().toUpperCase()
 
-  // Herkese açık bakiye sorgusu — yalnızca kod + durum + maske bilgiler
+  // Herkese açık bakiye sorgusu — V5.7.1: yalnızca { valid, remaining }
+  // (kart durumu, tutar, alıcı adı/telefonu gibi hiçbir bilgi sızdırılmaz)
   if (code) {
+    const rl = rateLimit(`giftcard-balance:${clientIp(request)}`, 10, 60 * 1000)
+    if (!rl.ok) return tooManyRequests(rl.retryAfterSec)
+
     if (!/^MELEK-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code)) {
       return Response.json({ error: "Geçersiz kart kodu biçimi." }, { status: 400 })
     }
-    const card = await db.giftCard.findUnique({ where: { code } })
-    if (!card || card.status === "iptal") {
-      return Response.json({ error: "Bu koda ait aktif bir hediye kartı bulunamadı." }, { status: 404 })
+    try {
+      const card = await db.giftCard.findUnique({ where: { code }, select: { status: true, balance: true } })
+      const valid = card?.status === "aktif"
+      return Response.json(
+        { valid, remaining: valid ? card!.balance : 0 },
+        { headers: { "Cache-Control": "no-store" } },
+      )
+    } catch (e) {
+      console.error("[GET giftcards:code]", e)
+      return Response.json({ error: "Kart sorgulanamadı." }, { status: 500 })
     }
-    return Response.json({
-      code: card.code,
-      status: card.status,
-      balance: card.status === "aktif" ? card.balance : null,
-      amount: card.amount,
-      message: card.status === "talep"
-        ? "Kartınız ödeme teyidi sonrası aktifleştirilecek."
-        : card.status === "kullanildi"
-          ? "Kartın bakiyesi tamamen kullanılmış."
-          : null,
-    })
   }
 
-  // Ekip: tüm kartlar + istatistik
-  const cards = await db.giftCard.findMany({ orderBy: { createdAt: "desc" } })
-  const rows = cards.map(toRow)
-  return Response.json({
-    cards: rows,
-    count: rows.length,
-    stats: {
-      totalIssued: rows.length,
-      requested: rows.filter((c) => c.status === "talep").length,
-      active: rows.filter((c) => c.status === "aktif").length,
-      activeBalance: rows.filter((c) => c.status === "aktif").reduce((sum, c) => sum + c.balance, 0),
-      totalLoaded: rows.filter((c) => c.status !== "iptal").reduce((sum, c) => sum + c.amount, 0),
-    },
-  })
+  // Ekip: tüm kartlar + istatistik (oturum gerekli)
+  const staff = await requireStaff(request)
+  if (!staff.ok) return staff.response
+
+  try {
+    const cards = await db.giftCard.findMany({ orderBy: { createdAt: "desc" } })
+    const rows = cards.map(toRow)
+    return Response.json({
+      cards: rows,
+      count: rows.length,
+      stats: {
+        totalIssued: rows.length,
+        requested: rows.filter((c) => c.status === "talep").length,
+        active: rows.filter((c) => c.status === "aktif").length,
+        activeBalance: rows.filter((c) => c.status === "aktif").reduce((sum, c) => sum + c.balance, 0),
+        totalLoaded: rows.filter((c) => c.status !== "iptal").reduce((sum, c) => sum + c.amount, 0),
+      },
+    })
+  } catch (e) {
+    console.error("[GET giftcards]", e)
+    return Response.json({ error: "Hediye kartları yüklenemedi." }, { status: 500 })
+  }
 }
 
 // ─── Kart talebi — HERKES, giriş gerekmez ───────────────────────────────────
@@ -123,6 +137,12 @@ export async function POST(request: Request) {
       return Response.json({ error: "Hediye notu en fazla 300 karakter olabilir." }, { status: 400 })
     }
 
+    // V5.7.1 GÜVENLİK: «aktif» durum artık yalnızca GEÇERLİ ekip oturumuyla
+    // mümkündür (eski byStaff:true istemci açığı kapatıldı). Misafir talebi
+    // her zaman «talep» olur — ödeme teyidinden sonra ekip PATCH ile aktifleştirir.
+    const staffSession = getOptionalStaff(request)
+    const isStaff = staffSession !== null && body.byStaff === true
+
     // Benzersiz kod üret (çakışma ihtimali çok düşük — 3 deneme)
     let code = generateGiftCode()
     for (let i = 0; i < 3; i++) {
@@ -140,8 +160,7 @@ export async function POST(request: Request) {
         buyerPhone: phone,
         recipientName: recipient || null,
         message: note || null,
-        // Ekip elle oluşturuyorsa ödeme alınmış sayılır → doğrudan aktif
-        status: body.byStaff === true ? "aktif" : "talep",
+        status: isStaff ? "aktif" : "talep",
       },
     })
 
@@ -160,7 +179,8 @@ export async function POST(request: Request) {
       },
       { status: 201 },
     )
-  } catch {
+  } catch (e) {
+    console.error("[POST giftcards]", e)
     return Response.json({ error: "Hediye kartı oluşturulamadı." }, { status: 500 })
   }
 }
@@ -168,6 +188,9 @@ export async function POST(request: Request) {
 // ─── Durum değişikliği (PATCH) — ekip ───────────────────────────────────────
 // { id, status: "aktif" | "iptal" } — ödeme alındığında aktifleştir
 export async function PATCH(request: Request) {
+  const staff = await requireStaff(request)
+  if (!staff.ok) return staff.response
+
   const rl = rateLimit(`giftcard-patch:${clientIp(request)}`, 30, 60 * 1000)
   if (!rl.ok) return tooManyRequests(rl.retryAfterSec)
 
@@ -206,14 +229,20 @@ export async function PATCH(request: Request) {
       card: toRow(card),
       whatsappUrl: waPhone ? `https://wa.me/${waPhone}?text=${waText}` : null,
     })
-  } catch {
+  } catch (e) {
+    console.error("[PATCH giftcards]", e)
     return Response.json({ error: "Hediye kartı güncellenemedi." }, { status: 500 })
   }
 }
 
 // ─── Bakiye kullan (PUT) — ekip: ödeme anında düş ───────────────────────────
 // { code, amount, note? } → aktif kartın bakiyesinden düşer
+// W2 (V5.7.1): düşüm artık ATOMİK — koşullu updateMany (status=aktif VE
+// balance >= tutar) paralel isteklerde bakiyenin eksiye düşmesini imkânsız kılar.
 export async function PUT(request: Request) {
+  const staff = await requireStaff(request)
+  if (!staff.ok) return staff.response
+
   const rl = rateLimit(`giftcard-use:${clientIp(request)}`, 30, 60 * 1000)
   if (!rl.ok) return tooManyRequests(rl.retryAfterSec)
 
@@ -229,39 +258,47 @@ export async function PUT(request: Request) {
       return Response.json({ error: "Geçerli bir tutar girin (1 – 100.000 ₺)." }, { status: 400 })
     }
 
-    const card = await db.giftCard.findUnique({ where: { code } })
-    if (!card) {
-      return Response.json({ error: "Bu koda ait hediye kartı bulunamadı." }, { status: 404 })
-    }
-    if (card.status !== "aktif") {
-      return Response.json(
-        { error: `Kart aktif değil (durum: ${card.status}) — önce aktifleştirin.` },
-        { status: 400 },
-      )
-    }
-    if (card.balance < amount) {
-      return Response.json(
-        { error: `Bakiye yetersiz — kalan ${paraTL(card.balance)}.` },
-        { status: 400 },
-      )
-    }
-
-    const newBalance = Math.round((card.balance - amount) * 100) / 100
-    const updated = await db.giftCard.update({
-      where: { id: card.id },
+    // Atomik koşullu düşüm: yalnızca kart aktifse ve bakiye yeterliyse azalt
+    const updated = await db.giftCard.updateMany({
+      where: { code, status: "aktif", balance: { gte: amount } },
       data: {
-        balance: newBalance,
+        balance: { decrement: amount },
         usedCount: { increment: 1 },
-        status: newBalance <= 0 ? "kullanildi" : "aktif",
       },
     })
 
+    if (updated.count === 0) {
+      // Neden ayırt et: kart yok / aktif değil / bakiye yetersiz
+      const card = await db.giftCard.findUnique({ where: { code } })
+      if (!card) {
+        return Response.json({ error: "Bu koda ait hediye kartı bulunamadı." }, { status: 404 })
+      }
+      if (card.status !== "aktif") {
+        return Response.json(
+          { error: `Kart aktif değil (durum: ${card.status}) — önce aktifleştirin.` },
+          { status: 400 },
+        )
+      }
+      return Response.json(
+        { error: `Bakiye yetersiz — kalan ${paraTL(card.balance)}.` },
+        { status: 409 },
+      )
+    }
+
+    // Güncel kartı oku (bakiye, durum — bakiye bittiyse «kullanildi»)
+    const card = (await db.giftCard.findUnique({ where: { code } }))!
+    if (card.balance <= 0 && card.status === "aktif") {
+      await db.giftCard.update({ where: { id: card.id }, data: { status: "kullanildi" } })
+      card.status = "kullanildi"
+    }
+
     return Response.json({
-      card: toRow(updated),
+      card: toRow(card),
       deducted: amount,
-      remaining: newBalance,
+      remaining: card.balance,
     })
-  } catch {
+  } catch (e) {
+    console.error("[PUT giftcards]", e)
     return Response.json({ error: "Bakiye düşülemedi." }, { status: 500 })
   }
 }

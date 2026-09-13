@@ -2,6 +2,7 @@
 // GET   /api/v1/salon/gallery                    — aktif öğeler (customerId dahil)
 // PATCH /api/v1/salon/gallery                    — öğeyi müşteri portfolyosuna bağla / çöz
 import { db } from "@/lib/db"
+import { requireStaff } from "@/lib/auth"
 import { dbUnavailable } from "@/lib/api-errors"
 import { rateLimit, clientIp, tooManyRequests } from "@/lib/rate-limit"
 
@@ -30,6 +31,9 @@ export async function GET() {
 // ─── Portfolyo bağlama (PATCH) — ekip ───────────────────────────────────────
 // { id, customerId: "…" | null } — çalışmayı müşteri portfolyosuna bağla/çıkar
 export async function PATCH(request: Request) {
+  const staff = await requireStaff(request)
+  if (!staff.ok) return staff.response
+
   const rl = rateLimit(`gallery-patch:${clientIp(request)}`, 30, 60 * 1000)
   if (!rl.ok) return tooManyRequests(rl.retryAfterSec)
 

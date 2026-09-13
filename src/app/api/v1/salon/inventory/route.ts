@@ -5,12 +5,17 @@
 // DELETE /api/v1/salon/inventory?id=…     — sil
 
 import { db } from "@/lib/db"
+import { requireStaff } from "@/lib/auth"
 import { rateLimit, clientIp, tooManyRequests } from "@/lib/rate-limit"
 
 const UNITS = ["gr", "ml", "adet", "set"]
 const CATEGORIES = ["jel", "akrilik", "kirpik", "bakim", "alet", "diger"]
 
-export async function GET() {
+export async function GET(request: Request) {
+  const staff = await requireStaff(request)
+  if (!staff.ok) return staff.response
+
+  try {
   const items = await db.inventoryItem.findMany({
     orderBy: [{ active: "desc" }, { name: "asc" }],
   })
@@ -34,9 +39,16 @@ export async function GET() {
     lowStockCount: rows.filter((r) => r.lowStock).length,
     totalValue: Math.round(rows.reduce((s, r) => s + r.stockValue, 0) * 100) / 100,
   })
+  } catch (e) {
+    console.error("[GET inventory]", e)
+    return Response.json({ error: "Envanter yüklenemedi." }, { status: 500 })
+  }
 }
 
 export async function POST(request: Request) {
+  const staff = await requireStaff(request)
+  if (!staff.ok) return staff.response
+
   const rl = rateLimit(`inventory-post:${clientIp(request)}`, 20, 60 * 1000)
   if (!rl.ok) return tooManyRequests(rl.retryAfterSec)
 
@@ -90,6 +102,9 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
+  const staff = await requireStaff(request)
+  if (!staff.ok) return staff.response
+
   const rl = rateLimit(`inventory-put:${clientIp(request)}`, 30, 60 * 1000)
   if (!rl.ok) return tooManyRequests(rl.retryAfterSec)
 
@@ -155,6 +170,9 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const staff = await requireStaff(request)
+  if (!staff.ok) return staff.response
+
   const rl = rateLimit(`inventory-delete:${clientIp(request)}`, 20, 60 * 1000)
   if (!rl.ok) return tooManyRequests(rl.retryAfterSec)
 

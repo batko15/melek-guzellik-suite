@@ -1,6 +1,8 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// NAIL ART — herkese açık tırnak sanatı sayfası (GİRİŞ GEREKMEZ)  ·  V5.6
+// NAIL ART — herkese açık tırnak sanatı sayfası (GİRİŞ GEREKMEZ)  ·  V5.8
 //   • Tüm tırnak tasarımı galerisi (API'den canlı) + büyütme (lightbox)
+//   • V5.8: yet-another-react-lightbox — dokunmatik kaydırma (swipe), pinch-zoom,
+//     küçük resimler, sayaç; ESC/ok tuşları paketten gelir
 //   • Tasarım başına «WhatsApp'tan iste» — tasarım adı mesaja otomatik gelir
 //     (numara yalnızca bağlantı içinde, sayfada Kliğ metin ASLA görünmez)
 //   • Tırnak hizmetleri & fiyatlar (menü stili) + randevu çağrısı
@@ -9,10 +11,17 @@
 
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react"
 import { useQuery } from "@tanstack/react-query"
+import Lightbox from "yet-another-react-lightbox"
+import Zoom from "yet-another-react-lightbox/plugins/zoom"
+import Thumbnails from "yet-another-react-lightbox/plugins/thumbnails"
+import Counter from "yet-another-react-lightbox/plugins/counter"
+import "yet-another-react-lightbox/styles.css"
+import "yet-another-react-lightbox/plugins/thumbnails.css"
+import "yet-another-react-lightbox/plugins/counter.css"
 import {
-  ChevronLeft, ChevronRight, X, Clock, CalendarCheck, Instagram, Sparkles,
+  ChevronLeft, Clock, CalendarCheck, Instagram, Sparkles,
   Share2, Copy, Check, MessageCircle, Crown, Gem, Palette, ArrowRight, Phone, Wand2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -25,6 +34,17 @@ import { type SalonService, type GalleryEntry, para, minutesLabel } from "@/lib/
 function waLink(text: string): string {
   const digits = BRANDING.company.phone.replace(/[^\d]/g, "")
   return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`
+}
+
+// ─── «Bugün» — yalnızca istemcide çözülen tarih (SSG donması + hydration uyarısı olmasın) ───
+const emptySubscribe = () => () => {}
+const getServerToday = (): Date | null => null
+let todayCache: Date | null = null
+const getClientToday = (): Date => (todayCache ??= new Date())
+
+/** useSyncExternalStore tabanlı — hidrasyon güvenli, kademeli render yok. */
+function useToday(): Date | null {
+  return useSyncExternalStore<Date | null>(emptySubscribe, getClientToday, getServerToday)
 }
 
 export function NailArtPage({
@@ -67,34 +87,35 @@ export function NailArtPage({
     [servicesData],
   )
 
-  // ─── Lightbox durumu ───
-  const [lightbox, setLightbox] = useState<number | null>(null)
-  const current = lightbox !== null ? designs[lightbox] : undefined
+  // ─── Lightbox durumu — yet-another-react-lightbox (kontrollü mod: -1 = kapalı) ───
+  const [lightboxIndex, setLightboxIndex] = useState(-1)
+  const lightboxOpen = lightboxIndex >= 0 && designs.length > 0
 
-  // Lightbox: klavye ile gezinme (←/→/ESC)
-  const next = useCallback(() => {
-    setLightbox((i) => (i === null ? null : (i + 1) % Math.max(1, designs.length)))
-  }, [designs.length])
-  const prev = useCallback(() => {
-    setLightbox((i) => (i === null ? null : (i - 1 + Math.max(1, designs.length)) % Math.max(1, designs.length)))
-  }, [designs.length])
+  // Slaytlar — tasarımlarla birebir aynı sıralamada (indeks hizalı)
+  const lightboxSlides = useMemo(
+    () => designs.map((g) => ({
+      src: g.imagePath,
+      alt: `${g.title} — Melek'çe tırnak sanatı tasarımı (büyük)`,
+    })),
+    [designs],
+  )
+
+  // Açıkken arka plan kaymasını kilitle (paket NoScroll + çift güvence)
   useEffect(() => {
-    if (lightbox === null) return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setLightbox(null)
-      if (e.key === "ArrowRight") next()
-      if (e.key === "ArrowLeft") prev()
-    }
-    window.addEventListener("keydown", onKey)
+    if (!lightboxOpen) return
     document.body.style.overflow = "hidden"
     return () => {
-      window.removeEventListener("keydown", onKey)
       document.body.style.overflow = ""
     }
-  }, [lightbox, next, prev])
+  }, [lightboxOpen])
 
   // ─── Sayfayı paylaş ───
   const [copied, setCopied] = useState(false)
+  // Pano geri bildirim zamanlayıcısı — bileşen kaldırılırsa temizle
+  const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => () => {
+    if (copyTimer.current) clearTimeout(copyTimer.current)
+  }, [])
   const share = async () => {
     const data = {
       title: "Melek'çe — Tırnak Sanatı Galerisi",
@@ -107,9 +128,13 @@ export function NailArtPage({
     try {
       await navigator.clipboard.writeText(data.url)
       setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      if (copyTimer.current) clearTimeout(copyTimer.current)
+      copyTimer.current = setTimeout(() => setCopied(false), 2000)
     } catch { /* pano yok — sessizce geç */ }
   }
+
+  // «Yıllık tecrübe» sayısı yalnızca tarayıcıda hesaplanır — sunucuda sabitlenmez
+  const today = useToday()
 
   return (
     <div className="mk-velvet min-h-screen bg-background pb-24 md:pb-0">
@@ -150,7 +175,7 @@ export function NailArtPage({
               <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground sm:text-[11px]">Tırnak Hizmeti</div>
             </div>
             <div className="p-4 text-center sm:p-6">
-              <div className="mk-display text-2xl font-bold text-brand-text sm:text-3xl">{new Date().getFullYear() - 2022}+</div>
+              <div className="mk-display text-2xl font-bold text-brand-text sm:text-3xl">{today ? `${today.getFullYear() - 2022}+` : "—"}</div>
               <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground sm:text-[11px]">Yıllık Tecrübe</div>
             </div>
           </div>
@@ -177,17 +202,17 @@ export function NailArtPage({
               {designs.map((g, i) => (
                 <button
                   key={g.id}
-                  onClick={() => setLightbox(i)}
+                  onClick={() => setLightboxIndex(i)}
                   aria-label={`${g.title} tasarımını büyüt`}
                   className={cn(
-                    "mk-gallery-tile mk-photo-frame mk-card mk-anim-up group relative overflow-hidden rounded-xl text-left",
+                    "mk-gallery-tile mk-photo-frame mk-card mk-anim-up group relative overflow-hidden rounded-2xl text-left",
                     `mk-delay-${Math.min(6, (i % 6) + 1)}`,
                   )}
                 >
                   <img
                     src={g.imagePath}
                     alt={`${g.title} — Melek'çe tırnak sanatı tasarımı`}
-                    className="aspect-square w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="aspect-square w-full object-cover"
                     loading="lazy"
                   />
                   <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/90 via-background/40 to-transparent px-3 pb-2.5 pt-10">
@@ -278,14 +303,14 @@ export function NailArtPage({
           <div className="flex flex-col items-center gap-3 sm:flex-row">
             <Button
               onClick={onStudio}
-              className="mk-gold-glow mk-btn-lift h-12 rounded-full bg-primary px-7 font-bold text-primary-foreground hover:bg-primary/90"
+              className="mk-gold-glow mk-btn-lift h-12 w-full justify-center rounded-full bg-primary px-7 font-bold text-primary-foreground hover:bg-primary/90 sm:w-auto"
             >
               <Wand2 className="mr-1.5 h-4 w-4" /> Tasarımı Canlı Dene
             </Button>
             <Button
               onClick={onBook}
               variant="outline"
-              className="h-12 rounded-full border-primary/40 px-7 font-bold text-brand-text hover:bg-primary/10"
+              className="h-12 w-full justify-center rounded-full border-primary/40 px-7 font-bold text-brand-text hover:bg-primary/10 sm:w-auto"
             >
               <CalendarCheck className="mr-1.5 h-4 w-4" /> Hemen Randevu Al
             </Button>
@@ -293,7 +318,7 @@ export function NailArtPage({
               href={waLink("Merhaba! Tırnak sanatı galerinizdeki tasarımları çok beğendim, bilgi almak istiyorum.")}
               target="_blank"
               rel="noopener noreferrer"
-              className="mk-focus inline-flex h-12 items-center gap-2 rounded-full border border-primary/40 bg-primary/8 px-7 text-sm font-bold text-brand-text transition-colors hover:bg-primary/15"
+              className="mk-focus inline-flex h-12 w-full items-center justify-center gap-2 rounded-full border border-primary/40 bg-primary/8 px-7 text-sm font-bold text-brand-text transition-colors hover:bg-primary/15 sm:w-auto"
             >
               <MessageCircle className="h-4 w-4" /> WhatsApp'tan yazın
             </a>
@@ -312,78 +337,86 @@ export function NailArtPage({
         </section>
       </main>
 
-      {/* ═══ Lightbox — tasarımı büyüt & WhatsApp'tan iste ═══ */}
-      {current && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 p-4 backdrop-blur-sm"
-          role="dialog"
-          aria-modal="true"
-          aria-label={`${current.title} tasarım görüntüleyici`}
-          onClick={() => setLightbox(null)}
-        >
-          <button
-            onClick={() => setLightbox(null)}
-            aria-label="Kapat"
-            className="mk-focus absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full border border-border/70 bg-background/80 text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <X className="h-5 w-5" />
-          </button>
-
-          {/* Önceki / sonraki */}
-          {designs.length > 1 && (
-            <>
-              <button
-                onClick={(e) => { e.stopPropagation(); prev() }}
-                aria-label="Önceki tasarım"
-                className="mk-focus absolute left-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-border/70 bg-background/80 text-muted-foreground transition-colors hover:text-foreground sm:left-6"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); next() }}
-                aria-label="Sonraki tasarım"
-                className="mk-focus absolute right-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-border/70 bg-background/80 text-muted-foreground transition-colors hover:text-foreground sm:right-6"
-              >
-                <ChevronRight className="h-5 w-5" />
-              </button>
-            </>
-          )}
-
-          <div
-            className="mk-photo-frame mk-gold-glow mx-auto w-full max-w-lg overflow-hidden rounded-2xl border border-primary/25"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <img
-              src={current.imagePath}
-              alt={`${current.title} — Melek'çe tırnak sanatı tasarımı (büyük)`}
-              className="max-h-[62vh] w-full object-contain bg-secondary/40"
-            />
-            <div className="border-t border-border/60 bg-background p-4">
-              <div className="flex items-center gap-2.5">
-                <Gem className="h-4 w-4 shrink-0 text-brand-text" />
-                <div className="mk-display min-w-0 flex-1 truncate text-lg font-bold">{current.title}</div>
-                <div className="shrink-0 text-[11px] font-semibold tabular-nums text-muted-foreground">
-                  {lightbox! + 1} / {designs.length}
+      {/* ═══ Lightbox — tasarımı büyüt & WhatsApp'tan iste (V5.8: dokunmatik kaydırma) ═══
+          • Swipe / pinch-zoom / ESC / ok tuşları paketten gelir
+          • «Bu tasarımı WhatsApp'tan iste» her slaytın altında (render.slideFooter) —
+            slaytın kendi tasarım adı mesaja otomatik yazılır (src eşleşmesiyle)      */}
+      <Lightbox
+        open={lightboxOpen}
+        close={() => setLightboxIndex(-1)}
+        index={Math.min(Math.max(lightboxIndex, 0), Math.max(0, designs.length - 1))}
+        slides={lightboxSlides}
+        plugins={[Zoom, Thumbnails, Counter]}
+        carousel={{ imageFit: "contain" }}
+        zoom={{ maxZoomPixelRatio: 3, scrollToZoom: true }}
+        thumbnails={{
+          width: 64,
+          height: 64,
+          border: 2,
+          borderRadius: 12,
+          padding: 2,
+          gap: 6,
+          vignette: true,
+          showToggle: true,
+          borderColor: "color-mix(in oklch, var(--brand) 55%, transparent)",
+        }}
+        counter={{ className: "mk-display tabular-nums tracking-[0.14em]" }}
+        labels={{
+          Previous: "Önceki tasarım",
+          Next: "Sonraki tasarım",
+          Close: "Kapat",
+          Lightbox: "Tasarım görüntüleyici",
+          Carousel: "Tırnak sanatı galerisi",
+          Slide: "Tasarım",
+          "Photo gallery": "Tırnak sanatı galerisi",
+          "{index} of {total}": "{total} tasarımdan {index}. si",
+          "Zoom in": "Yakınlaştır",
+          "Zoom out": "Uzaklaştır",
+          Thumbnails: "Küçük resimler",
+          "Show thumbnails": "Küçük resimleri göster",
+          "Hide thumbnails": "Küçük resimleri gizle",
+        }}
+        on={{ view: ({ index }) => setLightboxIndex(index) }}
+        styles={{
+          root: {
+            "--yarl__color_backdrop": "oklch(0.135 0.006 75 / 0.96)",
+            "--yarl__color_button": "var(--brand-text)",
+            "--yarl__color_button_active": "var(--brand)",
+          },
+        }}
+        render={{
+          // Her slaytın altında: tasarım adı + WhatsApp + randevu (eski footer işlevi korunur)
+          slideFooter: ({ slide }) => {
+            const design = designs.find((d) => d.imagePath === slide.src)
+            if (!design) return null
+            return (
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex justify-center px-3 pb-3 sm:pb-4">
+                <div className="mk-photo-frame pointer-events-auto w-full max-w-lg rounded-2xl border border-primary/25 bg-background/95 p-4 shadow-2xl backdrop-blur-md">
+                  <div className="flex items-center gap-2.5">
+                    <Gem className="h-4 w-4 shrink-0 text-brand-text" />
+                    <div className="mk-display min-w-0 flex-1 truncate text-lg font-bold">{design.title}</div>
+                    <span className="mk-diamond shrink-0 scale-75" aria-hidden="true" />
+                  </div>
+                  <a
+                    href={waLink(`Merhaba! Tırnak sanatı galerinizdeki «${design.title}» tasarımını çok beğendim — bu tarz bir tasarım için randevu almak istiyorum.`)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mk-focus mt-3.5 flex h-11 w-full items-center justify-center gap-2 rounded-full bg-primary font-bold text-primary-foreground transition-colors hover:bg-primary/90"
+                  >
+                    <MessageCircle className="h-4 w-4" /> Bu tasarımı WhatsApp'tan iste
+                  </a>
+                  <button
+                    onClick={onBook}
+                    className="mk-focus mt-2 flex h-10 w-full items-center justify-center gap-2 rounded-full border border-primary/40 bg-primary/8 text-sm font-bold text-brand-text transition-colors hover:bg-primary/15"
+                  >
+                    <CalendarCheck className="h-4 w-4" /> Online randevu al
+                  </button>
                 </div>
               </div>
-              <a
-                href={waLink(`Merhaba! Tırnak sanatı galerinizdeki «${current.title}» tasarımını çok beğendim — bu tarz bir tasarım için randevu almak istiyorum.`)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mk-focus mt-3.5 flex h-11 w-full items-center justify-center gap-2 rounded-full bg-primary font-bold text-primary-foreground transition-colors hover:bg-primary/90"
-              >
-                <MessageCircle className="h-4 w-4" /> Bu tasarımı WhatsApp'tan iste
-              </a>
-              <button
-                onClick={onBook}
-                className="mk-focus mt-2 flex h-10 w-full items-center justify-center gap-2 rounded-full border border-primary/40 bg-primary/8 text-sm font-bold text-brand-text transition-colors hover:bg-primary/15"
-              >
-                <CalendarCheck className="h-4 w-4" /> Online randevu al
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+            )
+          },
+        }}
+      />
     </div>
   )
 }

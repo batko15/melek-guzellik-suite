@@ -222,24 +222,29 @@ export function para2(value: number): string {
   return `${new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)} ${BRANDING.locale.currencySymbol}`
 }
 
+// Studio saati her zaman İstanbul: Staff-Portal istemcide çalışır; kullanıcı cihaz saati
+// (ör. yurtdışı) veya sunucu-UTC ne olursa olsun randevu saatleri salon gerçeğiyle aynı kalsın.
+// (notify.ts / notify-send.ts ile aynı desen — bkz. BRANDING.weather.timezone)
+const TZ = { timeZone: "Europe/Istanbul" } as const
+
 export function timeStr(iso: string): string {
-  return new Date(iso).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })
+  return new Date(iso).toLocaleTimeString("tr-TR", { ...TZ, hour: "2-digit", minute: "2-digit" })
 }
 
 export function dateStr(iso: string): string {
-  return new Date(iso).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" })
+  return new Date(iso).toLocaleDateString("tr-TR", { ...TZ, day: "numeric", month: "long", year: "numeric" })
 }
 
 export function dateStrShort(iso: string): string {
-  return new Date(iso).toLocaleDateString("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric" })
+  return new Date(iso).toLocaleDateString("tr-TR", { ...TZ, day: "2-digit", month: "2-digit", year: "numeric" })
 }
 
 export function weekdayStr(iso: string): string {
-  return new Date(iso).toLocaleDateString("tr-TR", { weekday: "short" })
+  return new Date(iso).toLocaleDateString("tr-TR", { ...TZ, weekday: "short" })
 }
 
 export function weekdayLongStr(iso: string): string {
-  return new Date(iso).toLocaleDateString("tr-TR", { weekday: "long" })
+  return new Date(iso).toLocaleDateString("tr-TR", { ...TZ, weekday: "long" })
 }
 
 export function minutesLabel(min: number): string {

@@ -4,17 +4,22 @@
 //        { bookingId?, customer, phone, channel, kind, message }
 
 import { db } from "@/lib/db"
+import { requireStaff } from "@/lib/auth"
 import { rateLimit, clientIp, tooManyRequests } from "@/lib/rate-limit"
 
 const CHANNELS = ["whatsapp", "sms", "email", "instagram"]
 const KINDS = ["onay", "degisiklik", "iptal", "hatirlatma", "tamamlandi", "ozel"]
 
 export async function GET(request: Request) {
+  const staff = await requireStaff(request)
+  if (!staff.ok) return staff.response
+
   const params = new URL(request.url).searchParams
   const limitRaw = Number(params.get("limit") ?? 50)
   const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 200) : 50
   const bookingId = params.get("bookingId")
 
+  try {
   const logs = await db.notificationLog.findMany({
     where: bookingId ? { bookingId } : undefined,
     orderBy: { createdAt: "desc" },
@@ -34,9 +39,16 @@ export async function GET(request: Request) {
     })),
     count: logs.length,
   })
+  } catch (e) {
+    console.error("[GET notifications]", e)
+    return Response.json({ error: "Bildirim geçmişi yüklenemedi." }, { status: 500 })
+  }
 }
 
 export async function POST(request: Request) {
+  const staff = await requireStaff(request)
+  if (!staff.ok) return staff.response
+
   // Hız sınırı: IP başına dakikada 60 kayıt (kanal açma tıklamaları)
   const rl = rateLimit(`notify-log:${clientIp(request)}`, 60, 60 * 1000)
   if (!rl.ok) return tooManyRequests(rl.retryAfterSec)

@@ -4,13 +4,21 @@
 // PATCH  /api/v1/salon/customers              — sadakat puanı ekle/kullan (ekip)
 
 import { db } from "@/lib/db"
+import { requireStaff } from "@/lib/auth"
 import { dbUnavailable } from "@/lib/api-errors"
 import { rateLimit, clientIp, tooManyRequests } from "@/lib/rate-limit"
 
 const SHAPES = ["badem", "oval", "kare", "yuvarlak", "stiletto", null]
 const GELS = ["jel", "akrilik", "dip", "kalici-oje", "dogal", null]
 
-export async function GET() {
+function isRecordNotFound(e: unknown): boolean {
+  return String((e as { code?: string })?.code ?? "") === "P2025"
+}
+
+export async function GET(request: Request) {
+  const staff = await requireStaff(request)
+  if (!staff.ok) return staff.response
+
   try {
   const customers = await db.salonCustomer.findMany({
     include: {
@@ -73,6 +81,9 @@ export async function GET() {
 
 // ─── Müşteri kartı güncelleme (PUT) — ekip ──────────────────────────────────
 export async function PUT(request: Request) {
+  const staff = await requireStaff(request)
+  if (!staff.ok) return staff.response
+
   const rl = rateLimit(`customer-put:${clientIp(request)}`, 20, 60 * 1000)
   if (!rl.ok) return tooManyRequests(rl.retryAfterSec)
 
@@ -132,7 +143,11 @@ export async function PUT(request: Request) {
         loyaltyPoints: customer.loyaltyPoints,
       },
     })
-  } catch {
+  } catch (e) {
+    if (isRecordNotFound(e)) {
+      return Response.json({ error: "Müşteri bulunamadı." }, { status: 404 })
+    }
+    console.error("[PUT customers]", e)
     return Response.json({ error: "Müşteri güncellenemedi." }, { status: 500 })
   }
 }
@@ -140,6 +155,9 @@ export async function PUT(request: Request) {
 // ─── Sadakat puanı ekle / kullan (PATCH) — ekip ─────────────────────────────
 // { id, points: +5 | -10, reason: "…" } → puan güncelle + işlem günlüğü
 export async function PATCH(request: Request) {
+  const staff = await requireStaff(request)
+  if (!staff.ok) return staff.response
+
   const rl = rateLimit(`customer-patch:${clientIp(request)}`, 20, 60 * 1000)
   if (!rl.ok) return tooManyRequests(rl.retryAfterSec)
 
@@ -176,7 +194,11 @@ export async function PATCH(request: Request) {
       change: body.points,
       reason,
     })
-  } catch {
+  } catch (e) {
+    if (isRecordNotFound(e)) {
+      return Response.json({ error: "Müşteri bulunamadı." }, { status: 404 })
+    }
+    console.error("[PATCH customers]", e)
     return Response.json({ error: "Puan güncellenemedi." }, { status: 500 })
   }
 }

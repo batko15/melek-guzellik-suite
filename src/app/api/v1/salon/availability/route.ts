@@ -19,17 +19,22 @@ export async function GET(request: Request) {
   const dayEnd = new Date(dayStart)
   dayEnd.setDate(dayEnd.getDate() + 1)
 
-  const bookings = await db.booking.findMany({
-    where: { startAt: { gte: dayStart, lt: dayEnd }, status: { in: ["bekliyor", "onaylandi"] } },
-    select: { startAt: true, durationMin: true },
-    orderBy: { startAt: "asc" },
-  })
+  try {
+    const bookings = await db.booking.findMany({
+      where: { startAt: { gte: dayStart, lt: dayEnd }, status: { in: ["bekliyor", "onaylandi"] } },
+      select: { startAt: true, durationMin: true },
+      orderBy: { startAt: "asc" },
+    })
 
-  return Response.json({
-    date: dateStr,
-    busy: bookings.map((b) => ({
-      startAt: b.startAt.toISOString(),
-      durationMin: b.durationMin,
-    })),
-  })
+    return Response.json({
+      date: dateStr,
+      busy: bookings.map((b) => ({
+        startAt: b.startAt.toISOString(),
+        durationMin: b.durationMin,
+      })),
+    })
+  } catch (e) {
+    console.error("[GET availability]", e)
+    return Response.json({ error: "Uygunluk bilgisi alınamadı." }, { status: 500 })
+  }
 }

@@ -4,9 +4,15 @@
 // ein eigener PrismaClient pro Aufruf wäre eine zusätzliche Verbindungsquelle.
 
 import { db } from "@/lib/db"
+import { requireStaff } from "@/lib/auth"
 import { isPostgres, SUPABASE_PROJECT_REF } from "@/lib/db-bootstrap"
 
-export async function GET() {
+export async function GET(request: Request) {
+  // V5.7.1: yalnızca ekip oturumu — maskeli DB-URL, proje-ref gibi
+  // altyapı ayrıntıları artık herkese açık değil (2-b Bulgu 25).
+  const staff = await requireStaff(request)
+  if (!staff.ok) return staff.response
+
   const url = process.env.DATABASE_URL ?? ""
   const masked = url
     .replace(/\/\/[^@]+@/, "//***:***@")

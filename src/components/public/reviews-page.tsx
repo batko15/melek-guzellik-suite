@@ -191,7 +191,7 @@ export function ReviewsPage({
 
         {/* ═══ Değerlendirme formu / teşekkür ═══ */}
         {sent ? (
-          <div className="mk-card mk-anim-up mx-auto mb-10 max-w-md rounded-2xl p-8 text-center">
+          <div className="mk-card mk-anim-up mx-auto mb-10 max-w-md rounded-2xl p-6 text-center sm:p-8">
             <CheckCircle2 className="mx-auto h-14 w-14 text-brand-text" strokeWidth={1.4} />
             <h2 className="mk-display mt-4 text-2xl font-bold">Teşekkürler, {name.split(" ")[0]}!</h2>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{cfg.pendingNote}</p>
@@ -306,7 +306,7 @@ export function ReviewsPage({
                   value={serviceFilter}
                   onChange={(e) => setServiceFilter(e.target.value)}
                   aria-label="Hizmete göre filtrele"
-                  className="mk-focus h-8 rounded-full border border-border/70 bg-secondary/50 px-3 text-[11px] font-semibold text-foreground"
+                  className="mk-focus h-9 rounded-full border border-border/70 bg-secondary/50 px-3 text-[11px] font-semibold text-foreground"
                 >
                   <option value="">Tüm hizmetler</option>
                   {serviceOptions.map((s) => (
@@ -356,7 +356,7 @@ export function ReviewsPage({
                     </div>
                     <Stars value={r.rating} />
                   </div>
-                  <p className="mt-3.5 text-sm leading-relaxed text-foreground/90">«{r.comment}»</p>
+                  <p className="mt-3.5 text-pretty text-sm leading-relaxed text-foreground/90">«{r.comment}»</p>
                 </article>
               ))}
             </div>

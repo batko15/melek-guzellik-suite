@@ -6,9 +6,28 @@ import { AppShell } from "@/components/app-shell"
 import { Providers } from "@/components/providers"
 import { BRANDING, BRAND_DISPLAY } from "@/config/branding"
 
+const brandName = `${BRAND_DISPLAY.part1} ${BRAND_DISPLAY.part2}`
+const pageTitle = `Yorumlar — ${brandName}`
+const pageDescription = `Müşteri yorumlarımızı okuyun ve deneyiminizi paylaşın — ${BRANDING.company.legalName}, ${BRANDING.company.city}`
+
 export const metadata: Metadata = {
-  title: `Yorumlar — ${BRAND_DISPLAY.part1} ${BRAND_DISPLAY.part2}`,
-  description: `Müşteri yorumlarımızı okuyun ve deneyiminizi paylaşın — ${BRANDING.company.legalName}`,
+  title: pageTitle,
+  description: pageDescription,
+  alternates: { canonical: "/yorumlar" },
+  openGraph: {
+    title: pageTitle,
+    description: pageDescription,
+    url: "/yorumlar",
+    siteName: brandName,
+    type: "website",
+    locale: "tr_TR",
+    images: [BRANDING.brand.ogImage],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: pageTitle,
+    description: pageDescription,
+  },
 }
 
 export default function YorumlarPage() {

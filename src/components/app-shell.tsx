@@ -19,6 +19,7 @@ import { BookingFlow } from "@/components/public/booking-flow"
 import { ReviewsPage } from "@/components/public/reviews-page"
 import { NailArtPage } from "@/components/public/nail-art-page"
 import { NailStudio } from "@/components/public/nail-studio"
+import { FloatingWhatsApp } from "@/components/public/floating-whatsapp"
 import { LoginScreen, type StaffSession } from "@/components/auth/login-screen"
 import { BRANDING, BRAND_DISPLAY, MODULE_MAP } from "@/config/branding"
 import { REGISTERED_MODULES, NAV_SECTIONS, resolveDefaultView } from "@/lib/module-registry"
@@ -53,14 +54,14 @@ function MobileBottomNav({ view, setView }: { view: PublicView; setView: (v: Pub
               key={item.id}
               onClick={() => setView(item.id)}
               aria-current={active ? "page" : undefined}
-              className="mk-focus relative flex min-h-[60px] flex-1 flex-col items-center justify-center gap-1 px-2 py-2"
+              className="mk-focus relative flex min-h-[60px] flex-1 select-none flex-col items-center justify-center gap-1 px-2 py-2 transition-colors"
             >
-              {active && <span className="absolute top-0 h-[3px] w-10 rounded-b-full bg-primary mk-gold-glow" />}
+              {active && <span className="absolute top-0 h-[3px] w-12 rounded-b-full bg-primary mk-gold-glow" />}
               <item.Icon
-                className={cn("h-5 w-5", active ? "text-brand-text" : "text-muted-foreground")}
+                className={cn("h-5 w-5 transition-colors", active ? "text-brand-text" : "text-muted-foreground")}
                 strokeWidth={active ? 2.2 : 1.8}
               />
-              <span className={cn("text-[10px] font-bold", active ? "text-foreground" : "text-muted-foreground")}>
+              <span className={cn("text-[10px] font-bold transition-colors", active ? "text-foreground" : "text-muted-foreground")}>
                 {item.label}
               </span>
             </button>
@@ -311,6 +312,8 @@ export function AppShell({ initialStage }: { initialStage?: PublicView }) {
           onStudio={() => goPublic("nailstudio")}
         />
         <MobileBottomNav view="landing" setView={goPublic} />
+        {/* V4-c: yüzen WhatsApp — yalnızca herkese açık görünümler */}
+        <FloatingWhatsApp />
       </>
     )
   }
@@ -325,6 +328,7 @@ export function AppShell({ initialStage }: { initialStage?: PublicView }) {
           onStaffLogin={() => setStage("login")}
         />
         <MobileBottomNav view="randevu" setView={goPublic} />
+        <FloatingWhatsApp />
       </>
     )
   }
@@ -339,6 +343,7 @@ export function AppShell({ initialStage }: { initialStage?: PublicView }) {
           onStaffLogin={() => setStage("login")}
         />
         <MobileBottomNav view="yorumlar" setView={goPublic} />
+        <FloatingWhatsApp />
       </>
     )
   }
@@ -355,6 +360,7 @@ export function AppShell({ initialStage }: { initialStage?: PublicView }) {
           onStudio={() => goPublic("nailstudio")}
         />
         <MobileBottomNav view="nailart" setView={goPublic} />
+        <FloatingWhatsApp />
       </>
     )
   }
@@ -369,6 +375,7 @@ export function AppShell({ initialStage }: { initialStage?: PublicView }) {
           onStaffLogin={() => setStage("login")}
         />
         <MobileBottomNav view="nailstudio" setView={goPublic} />
+        <FloatingWhatsApp />
       </>
     )
   }

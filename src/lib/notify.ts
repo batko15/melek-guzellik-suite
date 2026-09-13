@@ -28,11 +28,15 @@ export interface BookingNotificationData {
   notes?: string | null
 }
 
+// Sunucu her zaman İstanbul saatiyle biçimlendirir (UTC sunucularda 3 saatlik kayma olmasın)
+const TZ = { timeZone: "Europe/Istanbul" } as const
+
 const TL_DATE = (d: Date) =>
-  d.toLocaleDateString("tr-TR", { day: "numeric", month: "long", weekday: "long" })
+  d.toLocaleDateString("tr-TR", { ...TZ, day: "numeric", month: "long", weekday: "long" })
 const TL_TIME = (d: Date) =>
-  d.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })
+  d.toLocaleTimeString("tr-TR", { ...TZ, hour: "2-digit", minute: "2-digit" })
 const PARA = (v: number) =>
+  // timeZone yalnızca tarih/saat biçiminde anlamlıdır (NumberFormat seçeneği değildir)
   `${Math.round(v).toLocaleString("tr-TR")} ${BRANDING.locale.currencySymbol}`
 const BRAND = () => BRANDING.brand.nameParts.join(" ")
 

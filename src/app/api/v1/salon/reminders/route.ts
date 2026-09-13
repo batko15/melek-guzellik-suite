@@ -10,9 +10,13 @@
 // POST /api/v1/salon/notifications günlüğe kaydeder → randevu kuyruktan düşer.
 
 import { db } from "@/lib/db"
+import { requireStaff } from "@/lib/auth"
 import { buildMessage, channelUrls } from "@/lib/notify"
 
 export async function GET(request: Request) {
+  const staff = await requireStaff(request)
+  if (!staff.ok) return staff.response
+
   const params = new URL(request.url).searchParams
   const hoursRaw = Number(params.get("hours") ?? 48)
   const hours = Number.isFinite(hoursRaw) ? Math.min(Math.max(hoursRaw, 1), 168) : 48
@@ -20,6 +24,7 @@ export async function GET(request: Request) {
   const now = new Date()
   const until = new Date(now.getTime() + hours * 3600 * 1000)
 
+  try {
   const bookings = await db.booking.findMany({
     where: {
       startAt: { gte: now, lt: until },
@@ -71,4 +76,8 @@ export async function GET(request: Request) {
     hours,
     window: { from: now.toISOString(), until: until.toISOString() },
   })
+  } catch (e) {
+    console.error("[GET reminders]", e)
+    return Response.json({ error: "Hatırlatma kuyruğu yüklenemedi." }, { status: 500 })
+  }
 }

@@ -1,15 +1,20 @@
-// Herkese açık açılış sayfası — Melek'çe Güzellik (V3.1, tamamen Türkçe)
+// Herkese açık açılış sayfası — Melek'çe Güzellik (V5.8, tamamen Türkçe)
 // GERÇEK MARKA: Logo (public/brand/) Navbar · Hero · Footer'da
 // Logo-DNA: Gold-Eck-Ornamente · Rauten-Trenner · «Since 2022» · Samt-Schwarz-Gold
-// Hero + Canlı hava durumu · Hizmetler (Menü-Stil) · Galeri (Filter) · Değerlendirmeler ·
-// Hakkımızda · Çalışma Saatleri · İletişim · İnteraktif Harita
+// Hero + Canlı hava durumu · Hizmetler (Menü-Stil) · Galeri (Filter) · ÖNCESİ & SONRASI (V5.8) ·
+// Değerlendirmeler · Hakkımızda · Çalışma Saatleri · İletişim · İnteraktif Harita
 // Randevu almak ve değerlendirme yazmak için giriş GEREKMEZ.
+// V5.8: framer-motion «Reveal» ile bölümler ekrana girince yumuşakça belirir
+//       (prefers-reduced-motion destekli — hareket azaltılmışsa animasyon yok)
 
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { Instagram, MapPin, Phone, Clock, CalendarCheck, ChevronRight, MessageSquareHeart, ArrowRight, MessageCircle, Navigation, Sparkles, Heart, Crown, Mail, Gift, Copy, Check, User, MessageSquare, Smartphone, Download, Wand2 } from "lucide-react"
+import Image from "next/image"
+import "img-comparison-slider"
+import "img-comparison-slider/dist/styles.css"
+import { Instagram, MapPin, Phone, Clock, CalendarCheck, ChevronRight, MessageSquareHeart, ArrowRight, MessageCircle, Navigation, Sparkles, Heart, Crown, Mail, Gift, Copy, Check, User, MessageSquare, Smartphone, Download, Wand2, ChevronsLeftRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -17,17 +22,68 @@ import { BRANDING, BRAND_DISPLAY } from "@/config/branding"
 import { type SalonService, type GalleryEntry, type ReviewRow, type ReviewSummary, CATEGORY_META, para, minutesLabel, Stars } from "@/lib/salon"
 import { WeatherWidget } from "@/components/weather-widget"
 import { LocationMap } from "@/components/public/location-map"
+import { Reveal } from "@/components/public/reveal"
+
+// ─── img-comparison-slider (Web Component) — React 19 JSX tip bildirimi ───
+// Paket yalnızca ham Web Component sağlar; bu bildirim <img-comparison-slider>
+// etiketini TypeScript için yazılabilir hale getirir (değer: 0–100 maruziyet).
+// Not: Modül genişletme (augmentation) için namespace söz dizimi zorunludur.
+/* eslint-disable @typescript-eslint/no-namespace -- JSX augmentation requires namespace syntax */
+declare module "react" {
+  namespace JSX {
+    interface IntrinsicElements {
+      "img-comparison-slider": React.DetailedHTMLProps<
+        React.HTMLAttributes<HTMLElement>,
+        HTMLElement
+      > & {
+        value?: number
+      }
+    }
+  }
+}
+/* eslint-enable @typescript-eslint/no-namespace */
+
+// ─── V5.8: Öncesi & Sonrası — dönüşüm karşılaştırmaları (görseller public/gallery) ───
+const BEFORE_AFTER = [
+  {
+    id: "klasik-bordo",
+    title: "Klasik Bordo",
+    before: "/gallery/before-bordo.png",
+    after: "/gallery/after-bordo.png",
+    beforeAlt: "Klasik Bordo öncesi — bakımsız ve kırılgan doğal tırnaklar",
+    afterAlt: "Klasik Bordo sonrası — parlak bordo jel tırnaklar",
+  },
+  {
+    id: "fransiz-incisi",
+    title: "Fransız İncisi",
+    before: "/gallery/before-french.png",
+    after: "/gallery/after-french.png",
+    beforeAlt: "Fransız İncisi öncesi — zayıf ve sararmış doğal tırnaklar",
+    afterAlt: "Fransız İncisi sonrası — kusursuz fransız jel tırnaklar",
+  },
+] as const
+
+// ─── «Bugün» — yalnızca istemcide çözülen tarih (SSG/SSR donması + hydration uyarısı olmasın) ───
+const emptySubscribe = () => () => {}
+const getServerToday = (): Date | null => null
+let todayCache: Date | null = null
+const getClientToday = (): Date => (todayCache ??= new Date())
+
+/** useSyncExternalStore tabanlı — hidrasyon güvenli, kademeli render yok. */
+function useToday(): Date | null {
+  return useSyncExternalStore<Date | null>(emptySubscribe, getClientToday, getServerToday)
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // MARKA-BAŞLIK (Sektionen) — Logo-DNA: Raute ◆ + Gold-Linie + Serifen
 // ═══════════════════════════════════════════════════════════════════════════
 
 function SectionHeader({
-  eyebrow, title, accent, description,
-}: { eyebrow: string; title: string; accent?: string; description?: string }) {
+  eyebrow, title, accent, description, align = "center",
+}: { eyebrow: string; title: string; accent?: string; description?: string; align?: "center" | "left" }) {
   return (
-    <div className="mb-10 text-center">
-      <div className="flex items-center justify-center gap-3">
+    <div className={cn("mb-10", align === "center" ? "text-center" : "text-left")}>
+      <div className={cn("flex items-center gap-3", align === "center" && "justify-center")}>
         <span className="mk-gold-line h-px w-8 sm:w-12" />
         <span className="mk-diamond" />
         <span className="text-[10px] font-bold uppercase tracking-[0.32em] text-brand-text sm:text-[11px]">
@@ -36,11 +92,13 @@ function SectionHeader({
         <span className="mk-diamond" />
         <span className="mk-gold-line h-px w-8 sm:w-12" />
       </div>
-      <h2 className="mk-display mt-4 text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
+      <h2 className="mk-display mt-4 text-balance text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
         {title} {accent && <span className="mk-gold-text">{accent}</span>}
       </h2>
       {description && (
-        <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground">{description}</p>
+        <p className={cn("mt-3 max-w-xl text-pretty text-sm leading-relaxed text-muted-foreground", align === "center" && "mx-auto")}>
+          {description}
+        </p>
       )}
     </div>
   )
@@ -109,10 +167,12 @@ export function LandingPage({
   const categories = ["tirnak", "guzellik", "kirpik", "paket"].filter((c) => services.some((s) => s.category === c))
   const galleryCategories = ["tumu", ...Array.from(new Set(galleryAll.map((g) => g.category)))]
   const gallery = galleryFilter === "tumu" ? galleryAll : galleryAll.filter((g) => g.category === galleryFilter)
-  const todayIdx = (new Date().getDay() + 6) % 7
+  // «Bugün» vurgusu yalnızca tarayıcıda hesaplanır — sunucuda tarih sabitlenmez
+  const today = useToday()
+  const todayIdx = today ? (today.getDay() + 6) % 7 : -1
 
   return (
-    <div className="mk-velvet min-h-screen bg-background pb-[76px] md:pb-0">
+    <div className="mk-velvet min-h-screen bg-background pb-24 md:pb-0">
       {/* ═══ Navbar — Gerçek marka monogramı ile ═══ */}
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/88 backdrop-blur-md">
         <div className="mk-gold-line h-[2px] w-full" />
@@ -175,12 +235,12 @@ export function LandingPage({
               <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Gelibolu · Çanakkale</span>
             </div>
 
-            <h1 className="mk-display mt-6 text-4xl font-bold leading-[1.12] tracking-tight sm:text-5xl lg:text-[3.4rem]">
+            <h1 className="mk-display mt-6 text-balance text-4xl font-bold leading-[1.12] tracking-tight sm:text-5xl lg:text-[3.4rem]">
               {landing.heroTitle}
               <br />
               <span className="mk-gold-text">{landing.heroTitleAccent}</span>
             </h1>
-            <p className="mt-6 max-w-lg text-[15px] leading-relaxed text-muted-foreground">
+            <p className="mt-6 max-w-lg text-pretty text-[15px] leading-relaxed text-muted-foreground">
               {landing.heroDescription}
             </p>
 
@@ -258,7 +318,7 @@ export function LandingPage({
                 <figure
                   key={g.id}
                   className={cn(
-                    "mk-gallery-tile mk-photo-frame mk-anim-up group relative overflow-hidden rounded-xl border border-border/60",
+                    "mk-gallery-tile mk-photo-frame mk-anim-up group relative overflow-hidden rounded-2xl border border-border/60",
                     i === 1 && "sm:-translate-y-3",
                     `mk-delay-${i + 1}`,
                   )}
@@ -280,14 +340,16 @@ export function LandingPage({
       )}
 
       {/* ═══ Hizmetler & Fiyatlar — Menü-Stil (noktalı fiyat çizgisi) ═══ */}
-      <section id="hizmetler" className="border-t border-border/60 py-14 lg:py-20">
+      <section id="hizmetler" className="scroll-mt-24 border-t border-border/60 py-14 lg:py-20">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <SectionHeader
-            eyebrow="Hizmetler & Fiyatlar"
-            title="Her kadın için"
-            accent="bakım programları"
-            description="Yüksek kaliteli ürünler, hassas teknik ve isteklerinize ayrılan zaman — klasik manikürden etkileyici kirpiklere kadar."
-          />
+          <Reveal>
+            <SectionHeader
+              eyebrow="Hizmetler & Fiyatlar"
+              title="Her kadın için"
+              accent="bakım programları"
+              description="Yüksek kaliteli ürünler, hassas teknik ve isteklerinize ayrılan zaman — klasik manikürden etkileyici kirpiklere kadar."
+            />
+          </Reveal>
 
           {categories.map((cat) => (
             <div key={cat} className="mb-10 last:mb-0">
@@ -337,42 +399,48 @@ export function LandingPage({
             </div>
           ))}
 
-          <div className="mk-ornament mk-card mt-10 flex flex-col items-center justify-between gap-4 rounded-xl p-6 text-center sm:flex-row sm:text-left">
-            <div>
-              <div className="mk-display text-lg font-bold">Randevunuz için hazır mısınız?</div>
-              <div className="mt-1 text-sm text-muted-foreground">1 dakikada online alın — hizmeti, saati ve tarihi kendiniz seçin. Giriş gerekmez.</div>
+          <Reveal>
+            <div className="mk-ornament mk-card mt-10 flex flex-col items-center justify-between gap-4 rounded-xl p-6 text-center hover:-translate-y-0.5 sm:flex-row sm:text-left">
+              <div>
+                <div className="mk-display text-lg font-bold">Randevunuz için hazır mısınız?</div>
+                <div className="mt-1 text-sm text-muted-foreground">1 dakikada online alın — hizmeti, saati ve tarihi kendiniz seçin. Giriş gerekmez.</div>
+              </div>
+              <Button
+                onClick={onBook}
+                className="mk-gold-glow h-11 shrink-0 rounded-full bg-primary px-6 font-bold text-primary-foreground hover:bg-primary/90"
+              >
+                <CalendarCheck className="mr-1.5 h-4 w-4" /> Hemen Al
+              </Button>
             </div>
-            <Button
-              onClick={onBook}
-              className="mk-gold-glow h-11 shrink-0 rounded-full bg-primary px-6 font-bold text-primary-foreground hover:bg-primary/90"
-            >
-              <CalendarCheck className="mr-1.5 h-4 w-4" /> Hemen Al
-            </Button>
-          </div>
+          </Reveal>
         </div>
       </section>
 
       {/* ═══ V5.4: Hediye Kartı — sevdiklerinize şımartma ═══ */}
-      <section id="hediye-karti" className="border-t border-border/60 py-14 lg:py-20">
+      <section id="hediye-karti" className="scroll-mt-24 border-t border-border/60 py-14 lg:py-20">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <SectionHeader
-            eyebrow="Hediye Kartı"
-            title="Sevdiklerinize"
-            accent="şımartma hediyesi"
-            description="Dijital hediye kartı ile manikürden kirpiklere dilediği bakımı hediye edin — kodu anında oluşturulur, ödeme sonrası aktifleşir."
-          />
+          <Reveal>
+            <SectionHeader
+              eyebrow="Hediye Kartı"
+              title="Sevdiklerinize"
+              accent="şımartma hediyesi"
+              description="Dijital hediye kartı ile manikürden kirpiklere dilediği bakımı hediye edin — kodu anında oluşturulur, ödeme sonrası aktifleşir."
+            />
+          </Reveal>
           <GiftCardSection />
         </div>
       </section>
 
       {/* ═══ Galeri — Kategori filtresi ile ═══ */}
-      <section id="galeri" className="border-t border-border/60 py-14 lg:py-20">
+      <section id="galeri" className="scroll-mt-24 border-t border-border/60 py-14 lg:py-20">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <SectionHeader
-            eyebrow="Galeri"
-            title="Gerçek çalışmalarımız"
-            description="Stüdyomuzdan seçilmiş tırnak sanatı, kirpik ve güzellik uygulamaları — hepsi kendi çalışmalarımız."
-          />
+          <Reveal>
+            <SectionHeader
+              eyebrow="Galeri"
+              title="Gerçek çalışmalarımız"
+              description="Stüdyomuzdan seçilmiş tırnak sanatı, kirpik ve güzellik uygulamaları — hepsi kendi çalışmalarımız."
+            />
+          </Reveal>
 
           {galleryAll.length > 0 && (
             <div className="mb-7 flex flex-wrap items-center justify-center gap-2">
@@ -399,7 +467,7 @@ export function LandingPage({
               <figure
                 key={g.id}
                 className={cn(
-                  "mk-gallery-tile mk-photo-frame mk-anim-up mk-card group relative overflow-hidden rounded-xl",
+                  "mk-gallery-tile mk-photo-frame mk-anim-up mk-card group relative overflow-hidden rounded-2xl",
                   `mk-delay-${Math.min(6, (i % 6) + 1)}`,
                 )}
               >
@@ -437,10 +505,86 @@ export function LandingPage({
         </div>
       </section>
 
-      {/* ═══ Misafir Değerlendirmeleri ═══ */}
-      <section id="yorumlar" className="border-t border-border/60 py-14 lg:py-20">
+      {/* ═══ V5.8: Öncesi & Sonrası — dönüşüm karşılaştırma slider'ları ═══
+          img-comparison-slider (a11y: tabindex + ok tuşları, dokunmatik sürükleme) ═══ */}
+      <section id="oncesi-sonrasi" className="scroll-mt-24 border-t border-border/60 py-14 lg:py-20">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <SectionHeader eyebrow="Değerlendirmeler" title="Misafirlerimiz" accent="ne diyor?" />
+          <Reveal>
+            <SectionHeader
+              eyebrow="Öncesi & Sonrası"
+              title="Farkı kendiniz"
+              accent="görün"
+              description="Kaydırıcıyı sürükleyin — farkı görün ✨ Gerçek dönüşümler, stüdyomuzda elle uygulanan bakımlarla."
+            />
+          </Reveal>
+
+          <div className="grid gap-5 md:grid-cols-2 md:gap-6">
+            {BEFORE_AFTER.map((c, i) => (
+              <Reveal key={c.id} delay={i * 0.12} className="min-w-0">
+                <figure className="mk-card mk-photo-frame h-full overflow-hidden rounded-2xl p-2.5 sm:p-3">
+                  <div className="relative overflow-hidden rounded-xl">
+                    <img-comparison-slider
+                      value={50}
+                      suppressHydrationWarning={true}
+                      className="block w-full"
+                      aria-label={`${c.title} — öncesi ve sonrası karşılaştırması (ok tuşlarıyla da kaydırabilirsiniz)`}
+                      style={
+                        {
+                          "--divider-color": "color-mix(in oklch, var(--brand) 65%, transparent)",
+                          "--divider-width": "2px",
+                          "--divider-shadow": "0 0 12px rgba(0, 0, 0, 0.45)",
+                        } as CSSProperties
+                      }
+                    >
+                      <Image
+                        slot="first"
+                        src={c.before}
+                        alt={c.beforeAlt}
+                        width={1344}
+                        height={768}
+                        sizes="(min-width: 768px) 50vw, 100vw"
+                        className="h-auto w-full select-none"
+                        draggable={false}
+                      />
+                      <Image
+                        slot="second"
+                        src={c.after}
+                        alt={c.afterAlt}
+                        width={1344}
+                        height={768}
+                        sizes="(min-width: 768px) 50vw, 100vw"
+                        className="h-auto w-full select-none"
+                        draggable={false}
+                      />
+                      {/* Özel altın tutamak — bileşen konumlandırır, sürükleme tüm yüzeyde çalışır */}
+                      <span slot="handle" className="mk-compare-handle" aria-hidden="true">
+                        <ChevronsLeftRight className="h-5 w-5" />
+                      </span>
+                    </img-comparison-slider>
+                    <span className="pointer-events-none absolute left-3 top-3 rounded-full border border-border/60 bg-background/70 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-foreground/90 backdrop-blur-md">
+                      Önce
+                    </span>
+                    <span className="pointer-events-none absolute right-3 top-3 rounded-full border border-primary/40 bg-primary/15 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-brand-text backdrop-blur-md">
+                      Sonra
+                    </span>
+                  </div>
+                  <figcaption className="flex items-center justify-between gap-2 px-1.5 pb-0.5 pt-2.5">
+                    <span className="mk-display text-sm font-bold text-foreground">{c.title}</span>
+                    <span className="text-[10px] font-medium text-muted-foreground">Stüdyo çalışması</span>
+                  </figcaption>
+                </figure>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ Misafir Değerlendirmeleri ═══ */}
+      <section id="yorumlar" className="scroll-mt-24 border-t border-border/60 py-14 lg:py-20">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <Reveal>
+            <SectionHeader eyebrow="Değerlendirmeler" title="Misafirlerimiz" accent="ne diyor?" />
+          </Reveal>
           {summary && summary.count > 0 && (
             <div className="mb-8 flex justify-center">
               <div className="inline-flex flex-wrap items-center justify-center gap-3 rounded-full border border-primary/30 bg-primary/8 px-5 py-2.5">
@@ -487,19 +631,22 @@ export function LandingPage({
       </section>
 
       {/* ═══ Hakkımızda ═══ */}
-      <section id="hakkimizda" className="border-t border-border/60 py-14 lg:py-20">
+      <section id="hakkimizda" className="scroll-mt-24 border-t border-border/60 py-14 lg:py-20">
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 sm:px-6 lg:grid-cols-2">
-          <div className="mk-ornament mk-gold-glow-soft overflow-hidden rounded-3xl border border-primary/25">
-            <img
-              src="/gallery/salon-interior.png"
-              alt="Melek'çe Güzellik'te siyah ve altın tonlarında zarif stüdyo iç mekânı"
-              className="aspect-[4/3] w-full object-cover"
-              loading="lazy"
-            />
-          </div>
-          <div>
-            <SectionHeader eyebrow="Hakkımızda" title={landing.aboutTitle} />
-            <div className="-mt-6">
+          <Reveal className="min-w-0">
+            <div className="mk-ornament mk-gold-glow-soft overflow-hidden rounded-3xl border border-primary/25">
+              <img
+                src="/gallery/salon-interior.png"
+                alt="Melek'çe Güzellik'te siyah ve altın tonlarında zarif stüdyo iç mekânı"
+                className="aspect-[4/3] w-full object-cover"
+                loading="lazy"
+              />
+            </div>
+          </Reveal>
+          <Reveal className="min-w-0" delay={0.12}>
+            <div>
+              <SectionHeader eyebrow="Hakkımızda" title={landing.aboutTitle} align="left" />
+              <div>
               <p className="max-w-lg text-[15px] leading-relaxed text-muted-foreground">{landing.aboutText}</p>
               <div className="mt-7 space-y-3">
                 {[
@@ -522,18 +669,20 @@ export function LandingPage({
                 <span className="mk-diamond" />
                 <span className="mk-gold-line h-px w-8" />
               </div>
+              </div>
             </div>
-          </div>
+          </Reveal>
         </div>
       </section>
 
       {/* ═══ Çalışma Saatleri & İletişim ═══ */}
-      <section id="iletisim" className="border-t border-border/60 py-14 lg:py-20">
+      <section id="iletisim" className="scroll-mt-24 border-t border-border/60 py-14 lg:py-20">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <SectionHeader eyebrow="Çalışma Saatleri & İletişim" title="Bizimle" accent="iletişime geçin" />
+          <Reveal>
           <div className="grid gap-6 lg:grid-cols-2">
             {/* Çalışma saatleri */}
-            <div className="mk-card rounded-2xl p-7">
+            <div className="mk-card rounded-2xl p-7 hover:-translate-y-0.5">
               <div className="flex items-center gap-2.5 text-[11px] font-bold uppercase tracking-[0.25em] text-brand-text">
                 <Clock className="h-4 w-4" /> Çalışma Saatleri
               </div>
@@ -557,7 +706,7 @@ export function LandingPage({
             </div>
 
             {/* İletişim */}
-            <div className="mk-card rounded-2xl p-7">
+            <div className="mk-card rounded-2xl p-7 hover:-translate-y-0.5">
               <div className="flex items-center gap-2.5 text-[11px] font-bold uppercase tracking-[0.25em] text-brand-text">
                 <MapPin className="h-4 w-4" /> İletişim & Ulaşım
               </div>
@@ -614,24 +763,28 @@ export function LandingPage({
               </div>
             </div>
           </div>
+          </Reveal>
         </div>
       </section>
 
       {/* ═══ Konum & İnteraktif Harita ═══ */}
-      <section id="konum" className="border-t border-border/60 py-14 lg:py-20">
+      <section id="konum" className="scroll-mt-24 border-t border-border/60 py-14 lg:py-20">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <SectionHeader
-            eyebrow="Konum"
-            title="Bizi"
-            accent="Gelibolu'da bulun"
-            description={`${company.street}, ${company.city} — haritayı yakınlaştırıp yol tarifi alın ya da WhatsApp'tan yazın.`}
-          />
+          <Reveal>
+            <SectionHeader
+              eyebrow="Konum"
+              title="Bizi"
+              accent="Gelibolu'da bulun"
+              description={`${company.street}, ${company.city} — haritayı yakınlaştırıp yol tarifi alın ya da WhatsApp'tan yazın.`}
+            />
+          </Reveal>
 
           <div className="grid items-start gap-6 lg:grid-cols-3">
-            <div className="lg:col-span-2">
+            <div className="min-w-0 lg:col-span-2">
               <LocationMap />
             </div>
-            <div className="mk-card space-y-3 rounded-2xl p-6">
+            <Reveal className="min-w-0" delay={0.12}>
+              <div className="mk-card space-y-3 rounded-2xl p-6 hover:-translate-y-0.5">
               <div className="flex items-center gap-2.5 text-[10px] font-bold uppercase tracking-[0.25em] text-brand-text">
                 <Navigation className="h-4 w-4" /> Yol Tarifi
               </div>
@@ -668,7 +821,8 @@ export function LandingPage({
                   <Instagram className="mr-1.5 h-4 w-4 text-brand-text" /> Instagram'ı Aç
                 </a>
               </Button>
-            </div>
+              </div>
+            </Reveal>
           </div>
         </div>
       </section>
@@ -756,7 +910,7 @@ export function LandingPage({
               </div>
             </div>
 
-            <div className="mt-7 flex items-center gap-2.5 text-[9px] uppercase tracking-[0.3em] text-muted-foreground/50">
+            <div className="mt-7 flex items-center gap-2.5 text-[9px] uppercase tracking-[0.3em] text-muted-foreground/70">
               <span className="mk-since-badge">Since {brand.since}</span>
               <span className="mk-diamond scale-75 opacity-50" />
               <span>Gelibolu</span>
@@ -787,6 +941,12 @@ function GiftCardSection() {
   const [done, setDone] = useState<{ code: string; amount: number } | null>(null)
   const [copied, setCopied] = useState(false)
   const [waUrl, setWaUrl] = useState("")
+
+  // Kopyalama geri bildirimi zamanlayıcısı — bileşen kaldırılırsa temizle
+  const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => () => {
+    if (copyTimer.current) clearTimeout(copyTimer.current)
+  }, [])
 
   const amounts = [500, 750, 1000, 1500]
   const selectedAmount = customAmount ? Math.round(Number(customAmount.replace(/\D/g, "")) || 0) : amount
@@ -835,7 +995,8 @@ function GiftCardSection() {
     try {
       await navigator.clipboard.writeText(done.code)
       setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      if (copyTimer.current) clearTimeout(copyTimer.current)
+      copyTimer.current = setTimeout(() => setCopied(false), 2000)
     } catch {
       // panoya kopyalanamadı — zararsız
     }
@@ -874,7 +1035,7 @@ function GiftCardSection() {
               <div className="font-mono text-[11px] tracking-[0.18em] text-muted-foreground">
                 {done ? done.code : "MELEK-••••-••••"}
               </div>
-              <div className="text-[9px] font-bold uppercase tracking-[0.24em] text-muted-foreground/60">
+              <div className="text-[9px] font-bold uppercase tracking-[0.24em] text-muted-foreground/75">
                 Since {BRANDING.brand.since}
               </div>
             </div>

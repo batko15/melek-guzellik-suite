@@ -104,18 +104,26 @@ export function isPostgres(): boolean {
 /** V5.5 — Supabase-Projekt-Ref aus der Pooler-DATABASE_URL ableiten.
  *  Pooler-Benutzername hat die Form «postgres.<proje-ref>»; für lokale
  *  SQLite oder fremde Postgres-Hosts gilt der Salon-Standard ( unten).
- *  Wird für den Supabase-API-Gesundheitscheck (system-status) genutzt. */
+ *  Wird für den Supabase-API-Gesundheitscheck (system-status) genutzt.
+ *  V5.7 — KEIN hartkodiertes Fremd-Projekt mehr: ist kein Ref ableitbar,
+ *  entscheidet die Env (SUPABASE_API_URL / NEXT_PUBLIC_SUPABASE_URL).
+ *  Fehlt auch sie, wird der Health-Check sauber ÜBERSPRUNGEN (""). */
 export const SUPABASE_PROJECT_REF: string = (() => {
   const url = process.env.DATABASE_URL ?? ""
+  // Pooler-Form: postgres.<ref>@…pooler.supabase.com
   const m = url.match(/^postgres(?:ql)?:\/\/[^:]+\.([a-z0-9]{20,})@/i)
-  if (m && /[a-z0-9]{20,}\.supabase\.co/i.test(url) === false && m[1]) {
-    // Pooler-Form: postgres.<ref>@…pooler.supabase.com
-  }
   if (m?.[1]) return m[1]
   // Fallback: direkte Supabase-Host-Form <ref>.db.supabase.co / <ref>.supabase.co
   const h = url.match(/\/\/([a-z0-9]{20,})\.(?:db\.)?supabase\.co/i)
   if (h?.[1]) return h[1]
-  return "pmudlcpusvwvmejirpsq" // Salon-Melek'çe-Standardprojekt
+  // Env-Pflicht: SUPABASE_API_URL = https://<ref>.supabase.co (oder nackter Ref)
+  const envUrl = (process.env.SUPABASE_API_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").trim()
+  const e = envUrl.match(/([a-z0-9]{20,})\.(?:db\.)?supabase\.co/i)
+  if (e?.[1]) return e[1]
+  if (/^[a-z0-9]{20,}$/i.test(envUrl)) return envUrl.toLowerCase()
+  // Feature sauber überspringen — kein Crash, kein falsches Fremd-Projekt
+  console.info("[bootstrap] SUPABASE_API_URL fehlt und aus DATABASE_URL ist kein Projekt-Ref ableitbar — Supabase-API-Gesundheitscheck wird übersprungen.")
+  return ""
 })()
 
 let bootstrapPromise: Promise<void> | null = null

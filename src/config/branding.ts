@@ -24,9 +24,10 @@ export interface BrandStat {
   label: string
 }
 
+// V5.7.1: BrandUser artık ŞİFRE İÇERMEZ — yalnızca görüntüleme meta verisi.
+// Gerçek doğrulama sunucuda yapılır (src/lib/auth.ts, scrypt hash + oturum çerezi).
 export interface BrandUser {
   username: string
-  password: string
   name: string
   role: string
   initials: string
@@ -157,10 +158,12 @@ export const BRANDING = {
     anonymousLabel: "Misafir",
   },
 
-  // ─── Ekip Girişleri (Ekip portalı için giriş bilgileri) ───────────────────
+  // ─── Ekip kartları (V5.7.1: SADECE görüntüleme — şifre YOK!) ──────────────
+  // Gerçek giriş doğrulaması sunucudadır (src/lib/auth.ts — scrypt hash).
+  // Hesap değişikliği: auth.ts içindeki hash'ler veya STAFF_USERS_JSON env.
   users: [
-    { username: "melek", password: "Melekce!2022", name: "Melek", role: "İşletme Sahibi", initials: "MK" },
-    { username: "admin", password: "Salon!2022", name: "Yönetici", role: "Stüdyo Yöneticisi", initials: "AD" },
+    { username: "melek", name: "Melek", role: "İşletme Sahibi", initials: "MK" },
+    { username: "admin", name: "Yönetici", role: "Stüdyo Yöneticisi", initials: "AD" },
   ] as BrandUser[],
 
   // ─── Alt Bilgi ────────────────────────────────────────────────────────────

@@ -108,6 +108,34 @@ export function nailArtLabel(id: string): string {
   return NAIL_ARTS.find((s) => s.id === id)?.label ?? id
 }
 
+// ─── Enum guard'ları (DB/URL'den gelen değerler asla SVG'yi çökertmesin) ────
+const SHAPE_IDS: NailShape[] = NAIL_SHAPES.map((s) => s.id)
+const LENGTH_IDS: NailLength[] = NAIL_LENGTHS.map((s) => s.id)
+const FINISH_IDS: NailFinish[] = NAIL_FINISHES.map((s) => s.id)
+const ART_IDS: NailArt[] = NAIL_ARTS.map((s) => s.id)
+const COLOR_IDS: string[] = NAIL_COLORS.map((c) => c.id)
+
+export function isDesignShape(v: unknown): v is NailShape {
+  return SHAPE_IDS.includes(v as NailShape)
+}
+export function isDesignLength(v: unknown): v is NailLength {
+  return LENGTH_IDS.includes(v as NailLength)
+}
+export function isDesignFinish(v: unknown): v is NailFinish {
+  return FINISH_IDS.includes(v as NailFinish)
+}
+export function isDesignArt(v: unknown): v is NailArt {
+  return ART_IDS.includes(v as NailArt)
+}
+export function isDesignColor(v: unknown): boolean {
+  return COLOR_IDS.includes(v as string)
+}
+
+/** Liste içinde değilse güvenli varsayılana döner. */
+function pick<T extends string>(list: readonly T[], v: unknown, fallback: T): T {
+  return list.includes(v as T) ? (v as T) : fallback
+}
+
 /** Fiyat tahmini: temel hizmet + efekt/desen ek ücretleri (₺). */
 export function designSurcharge(cfg: NailDesignConfig): number {
   const finish = NAIL_FINISHES.find((f) => f.id === cfg.finish)?.surcharge ?? 0
@@ -125,18 +153,28 @@ export function serializeDesign(cfg: NailDesignConfig): string {
   return JSON.stringify({ v: 1, s: cfg.shape, l: cfg.length, c: cfg.color, f: cfg.finish, a: cfg.art })
 }
 
-/** Booking.design (JSON string) → config. Geçersizse null. */
+/** Varsayılan tasarım — geçersiz alanlar buna döner (markanın imza stili). */
+export const DEFAULT_DESIGN: NailDesignConfig = {
+  shape: "badem",
+  length: "orta",
+  color: "bordo",
+  finish: "parlak",
+  art: "yok",
+}
+
+/** Booking.design (JSON string) → config. JSON bozuksa null; alan değeri
+ *  katalogda yoksa güvenli varsayılana döner (SVG NaN/çökme engellenir). */
 export function parseDesign(raw: string | null | undefined): NailDesignConfig | null {
   if (!raw) return null
   try {
-    const j = JSON.parse(raw) as { v?: number; s?: string; l?: string; c?: string; f?: string; a?: string }
-    if (!j || !j.s || !j.l || !j.c || !j.f || !j.a) return null
+    const j = JSON.parse(raw) as { v?: number; s?: unknown; l?: unknown; c?: unknown; f?: unknown; a?: unknown }
+    if (!j || typeof j !== "object" || !j.s || !j.l || !j.c || !j.f || !j.a) return null
     return {
-      shape: j.s as NailShape,
-      length: j.l as NailLength,
-      color: j.c,
-      finish: j.f as NailFinish,
-      art: j.a as NailArt,
+      shape: pick(SHAPE_IDS, j.s, DEFAULT_DESIGN.shape),
+      length: pick(LENGTH_IDS, j.l, DEFAULT_DESIGN.length),
+      color: pick(COLOR_IDS, j.c, DEFAULT_DESIGN.color),
+      finish: pick(FINISH_IDS, j.f, DEFAULT_DESIGN.finish),
+      art: pick(ART_IDS, j.a, DEFAULT_DESIGN.art),
     }
   } catch {
     return null

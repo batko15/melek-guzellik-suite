@@ -165,8 +165,11 @@ export interface NewBookingNotification {
  * her durumda NotificationLog'a yazılır. Asla throw etmez.
  */
 export async function notifyStudioNewBooking(b: NewBookingNotification): Promise<void> {
-  const TL_DATE = b.startAt.toLocaleDateString("tr-TR", { day: "numeric", month: "long", weekday: "long" })
-  const TL_TIME = b.startAt.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })
+  // Sunucu her zaman İstanbul saatiyle biçimlendirir (UTC sunucularda 3 saatlik kayma olmasın)
+  const TZ = { timeZone: "Europe/Istanbul" } as const
+  const TL_DATE = b.startAt.toLocaleDateString("tr-TR", { ...TZ, day: "numeric", month: "long", weekday: "long" })
+  const TL_TIME = b.startAt.toLocaleTimeString("tr-TR", { ...TZ, hour: "2-digit", minute: "2-digit" })
+  // timeZone yalnızca tarih/saat biçiminde anlamlıdır (NumberFormat seçeneği değildir)
   const PARA = `${Math.round(b.price).toLocaleString("tr-TR")} ${BRANDING.locale.currencySymbol}`
 
   const message = [

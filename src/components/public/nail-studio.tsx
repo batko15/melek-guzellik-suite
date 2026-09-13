@@ -7,7 +7,7 @@
 
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import {
   ChevronLeft, RotateCcw, CalendarCheck, Wand2, Info, MessageCircle, Share2, Check,
@@ -24,7 +24,9 @@ import {
 } from "@/lib/nail-design"
 
 // ─── El geometrisi (SVG koordinatları) ───────────────────────────────────────
-const FINGERS = [
+// rotate: yalnızca baş parmak eğimli — opsiyonel alan (union-access TS2339 için açık tip şart)
+type Finger = { id: string; cx: number; topY: number; w: number; scale: number; rotate?: number }
+const FINGERS: readonly Finger[] = [
   { id: "serce",  cx: 263, topY: 122, w: 25, scale: 0.70 },
   { id: "yuzuk",  cx: 222, topY: 88,  w: 29, scale: 0.92 },
   { id: "orta",   cx: 181, topY: 74,  w: 30, scale: 1.00 },
@@ -82,7 +84,8 @@ function Nail({
   fi: number; cx: number; topY: number; w: number; scale: number; rotate?: number
   cfg: NailDesignConfig; uid: string
 }) {
-  const h = Math.round(LENGTH_H[cfg.length] * scale)
+  // Fallback «orta»: DB/Store'dan bozuk boy gelirse NaN yerine güvenli boy (SVG paths asla NaN olmasın)
+  const h = Math.round((LENGTH_H[cfg.length] ?? LENGTH_H.orta) * scale)
   const color = nailColorById(cfg.color).hex
   const dark = shade(color, 0.55)
   const lighter = shade(color, 1.25)
@@ -389,11 +392,18 @@ export function NailStudio({
     window.open(`https://wa.me/${(BRANDING.company.whatsapp ?? BRANDING.company.phone).replace(/\D/g, "")}?text=${text}`, "_blank", "noopener,noreferrer")
   }
 
+  // Paylaş geri bildirimi zamanlayıcısı — bileşen kaldırılırsa temizle
+  const shareTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => () => {
+    if (shareTimer.current) clearTimeout(shareTimer.current)
+  }, [])
+
   const shareCopy = async () => {
     try {
       await navigator.clipboard.writeText(`💅 Canlı Nail Studio tasarımım: ${label} — ${window.location.origin}/nailstudio`)
       setShared(true)
-      setTimeout(() => setShared(false), 2000)
+      if (shareTimer.current) clearTimeout(shareTimer.current)
+      shareTimer.current = setTimeout(() => setShared(false), 2000)
     } catch { /* pano yoksa sessizce yut */ }
   }
 
@@ -487,6 +497,7 @@ export function NailStudio({
             <section aria-label="Hazır şablonlar" className="mk-anim-in">
               <div className="mb-3 flex items-center justify-between">
                 <h2 className="mk-display text-sm font-bold text-foreground">Hazır Şablonlar</h2>
+                <div className="mk-gold-line mx-3 h-px flex-1" aria-hidden="true" />
                 <button
                   onClick={() => setCfg(NAIL_PRESETS[0].config)}
                   className="mk-focus flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
@@ -496,7 +507,8 @@ export function NailStudio({
               </div>
               <div className="mk-scroll -mx-1 flex gap-2 overflow-x-auto px-1 pb-2">
                 {NAIL_PRESETS.map((p) => {
-                  const active = JSON.stringify(p.config) === JSON.stringify(cfg)
+                  // Kanonik serileştirme ile karşılaştır (JSON.stringify key-sırasına kırılgandır)
+                  const active = serializeDesign(p.config) === serializeDesign(cfg)
                   return (
                     <button
                       key={p.label}
@@ -522,7 +534,10 @@ export function NailStudio({
 
             {/* Şekil */}
             <section aria-label="Tırnak şekli" className="mk-anim-in">
-              <h2 className="mk-display mb-3 text-sm font-bold text-foreground">1 · Şekil</h2>
+              <div className="mb-3 flex items-center gap-3">
+                <h2 className="mk-display text-sm font-bold text-foreground">1 · Şekil</h2>
+                <div className="mk-gold-line h-px flex-1" aria-hidden="true" />
+              </div>
               <div className="flex flex-wrap gap-2">
                 {NAIL_SHAPES.map((s) => (
                   <Chip key={s.id} active={cfg.shape === s.id} onClick={() => patch({ shape: s.id })} title={s.hint}>
@@ -534,7 +549,10 @@ export function NailStudio({
 
             {/* Boy */}
             <section aria-label="Tırnak boyu" className="mk-anim-in">
-              <h2 className="mk-display mb-3 text-sm font-bold text-foreground">2 · Boy</h2>
+              <div className="mb-3 flex items-center gap-3">
+                <h2 className="mk-display text-sm font-bold text-foreground">2 · Boy</h2>
+                <div className="mk-gold-line h-px flex-1" aria-hidden="true" />
+              </div>
               <div className="flex flex-wrap gap-2">
                 {NAIL_LENGTHS.map((l) => (
                   <Chip key={l.id} active={cfg.length === l.id} onClick={() => patch({ length: l.id })} title={l.hint}>
@@ -546,9 +564,12 @@ export function NailStudio({
 
             {/* Renk */}
             <section aria-label="Renk" className="mk-anim-in">
-              <h2 className="mk-display mb-3 text-sm font-bold text-foreground">
-                3 · Renk <span className="ml-1 text-[11px] font-normal text-muted-foreground">— {nailColorById(cfg.color).label}</span>
-              </h2>
+              <div className="mb-3 flex items-center gap-3">
+                <h2 className="mk-display text-sm font-bold text-foreground">
+                  3 · Renk <span className="ml-1 text-[11px] font-normal text-muted-foreground">— {nailColorById(cfg.color).label}</span>
+                </h2>
+                <div className="mk-gold-line h-px flex-1" aria-hidden="true" />
+              </div>
               <div className="flex flex-wrap gap-2.5">
                 {NAIL_COLORS.map((c) => (
                   <button
@@ -572,7 +593,10 @@ export function NailStudio({
 
             {/* Efekt */}
             <section aria-label="Efekt" className="mk-anim-in">
-              <h2 className="mk-display mb-3 text-sm font-bold text-foreground">4 · Efekt</h2>
+              <div className="mb-3 flex items-center gap-3">
+                <h2 className="mk-display text-sm font-bold text-foreground">4 · Efekt</h2>
+                <div className="mk-gold-line h-px flex-1" aria-hidden="true" />
+              </div>
               <div className="flex flex-wrap gap-2">
                 {NAIL_FINISHES.map((f) => (
                   <Chip key={f.id} active={cfg.finish === f.id} onClick={() => patch({ finish: f.id })} title={f.hint}>
@@ -584,7 +608,10 @@ export function NailStudio({
 
             {/* Nail Art */}
             <section aria-label="Nail art" className="mk-anim-in">
-              <h2 className="mk-display mb-3 text-sm font-bold text-foreground">5 · Nail Art</h2>
+              <div className="mb-3 flex items-center gap-3">
+                <h2 className="mk-display text-sm font-bold text-foreground">5 · Nail Art</h2>
+                <div className="mk-gold-line h-px flex-1" aria-hidden="true" />
+              </div>
               <div className="flex flex-wrap gap-2">
                 {NAIL_ARTS.map((a) => (
                   <Chip key={a.id} active={cfg.art === a.id} onClick={() => patch({ art: a.id })} title={a.hint}>

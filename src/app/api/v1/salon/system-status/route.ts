@@ -13,6 +13,7 @@
 // kart «duraklatılmış» uyarısı gösterir (sahip Supabase'de Restore tıklar).
 
 import { db } from "@/lib/db"
+import { requireStaff } from "@/lib/auth"
 import { isPostgres, SUPABASE_PROJECT_REF } from "@/lib/db-bootstrap"
 import { BRANDING } from "@/config/branding"
 import { rateLimit, clientIp, tooManyRequests } from "@/lib/rate-limit"
@@ -61,6 +62,11 @@ async function pingSupabase(baseUrl: string): Promise<{
 }
 
 export async function GET(request: Request) {
+  // V5.7.1: yalnızca ekip oturumu — altyapı ayrıntıları (DB URL, proje ref)
+  // herkese açık değil.
+  const staff = await requireStaff(request)
+  if (!staff.ok) return staff.response
+
   // Hız sınırı: izleme paneli 10 req / dakika / IP
   const rl = rateLimit(`system-status:${clientIp(request)}`, 10, 60_000)
   if (!rl.ok) return tooManyRequests(rl.retryAfterSec)

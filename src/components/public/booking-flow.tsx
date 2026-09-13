@@ -8,7 +8,7 @@
 
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import confetti from "canvas-confetti"
 import {
@@ -33,6 +33,17 @@ type Step = 0 | 1 | 2
 
 const DATE_FMT = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+
+// ─── «Bugün» — yalnızca istemcide çözülen tarih (SSG donması + hydration uyarısı olmasın) ───
+const emptySubscribe = () => () => {}
+const getServerToday = (): Date | null => null
+let todayCache: Date | null = null
+const getClientToday = (): Date => (todayCache ??= new Date())
+
+/** useSyncExternalStore tabanlı — hidrasyon güvenli, kademeli render yok. */
+function useToday(): Date | null {
+  return useSyncExternalStore<Date | null>(emptySubscribe, getClientToday, getServerToday)
+}
 
 export function BookingFlow({
   onBack, onReviews, onStaffLogin,
@@ -95,16 +106,18 @@ export function BookingFlow({
   const [cat, setCat] = useState<string>("tirnak")
 
   // Önümüzdeki günler (yalnızca açık günler, en fazla 10)
+  // «Bugün» tarayıcıda hesaplanır — sunucuda donmuş tarih + hydration uyarısı olmasın
+  const today = useToday()
   const days = useMemo(() => {
+    if (!today) return []
     const list: Date[] = []
-    const today = new Date()
     for (let i = 0; i < 21 && list.length < 10; i++) {
       const d = new Date(today)
       d.setDate(d.getDate() + i)
       if (isOpenDay(d)) list.push(d)
     }
     return list
-  }, [])
+  }, [today])
 
   // Seçilen günün dolu blokları
   const { data: availData } = useQuery({
@@ -275,7 +288,7 @@ export function BookingFlow({
           <TabsContent value="yeni">
             {/* ═══ Başarı ekranı ═══ */}
             {done ? (
-              <div className="mk-card mk-anim-up mx-auto max-w-md rounded-2xl p-8 text-center">
+              <div className="mk-card mk-anim-up mx-auto max-w-md rounded-2xl p-6 text-center sm:p-8">
                 <div className="mk-gold-glow mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-primary/40 bg-primary/10">
                   <PartyPopper className="h-8 w-8 text-brand-text" strokeWidth={1.6} />
                 </div>
@@ -517,7 +530,7 @@ export function BookingFlow({
                                   "mk-focus h-11 rounded-lg border font-mono text-sm font-bold transition-all",
                                   active && "mk-gold-glow border-primary bg-primary text-primary-foreground",
                                   !active && free && "border-border/70 bg-card text-foreground hover:border-primary/50",
-                                  !free && "cursor-not-allowed border-border/40 bg-secondary/30 text-muted-foreground/40 line-through",
+                                  !free && "cursor-not-allowed border-border/40 bg-secondary/30 text-muted-foreground/60 line-through",
                                 )}
                               >
                                 {key}
@@ -811,7 +824,7 @@ function MyBookings() {
                   <h3 className="mb-2.5 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Yaklaşan randevular</h3>
                   <div className="space-y-2.5">
                     {upcoming.map((b) => (
-                      <div key={b.id} className="mk-card rounded-xl p-4">
+                      <div key={b.id} className="mk-card rounded-xl p-4 hover:-translate-y-0.5">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
                             <div className="mk-display text-sm font-bold text-foreground">{b.service.name}</div>

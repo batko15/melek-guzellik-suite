@@ -230,7 +230,8 @@
 .mk-card {
   border: 1px solid var(--border);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.022), rgba(255, 255, 255, 0)), var(--card);
-  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+  /* translate = Tailwind-4-Utility (hover:-translate-y-0.5) — sanfter Karten-Lift */
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, translate 0.3s ease;
 }
 .mk-card:hover {
   border-color: color-mix(in oklch, var(--brand) 35%, var(--border));
@@ -465,4 +466,94 @@ button, a, [role="button"], [role="tab"], summary, input, select, textarea {
   background: rgba(12, 10, 8, 0.75);
   color: var(--muted-foreground);
   font-size: 9px;
+}
+
+/* ═══ V5.8 — Öncesi & Sonrası karşılaştırma slider'ı (img-comparison-slider) ═══ */
+/* Özel altın tutamak: bileşen [slot="handle"] öğesini ayırıcıya kendisi ortalar */
+.mk-compare-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 9999px;
+  border: 1.5px solid color-mix(in oklch, var(--brand) 85%, transparent);
+  background: color-mix(in oklch, var(--brand) 22%, transparent);
+  color: var(--brand-text);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5), 0 0 14px color-mix(in oklch, var(--brand) 25%, transparent);
+}
+
+/* Klavye odağında marka renkli odak halkası (paketin webkit-ring yerine) */
+img-comparison-slider:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* ═══ V5.8 — yet-another-react-lightbox: Velvet-Theme cilası ═══
+   (Ana tema renkleri bileşende --yarl__* CSS değişkenleriyle verilir —
+    burada yalnızca ince, tamamlayıcı dokunuşlar) */
+.yarl__counter {
+  letter-spacing: 0.14em;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.7);
+}
+
+/* Slayt görsellerine mk-photo-frame hissi: koyu gölge + ince altın çerçeve */
+.yarl__slide img {
+  box-shadow:
+    0 12px 48px -12px rgba(0, 0, 0, 0.7),
+    0 0 0 1px color-mix(in oklch, var(--brand) 22%, transparent);
+}
+
+/* ═══ V5.9 — Layout-Politur: Scroll, Fokus & Reduced-Motion ═══════════════
+   (Vorhandene mk-* Utilities bleiben unangetastet — nur Ergänzungen) */
+
+/* Sanfter Ankersprung: Sticky-Navbar (h-16) überlappt Sektionsanker nicht */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Feines, gold-getöntes Projekt-Scrollbar-Styling (Desktop) —
+   .mk-scroll behält via Klassenspezifität seine eigenen 8px-Regeln */
+html {
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: color-mix(in oklch, var(--brand) 32%, oklch(0.3 0.015 78)) transparent;
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: color-mix(in oklch, var(--brand) 32%, oklch(0.3 0.015 78));
+  border-radius: 999px;
+  border: 2px solid transparent; /* schmaler Samt-Spalt zum Track */
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklch, var(--brand) 55%, oklch(0.35 0.02 78));
+  background-clip: padding-box;
+}
+
+/* prefers-reduced-motion: dekorative Marken-Animationen aus, smooth-scroll aus.
+   (Bewusst ZIELGERICHTET statt global *: Lade-Spinner/Pulse-Skeletons bleiben funktional) */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .mk-anim-up,
+  .mk-anim-in,
+  .mk-anim-right,
+  .mk-anim-blink,
+  .mk-anim-pulse,
+  .mk-shimmer,
+  .mk-logo-sheen::before,
+  .mk-gallery-tile img,
+  .mk-btn-lift {
+    animation: none !important;
+    transition: none !important;
+  }
 }

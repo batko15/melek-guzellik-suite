@@ -8,7 +8,7 @@ import { ArrowLeft, User, Lock, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { BRANDING, BRAND_DISPLAY, type BrandUser } from "@/config/branding"
+import { BRANDING, BRAND_DISPLAY } from "@/config/branding"
 
 export interface StaffSession {
   role: "staff"
@@ -31,20 +31,41 @@ export function LoginScreen({
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
 
-  const submitStaff = (e?: React.FormEvent) => {
+  // V5.7.1: Gerçek sunucu girişi — şifre doğrulaması API'de (scrypt),
+  // oturum HttpOnly çerezle kurulur. İstemcide şifre kontrolü YOK.
+  const submitStaff = async (e?: React.FormEvent) => {
     e?.preventDefault()
     setError("")
-    const found: BrandUser | undefined = BRANDING.users.find(
-      (u) => u.username === username.trim().toLowerCase() && u.password === password,
-    )
-    if (!found) {
-      setError("Kullanıcı adı veya şifre hatalı.")
-      return
-    }
     setLoading(true)
-    setTimeout(() => {
-      onStaffLogin({ role: "staff", username: found.username, name: found.name, roleLabel: found.role, initials: found.initials })
-    }, 400)
+    try {
+      const res = await fetch("/api/v1/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ username: username.trim(), password }),
+      })
+      if (!res.ok) {
+        setError("Kullanıcı adı veya şifre hatalı.")
+        return
+      }
+      const account = (await res.json()) as {
+        username: string
+        name: string
+        roleLabel: string
+        initials: string
+      }
+      onStaffLogin({
+        role: "staff",
+        username: account.username,
+        name: account.name,
+        roleLabel: account.roleLabel,
+        initials: account.initials,
+      })
+    } catch {
+      setError("Bağlantı hatası, tekrar deneyin.")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (

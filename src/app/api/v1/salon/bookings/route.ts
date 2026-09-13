@@ -1,19 +1,32 @@
-// Randevu API'si (V3 — Rezervasyon Merkezi)
-// GET    /api/v1/salon/bookings?phone=…              — misafir: kendi randevuları
-// GET    /api/v1/salon/bookings?from=…&to=…&status=… — ekip: tüm randevular
-// POST   /api/v1/salon/bookings                      — HERKES randevu alabilir (ad + telefon)
-// PATCH  /api/v1/salon/bookings                      — ekip: durum değiştir · misafir: telefon ile iptal
+// Randevu API'si (V3 — Rezervasyon Merkezi · V5.7.1 güvenlik güncellemesi)
+// GET    /api/v1/salon/bookings?phone=…              — misafir: kendi randevuları (hız sınırı + küçültülmüş alanlar)
+// GET    /api/v1/salon/bookings?from=…&to=…&status=… — ekip (oturum): tüm randevular
+// POST   /api/v1/salon/bookings                      — HERKES randevu alabilir (ad + telefon); ekip alanları yalnızca oturumla
+// PATCH  /api/v1/salon/bookings                      — ekip: durum değiştir · misafir: telefon ile SADECE iptal
 // PUT    /api/v1/salon/bookings                      — ekip: TAM DÜZENLEME (hizmet, tarih, süre, fiyat, müşteri, notlar, durum)
 // DELETE /api/v1/salon/bookings?id=…                 — ekip: randevuyu kalıcı sil
+//
+// V5.7.1 GÜVENLİK:
+//  • Oturum yoksa: GET yalnızca ?phone= ile (KVKK — küçültülmüş alanlar),
+//    PATCH yalnızca kendi randevusunu iptal (telefon eşleşmesi), PUT/DELETE kapalı.
+//  • Çakışma kontrolü + oluşturma TEK Seriştirilebilir işlemde (W1 — yarış koşulu yok).
+//  • Sadakat puanı koşullu updateMany ile bir kez verilir (W3 — çift puan yok).
 
 import { db } from "@/lib/db"
+import { requireStaff } from "@/lib/auth"
 import { rateLimit, clientIp, tooManyRequests } from "@/lib/rate-limit"
 import { sendBookingNotification, buildMessage, type NotifyKind } from "@/lib/notify"
 import { notifyStudioNewBooking, notifyCustomer } from "@/lib/notify-send"
 import { phoneDigits, canonicalPhone } from "@/lib/phone"
+import { dbUnavailable, isDbInitError } from "@/lib/api-errors"
 
 const STATUS_ACTIVE = ["bekliyor", "onaylandi"]
 const digits = phoneDigits
+
+// Prisma «kayıt bulunamadı» hatası (P2025) — 404 dönmeli, 500 değil
+function isRecordNotFound(e: unknown): boolean {
+  return String((e as { code?: string })?.code ?? "") === "P2025"
+}
 
 // V4: Sadakat kuralı — tamamlanan her randevu için 100₺ başına 1 puan (en az 1)
 // 10 puan = dijital damgalı kartta ödül (indirim)
@@ -48,6 +61,21 @@ interface BookingRow {
     sensitive: boolean
     loyaltyPoints: number
   }
+}
+
+/** Misafir (telefon sorgusu) yanıtı — yalnızca kendi kartında görülen alanlar.
+ *  KVKK/GDPR: müşteri profili (e-posta, alerji, hassasiyet, sadakat), ekip notu,
+ *  depozito, iç zaman damgaları ASLA gönderilmez. */
+interface GuestBookingRow {
+  id: string
+  startAt: string
+  durationMin: number
+  priceChf: number
+  status: string
+  notes: string | null
+  design: string | null
+  staffName: string | null
+  service: { name: string; category: string }
 }
 
 const SELECT = {
@@ -109,28 +137,50 @@ function toRow(b: DbBooking): BookingRow {
   }
 }
 
-/** V4: Randevu «tamamlandı»ğunda sadakat puanı kazandırır (bir kez). */
+function toGuestRow(b: BookingRow): GuestBookingRow {
+  return {
+    id: b.id,
+    startAt: b.startAt,
+    durationMin: b.durationMin,
+    priceChf: b.priceChf,
+    status: b.status,
+    notes: b.notes,
+    design: b.design,
+    staffName: b.staffName,
+    service: { name: b.service.name, category: b.service.category },
+  }
+}
+
+/** V4/W3: Randevu «tamamlandı»ğunda sadakat puanı kazandırır — TEK KEZ.
+ *  Koşullu updateMany (loyaltyAwarded=false → true) atomik hak alır; paralel
+ *  isteklerden yalnızca biri count=1 görür ve puanı verir (çift sayım yok). */
 async function awardLoyaltyIfNeeded(bookingId: string): Promise<{ awarded: number; total: number } | null> {
-  const b = await db.booking.findUnique({
-    where: { id: bookingId },
-    include: { customer: { select: { id: true, loyaltyPoints: true } } },
+  return db.$transaction(async (tx) => {
+    const b = await tx.booking.findUnique({
+      where: { id: bookingId },
+      select: { id: true, status: true, priceChf: true, loyaltyAwarded: true, customerId: true },
+    })
+    if (!b || b.status !== "tamamlandi" || b.loyaltyAwarded) return null
+    const claimed = await tx.booking.updateMany({
+      where: { id: b.id, loyaltyAwarded: false },
+      data: { loyaltyAwarded: true },
+    })
+    if (claimed.count === 0) return null // başka istek az önce puanı verdi
+    const points = loyaltyPointsForPrice(b.priceChf)
+    await tx.loyaltyLog.create({
+      data: {
+        customerId: b.customerId,
+        points,
+        reason: `Randevu tamamlandı — ${b.priceChf} ₺`,
+        bookingId: b.id,
+      },
+    })
+    const updated = await tx.salonCustomer.update({
+      where: { id: b.customerId },
+      data: { loyaltyPoints: { increment: points } },
+    })
+    return { awarded: points, total: updated.loyaltyPoints }
   })
-  if (!b || b.status !== "tamamlandi" || b.loyaltyAwarded) return null
-  const points = loyaltyPointsForPrice(b.priceChf)
-  await db.loyaltyLog.create({
-    data: {
-      customerId: b.customer.id,
-      points,
-      reason: `Randevu tamamlandı — ${b.priceChf} ₺`,
-      bookingId: b.id,
-    },
-  })
-  const updated = await db.salonCustomer.update({
-    where: { id: b.customer.id },
-    data: { loyaltyPoints: { increment: points } },
-  })
-  await db.booking.update({ where: { id: b.id }, data: { loyaltyAwarded: true } })
-  return { awarded: points, total: updated.loyaltyPoints }
 }
 
 async function listBookings(params: URLSearchParams): Promise<BookingRow[]> {
@@ -167,8 +217,35 @@ async function listBookings(params: URLSearchParams): Promise<BookingRow[]> {
 
 export async function GET(request: Request) {
   const params = new URL(request.url).searchParams
-  const bookings = await listBookings(params)
-  return Response.json({ bookings, count: bookings.length })
+  const phone = params.get("phone")
+
+  // ── Ekip (oturum): tam liste ──
+  const staff = await requireStaff(request)
+  if (staff.ok) {
+    try {
+      const bookings = await listBookings(params)
+      return Response.json({ bookings, count: bookings.length })
+    } catch (e) {
+      if (isDbInitError(e)) return dbUnavailable(String((e as Error)?.message ?? e))
+      console.error("[GET bookings]", e)
+      return Response.json({ error: "Randevular yüklenemedi." }, { status: 500 })
+    }
+  }
+
+  // ── Misafir: YALNIZCA kendi telefonu ile sorgu (hız sınırı 8/dk/IP) ──
+  if (!phone) return staff.response // 401
+  const rl = rateLimit(`booking-lookup:${clientIp(request)}`, 8, 60 * 1000)
+  if (!rl.ok) return tooManyRequests(rl.retryAfterSec)
+
+  try {
+    const bookings = await listBookings(new URLSearchParams({ phone }))
+    const rows = bookings.map(toGuestRow)
+    return Response.json({ bookings: rows, count: rows.length })
+  } catch (e) {
+    if (isDbInitError(e)) return dbUnavailable(String((e as Error)?.message ?? e))
+    console.error("[GET bookings:guest]", e)
+    return Response.json({ error: "Randevular yüklenemedi." }, { status: 500 })
+  }
 }
 
 // ─── Yeni randevu — HERKES, giriş gerekmez ──────────────────────────────────
@@ -214,10 +291,12 @@ export async function POST(request: Request) {
     }
 
     // Randevu tarihi geçmişte olamaz ve en fazla 60 gün ileride olabilir
-    // (istisna: ekip geçmişe düzeltme kaydı girebilir)
+    // (istisna: ekip geçmişe düzeltme kaydı girebilir — yalnızca GEÇERLİ oturumla;
+    //  V5.7.1: byStaff artık istemci iddiası DEĞİL, sunucu oturumuyla doğrulanır)
+    const staffSession = await requireStaff(request)
+    const isStaff = staffSession.ok && body.byStaff === true
     const start = new Date(body.startAt)
     const now = new Date()
-    const isStaff = body.byStaff === true
     if (Number.isNaN(start.getTime())) {
       return Response.json({ error: "Geçersiz tarih." }, { status: 400 })
     }
@@ -228,61 +307,71 @@ export async function POST(request: Request) {
       return Response.json({ error: "Randevu en fazla 60 gün ileride alınabilir." }, { status: 400 })
     }
 
-    // Müşteriyi telefon numarasına göre bul veya oluştur (girişsiz)
-    const customer = await db.salonCustomer.upsert({
-      where: { phone },
-      update: { name, ...(email ? { email } : {}) },
-      create: { name, phone, email: email || null },
-    })
+    // V4: Depozito & ekip ataması — yalnızca ekip (oturumlu) belirleyebilir
+    const deposit = isStaff ? Math.min(Math.max(body.deposit ?? 0, 0), 100000) : 0
+    let staffId: string | null = null
+    if (isStaff && body.staffId) {
+      const member = await db.staffMember.findUnique({ where: { id: body.staffId } })
+      if (member) staffId = member.id
+    }
 
-    // Çakışma kontrolü (yalnızca bekleyen/onaylı randevular)
+    // ── W1: Müşteri + çakışma kontrolü + oluşturma TEK işlemde ──
+    // (check-then-act yarış koşulu kaldırıldı: paralel istekler aynı slotu alamaz)
     const end = new Date(start.getTime() + service.durationMin * 60000)
     const dayStart = new Date(start)
     dayStart.setHours(0, 0, 0, 0)
     const dayEnd = new Date(dayStart)
     dayEnd.setDate(dayEnd.getDate() + 1)
 
-    const overlapping = await db.booking.findMany({
-      where: { startAt: { gte: dayStart, lt: dayEnd }, status: { in: STATUS_ACTIVE } },
-      select: { startAt: true, durationMin: true },
-    })
-    const clash = overlapping.some((b) => {
-      const bEnd = new Date(b.startAt.getTime() + b.durationMin * 60000)
-      return b.startAt < end && bEnd > start
-    })
-    if (clash) {
+    const outcome = await db.$transaction(
+      async (tx) => {
+        const customer = await tx.salonCustomer.upsert({
+          where: { phone },
+          update: { name, ...(email ? { email } : {}) },
+          create: { name, phone, email: email || null },
+        })
+
+        // Çakışma kontrolü (yalnızca bekleyen/onaylı randevular)
+        const overlapping = await tx.booking.findMany({
+          where: { startAt: { gte: dayStart, lt: dayEnd }, status: { in: STATUS_ACTIVE } },
+          select: { startAt: true, durationMin: true },
+        })
+        const clash = overlapping.some((b) => {
+          const bEnd = new Date(b.startAt.getTime() + b.durationMin * 60000)
+          return b.startAt < end && bEnd > start
+        })
+        if (clash) return { clash: true as const }
+
+        const booking = await tx.booking.create({
+          data: {
+            customerId: customer.id,
+            serviceId: service.id,
+            startAt: start,
+            durationMin: service.durationMin,
+            priceChf: service.priceChf,
+            status: "bekliyor",
+            notes: body.notes?.trim() || null,
+            staffNote: isStaff ? body.staffNote?.trim() || null : null,
+            // V5.7: Canlı Nail Studio tasarımı (kompakt JSON — en fazla 500 karakter)
+            design: body.design && body.design.trim().length > 0 && body.design.length <= 500 ? body.design.trim() : null,
+            deposit,
+            staffId,
+          },
+          ...SELECT,
+        })
+        return { clash: false as const, customer, booking }
+      },
+      { isolationLevel: "Serializable" },
+    )
+
+    if (outcome.clash) {
       return Response.json(
         { error: "Bu saat maalesef dolu — lütfen başka bir saat seçin." },
         { status: 409 },
       )
     }
 
-    // V4: Depozito & ekip ataması — yalnızca ekip belirleyebilir
-    const isStaff2 = body.byStaff === true
-    const deposit = isStaff2 ? Math.min(Math.max(body.deposit ?? 0, 0), 100000) : 0
-    let staffId: string | null = null
-    if (isStaff2 && body.staffId) {
-      const member = await db.staffMember.findUnique({ where: { id: body.staffId } })
-      if (member) staffId = member.id
-    }
-
-    const booking = await db.booking.create({
-      data: {
-        customerId: customer.id,
-        serviceId: service.id,
-        startAt: start,
-        durationMin: service.durationMin,
-        priceChf: service.priceChf,
-        status: "bekliyor",
-        notes: body.notes?.trim() || null,
-        staffNote: isStaff ? body.staffNote?.trim() || null : null,
-        // V5.7: Canlı Nail Studio tasarımı (kompakt JSON — en fazla 500 karakter)
-        design: body.design && body.design.trim().length > 0 && body.design.length <= 500 ? body.design.trim() : null,
-        deposit,
-        staffId,
-      },
-      ...SELECT,
-    })
+    const { customer, booking } = outcome
 
     // Bildirim kancası: WhatsApp onay bağlantısı üret (konsol logu + istemci butonu)
     const notification = sendBookingNotification({
@@ -328,7 +417,8 @@ export async function POST(request: Request) {
       },
       { status: 201 },
     )
-  } catch {
+  } catch (e) {
+    console.error("[POST bookings]", e)
     return Response.json({ error: "Randevu oluşturulamadı." }, { status: 500 })
   }
 }
@@ -336,6 +426,7 @@ export async function POST(request: Request) {
 // ─── Durum değişikliği (PATCH) ──────────────────────────────────────────────
 // Ekip:  { id, status }                       — tüm geçişler (bekliyor|onaylandi|tamamlandi|iptal|gelmedi)
 // Misafir: { id, status: "iptal", phone }     — yalnızca kendi randevusunu iptal edebilir
+// V5.7.1: oturum YOKSA ve phone gönderilmemişse → 401 (misafir yolu ıskalamaz)
 const ALLOWED_STATUS = ["bekliyor", "onaylandi", "tamamlandi", "iptal", "gelmedi"]
 
 /** Durum değişince müşteriye gönderilecek hazır bildirim mesajını üretir. */
@@ -359,6 +450,11 @@ export async function PATCH(request: Request) {
       return Response.json({ error: "Randevu kimliği ve geçerli bir durum gerekli." }, { status: 400 })
     }
 
+    const staff = await requireStaff(request)
+
+    // V5.7.1: yetkisiz istek — ne oturum ne telefon doğrulaması → erişim yok
+    if (!staff.ok && !body.phone) return staff.response
+
     const existing = await db.booking.findUnique({
       where: { id: body.id },
       ...SELECT,
@@ -367,14 +463,14 @@ export async function PATCH(request: Request) {
       return Response.json({ error: "Randevu bulunamadı." }, { status: 404 })
     }
 
-    // Misafir-iptali: telefon numarası eşleşmeli ve yalnızca iptal mümkün
-    if (body.phone) {
+    // Misafir-iptali (oturum yok): telefon numarası eşleşmeli ve yalnızca iptal mümkün
+    if (!staff.ok) {
       if (body.status !== "iptal") {
         return Response.json({ error: "Randevu yalnızca iptal edilebilir." }, { status: 403 })
       }
       // DÜZELTME (V3): biçim farklarına karşı normalize rakamlarla karşılaştır
       // («+90 532 111 22 33» ≡ «0532 111 22 33» ≡ «532 111 22 33»)
-      if (phoneDigits(existing.customer.phone) !== phoneDigits(body.phone.trim())) {
+      if (phoneDigits(existing.customer.phone) !== phoneDigits(body.phone!.trim())) {
         return Response.json({ error: "Bu randevu bu telefon numarasına ait değil." }, { status: 403 })
       }
       if (existing.status === "tamamlandi" || existing.status === "gelmedi") {
@@ -388,13 +484,14 @@ export async function PATCH(request: Request) {
       ...SELECT,
     })
 
-    // V4: «Tamamlandı» → sadakat puanı kazandır (çift sayım yok)
+    // V4: «Tamamlandı» → sadakat puanı kazandır (W3: çift sayım yok)
     const loyalty = body.status === "tamamlandi" ? await awardLoyaltyIfNeeded(booking.id) : null
 
     // Durum değişiminde müşteri bildirim mesajını hazır üret (ekip isterse gönderir)
+    const isStaffAction = staff.ok && !body.phone
     const kind = statusNotificationKind(body.status)
     const message =
-      kind && !body.phone
+      kind && isStaffAction
         ? buildMessage(kind, {
             customerName: booking.customer.name,
             customerPhone: booking.customer.phone,
@@ -409,7 +506,7 @@ export async function PATCH(request: Request) {
     // E-posta (müşteri adresi varsa) + WhatsApp (Twilio yapılandırılmışsa) gerçekten
     // gönderilir. Derin bağlantılar (wa.me) manuel kanal olarak yanıtta kalır.
     let autoSend: { emailSent: boolean; whatsappSent: boolean } | null = null
-    if (message && kind && !body.phone) {
+    if (message && kind && isStaffAction) {
       try {
         autoSend = await notifyCustomer({
           bookingId: booking.id,
@@ -435,15 +532,22 @@ export async function PATCH(request: Request) {
       ...(message ? { notifyMessage: message, notifyKind: kind } : {}),
       ...(autoSend ? { autoSend } : {}),
     })
-  } catch {
-    return Response.json({ error: "Randevu bulunamadı." }, { status: 404 })
+  } catch (e) {
+    if (isRecordNotFound(e)) {
+      return Response.json({ error: "Randevu bulunamadı." }, { status: 404 })
+    }
+    console.error("[PATCH bookings]", e)
+    return Response.json({ error: "Randevu güncellenemedi." }, { status: 500 })
   }
 }
 
-// ─── TAM DÜZENLEME (PUT) — Rezervasyon Merkezi ──────────────────────────────
+// ─── TAM DÜZENLEME (PUT) — Rezervasyon Merkezi (SADECE EKİP) ─────────────────
 // { id, serviceId?, startAt?, durationMin?, priceChf?, customerName?,
 //   customerPhone?, customerEmail?, notes?, staffNote?, status? }
 export async function PUT(request: Request) {
+  const staff = await requireStaff(request)
+  if (!staff.ok) return staff.response
+
   // Hız sınırı: IP başına dakikada 20 düzenleme
   const rl = rateLimit(`booking-put:${clientIp(request)}`, 20, 60 * 1000)
   if (!rl.ok) return tooManyRequests(rl.retryAfterSec)
@@ -604,7 +708,7 @@ export async function PUT(request: Request) {
       ...SELECT,
     })
 
-    // V4: Durum «tamamlandı» yapıldıysa sadakat puanı kazandır
+    // V4: Durum «tamamlandı» yapıldıysa sadakat puanı kazandır (W3: bir kez)
     const loyalty = status === "tamamlandi" ? await awardLoyaltyIfNeeded(booking.id) : null
 
     // Değişiklik bildirimi (tarih veya hizmet değiştiyse) — ekip isterse gönderir
@@ -628,6 +732,9 @@ export async function PUT(request: Request) {
       ...(notifyMessage ? { notifyMessage, notifyKind: "degisiklik" as const } : {}),
     })
   } catch (e) {
+    if (isRecordNotFound(e)) {
+      return Response.json({ error: "Randevu bulunamadı." }, { status: 404 })
+    }
     console.error("[PUT bookings]", e)
     return Response.json({ error: "Randevu güncellenemedi." }, { status: 500 })
   }
@@ -635,6 +742,9 @@ export async function PUT(request: Request) {
 
 // ─── Kalıcı silme (DELETE) — ekip ───────────────────────────────────────────
 export async function DELETE(request: Request) {
+  const staff = await requireStaff(request)
+  if (!staff.ok) return staff.response
+
   const rl = rateLimit(`booking-delete:${clientIp(request)}`, 20, 60 * 1000)
   if (!rl.ok) return tooManyRequests(rl.retryAfterSec)
 
@@ -657,7 +767,11 @@ export async function DELETE(request: Request) {
         startAt: existing.startAt.toISOString(),
       },
     })
-  } catch {
+  } catch (e) {
+    if (isRecordNotFound(e)) {
+      return Response.json({ error: "Randevu bulunamadı." }, { status: 404 })
+    }
+    console.error("[DELETE bookings]", e)
     return Response.json({ error: "Randevu silinemedi." }, { status: 500 })
   }
 }

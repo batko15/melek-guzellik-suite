@@ -14,20 +14,34 @@
 // Araştırma (probeauty/youcanbook 2026): otomatik hatırlatma, no-show
 // kaybını en çok azaltan yöntem (%40'a varan azalma).
 
+import { timingSafeEqual } from "node:crypto"
 import { db } from "@/lib/db"
+import { getOptionalStaff } from "@/lib/auth"
 import { buildMessage } from "@/lib/notify"
 import { notifyCustomer } from "@/lib/notify-send"
 
 const WINDOW_HOURS = 24
 
+/** Timing-sicherer String-Vergleich (gleiche Länge nötig; Länge selbst gilt als unkritisch). */
+function secretEquals(a: string, b: string): boolean {
+  const ab = Buffer.from(a, "utf8")
+  const bb = Buffer.from(b, "utf8")
+  if (ab.length !== bb.length || ab.length === 0) return false
+  return timingSafeEqual(ab, bb)
+}
+
 function authorized(request: Request): boolean {
+  // V5.7.1: geçerli ekip oturumu da yetkili sayılır (portaldan manuel tetikleme)
+  if (getOptionalStaff(request)) return true
+
   const secret = process.env.CRON_SECRET?.trim()
   if (!secret) return true // tanımlı değil → korumasız (yerel test modu)
 
   const header = request.headers.get("authorization") ?? ""
   const bearer = header.replace(/^Bearer\s+/i, "").trim()
   const query = new URL(request.url).searchParams.get("secret") ?? ""
-  return bearer === secret || query === secret
+  // V5.7.2: === durch timing-sicheren Vergleich ersetzt (Secret-Extraktion per Response-Timing verhindern)
+  return secretEquals(bearer, secret) || secretEquals(query, secret)
 }
 
 async function runReminderSweep() {

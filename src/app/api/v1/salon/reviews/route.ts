@@ -1,17 +1,25 @@
-// Değerlendirme API'si (herkese açık + moderasyon)
-// GET   /api/v1/salon/reviews              — onaylanmış yorumlar + puan özeti
+// Değerlendirme API'si (herkese açık + moderasyon · V5.7.1: oturum koruması)
+// GET   /api/v1/salon/reviews              — onaylanmış yorumlar + puan özeti (herkese açık)
 //        ?summary=1                        — yalnızca özet
-//        ?status=bekliyor                  — (ekip) moderasyon listesi
+//        ?status=bekliyor|reddedildi       — SADECE ekip oturumu ile (moderasyon listesi)
 // POST  /api/v1/salon/reviews              — herkes değerlendirme yazabilir (girişsiz)
 // PATCH /api/v1/salon/reviews              — (ekip) onayla / reddet
 
 import { db } from "@/lib/db"
+import { requireStaff, getOptionalStaff } from "@/lib/auth"
 import { rateLimit, clientIp, tooManyRequests } from "@/lib/rate-limit"
 
 export async function GET(request: Request) {
   const params = new URL(request.url).searchParams
   const status = params.get("status")
 
+  // V5.7.1: moderasyon listeleri (bekliyor/reddedildi) yalnızca ekip oturumu ile
+  if (status && status !== "onaylandi") {
+    const staff = await requireStaff(request)
+    if (!staff.ok) return staff.response
+  }
+
+  try {
   const reviews = await db.review.findMany({
     where: status ? { status } : { status: "onaylandi" },
     include: { service: { select: { name: true } } },
@@ -31,6 +39,10 @@ export async function GET(request: Request) {
     count: approved.filter((r) => r.rating === star).length,
   }))
 
+  // V5.7.1: bekleyen yorum sayısı yalnızca ekip oturumuna gösterilir
+  // (moderasyon kuyruğu büyüklüğü herkese açık sayfada sızmaz)
+  const isStaff = getOptionalStaff(request) !== null
+
   return Response.json({
     reviews: reviews.map((r) => ({
       id: r.id,
@@ -45,9 +57,13 @@ export async function GET(request: Request) {
       count,
       average: Math.round(average * 10) / 10,
       distribution,
-      pending: pendingCount,
+      pending: isStaff ? pendingCount : 0,
     },
   })
+  } catch (e) {
+    console.error("[GET reviews]", e)
+    return Response.json({ error: "Yorumlar yüklenemedi." }, { status: 500 })
+  }
 }
 
 // ─── Yeni değerlendirme (herkese açık, giriş gerekmez) ──────────────────────
@@ -122,6 +138,9 @@ export async function POST(request: Request) {
 const ALLOWED_STATUS = ["bekliyor", "onaylandi", "reddedildi"]
 
 export async function PATCH(request: Request) {
+  const staff = await requireStaff(request)
+  if (!staff.ok) return staff.response
+
   // Hız sınırı: moderasyon — IP başına dakikada 30 işlem
   const rl = rateLimit(`review-patch:${clientIp(request)}`, 30, 60 * 1000)
   if (!rl.ok) return tooManyRequests(rl.retryAfterSec)
@@ -138,12 +157,19 @@ export async function PATCH(request: Request) {
     return Response.json({
       review: { id: review.id, status: review.status, authorName: review.authorName },
     })
-  } catch {
-    return Response.json({ error: "Yorum bulunamadı." }, { status: 404 })
+  } catch (e) {
+    if (String((e as { code?: string })?.code ?? "") === "P2025") {
+      return Response.json({ error: "Yorum bulunamadı." }, { status: 404 })
+    }
+    console.error("[PATCH reviews]", e)
+    return Response.json({ error: "Yorum güncellenemedi." }, { status: 500 })
   }
 }
 
 export async function DELETE(request: Request) {
+  const staff = await requireStaff(request)
+  if (!staff.ok) return staff.response
+
   // Hız sınırı: silme — IP başına dakikada 20 işlem
   const rl = rateLimit(`review-delete:${clientIp(request)}`, 20, 60 * 1000)
   if (!rl.ok) return tooManyRequests(rl.retryAfterSec)
@@ -155,7 +181,11 @@ export async function DELETE(request: Request) {
     }
     await db.review.delete({ where: { id: body.id } })
     return Response.json({ ok: true })
-  } catch {
-    return Response.json({ error: "Yorum bulunamadı." }, { status: 404 })
+  } catch (e) {
+    if (String((e as { code?: string })?.code ?? "") === "P2025") {
+      return Response.json({ error: "Yorum bulunamadı." }, { status: 404 })
+    }
+    console.error("[DELETE reviews]", e)
+    return Response.json({ error: "Yorum silinemedi." }, { status: 500 })
   }
 }
