@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
-import { type SalonCustomerRow, type SalonBooking, BOOKING_STATUS, chf, dateStr, timeStr } from "@/lib/salon"
+import { type SalonCustomerRow, type SalonBooking, BOOKING_STATUS, para, dateStr, timeStr } from "@/lib/salon"
 
 export function MusterilerView() {
   const [search, setSearch] = useState("")
@@ -65,7 +65,7 @@ export function MusterilerView() {
             Müşteri <span className="mk-gold-text">Yönetimi</span>
           </h1>
           <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-            {all.length} müşteri · {regulars} sık gelen müşteri · toplam ciro CHF {chf(totalVolume)}
+            {all.length} müşteri · {regulars} sık gelen müşteri · toplam ciro {para(totalVolume)}
           </p>
         </div>
       </section>
@@ -116,7 +116,7 @@ export function MusterilerView() {
                   <div className="text-[9px] uppercase tracking-wide text-muted-foreground">Ziyaret</div>
                 </div>
                 <div>
-                  <div className="mk-display text-base font-bold tabular-nums text-brand-text">CHF {chf(c.volumeChf)}</div>
+                  <div className="mk-display text-base font-bold tabular-nums text-brand-text">{para(c.volumeChf)}</div>
                   <div className="text-[9px] uppercase tracking-wide text-muted-foreground">Ciro</div>
                 </div>
                 <div>
@@ -180,7 +180,7 @@ export function MusterilerView() {
                     <div className="text-[9px] uppercase tracking-wide text-muted-foreground">Ziyaret</div>
                   </div>
                   <div className="px-2 py-3">
-                    <div className="mk-display text-lg font-bold text-brand-text">CHF {chf(selected.volumeChf)}</div>
+                    <div className="mk-display text-lg font-bold text-brand-text">{para(selected.volumeChf)}</div>
                     <div className="text-[9px] uppercase tracking-wide text-muted-foreground">Ciro</div>
                   </div>
                   <div className="px-2 py-3">
@@ -203,7 +203,7 @@ export function MusterilerView() {
                           <div className="text-[10px] text-muted-foreground">{dateStr(b.startAt)} · {timeStr(b.startAt)}</div>
                         </div>
                         <div className="flex shrink-0 items-center gap-2">
-                          <span className="mk-display font-bold text-brand-text">CHF {chf(b.priceChf)}</span>
+                          <span className="mk-display font-bold text-brand-text">{para(b.priceChf)}</span>
                           <Badge className={cn("border text-[9px]", BOOKING_STATUS[b.status]?.cls)} variant="outline">
                             {BOOKING_STATUS[b.status]?.label}
                           </Badge>

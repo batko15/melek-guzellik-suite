@@ -73,6 +73,11 @@ export async function GET() {
     })
   }
 
+  // Bu ayın cirosu ve randevu sayısı
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+  const monthBookings = allBookings.filter((b) => b.startAt >= monthStart && b.status !== "iptal")
+  const monthRevenue = monthBookings.reduce((s, b) => s + b.priceChf, 0)
+
   // Yorum istatistikleri
   const approvedReviews = reviewRows.filter((r) => r.status === "onaylandi")
   const ratingAvg =
@@ -96,6 +101,7 @@ export async function GET() {
     },
     pending,
     week: { bookings: weekBookings.length, revenueChf: Math.round(weekRevenue), utilization },
+    month: { bookings: monthBookings.length, revenueChf: Math.round(monthRevenue) },
     total: {
       bookings: allBookings.length,
       completed: allBookings.filter((b) => b.status === "tamamlandi").length,

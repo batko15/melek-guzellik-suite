@@ -6,6 +6,7 @@
 // PATCH /api/v1/salon/reviews              — (ekip) onayla / reddet
 
 import { db } from "@/lib/db"
+import { rateLimit, clientIp, tooManyRequests } from "@/lib/rate-limit"
 
 export async function GET(request: Request) {
   const params = new URL(request.url).searchParams
@@ -51,6 +52,10 @@ export async function GET(request: Request) {
 
 // ─── Yeni değerlendirme (herkese açık, giriş gerekmez) ──────────────────────
 export async function POST(request: Request) {
+  // Hız sınırı: IP başına 10 dakikada en fazla 3 değerlendirme (spam koruması)
+  const rl = rateLimit(`review:${clientIp(request)}`, 3, 10 * 60 * 1000)
+  if (!rl.ok) return tooManyRequests(rl.retryAfterSec)
+
   try {
     const body = (await request.json()) as {
       authorName?: string
@@ -117,6 +122,10 @@ export async function POST(request: Request) {
 const ALLOWED_STATUS = ["bekliyor", "onaylandi", "reddedildi"]
 
 export async function PATCH(request: Request) {
+  // Hız sınırı: moderasyon — IP başına dakikada 30 işlem
+  const rl = rateLimit(`review-patch:${clientIp(request)}`, 30, 60 * 1000)
+  if (!rl.ok) return tooManyRequests(rl.retryAfterSec)
+
   try {
     const body = (await request.json()) as { id?: string; status?: string }
     if (!body.id || !body.status || !ALLOWED_STATUS.includes(body.status)) {
@@ -135,6 +144,10 @@ export async function PATCH(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  // Hız sınırı: silme — IP başına dakikada 20 işlem
+  const rl = rateLimit(`review-delete:${clientIp(request)}`, 20, 60 * 1000)
+  if (!rl.ok) return tooManyRequests(rl.retryAfterSec)
+
   try {
     const body = (await request.json()) as { id?: string }
     if (!body.id) {

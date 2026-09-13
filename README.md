@@ -1,4 +1,4 @@
-# Melek'çe Güzellik — Tırnak Sanatı & Güzellik Stüdyosu Suite V2.0.0
+# Melek'çe Güzellik — Tırnak Sanatı & Güzellik Stüdyosu Suite V2.1.0
 
 **Herkese açık web sitesi + giriş gerektirmeyen randevu ve değerlendirme + ekip yönetimi — tek uygulamada, TAMAMEN TÜRKÇE.**
 
@@ -80,6 +80,7 @@ bun run dev        # → http://localhost:3000
 
 | Sürüm | Yenilikler |
 |---|---|
+| **2.1.0** | • **İnteraktif Leaflet haritası** (koyu CARTO karoları, altın iğne, Google Haritalar yol tarifi) • **Altın konfeti kutlaması** (canvas-confetti — randevu başarı ekranı) • **WhatsApp bildirim kancaları** (randevu özeti wa.me bağlantısı + iletişim butonları) • **Hava durumu bakım ipuçları** (hava durumuna göre Türkçe tırnak/cilt bakım önerileri) • **Hız sınırlama + güvenlik** (randevu 5/10dk, yorum 3/10dk, 429 + Türkçe mesaj) • **Fiyat yönetimi** (satır içi fiyat/süre editörü, popüler rozet anahtarı) • **Yorum filtreleri** (yıldız + hizmet) • **Aylık ciro KPI'sı** • **Gelibolu konumu** (harita + hava durumu + ₺ fiyatlar) • **Gerçek stüdyo fotoğrafları** (8 Instagram gönderisi galeride) • Türk telefon numaraları (+90) ve gerçekçi TL fiyatları |
 | **2.0.0** | • **Tamamı Türkçe** (arayüz, veriler, API hataları) • **Girişsiz randevu**: herkes ad + telefonla randevu alır • **Herkese açık değerlendirmeler**: 1–5 yıldız + yorum, moderasyonlu • **Canlı hava durumu**: Open-Meteo, Türkçe açıklamalar, 4 günlük tahmin • **Randevularım**: telefonla sorgulama + self-servis iptal • **Mobil alt gezinme** (Ana Sayfa / Randevu / Yorumlar) — telefon için uygulama hissi • Ekip portalı 8 modüle çıktı (+ Yorum Moderasyonu) • Yeni API'ler: `reviews`, `weather`, `availability` • Türkçe demo verileri (9 değerlendirme dahil) |
 | 1.0.0 | Açılış sayfası + müşteri portalı (e-posta girişli) + 7 modüllü ekip portalı, Black-Gold tasarım |
 

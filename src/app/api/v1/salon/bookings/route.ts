@@ -5,6 +5,8 @@
 // PATCH /api/v1/salon/bookings                   — ekip: durum değiştir · misafir: telefon ile iptal
 
 import { db } from "@/lib/db"
+import { rateLimit, clientIp, tooManyRequests } from "@/lib/rate-limit"
+import { sendBookingNotification } from "@/lib/notify"
 
 const STATUS_ACTIVE = ["bekliyor", "onaylandi"]
 
@@ -65,6 +67,10 @@ export async function GET(request: Request) {
 
 // ─── Yeni randevu — HERKES, giriş gerekmez ──────────────────────────────────
 export async function POST(request: Request) {
+  // Hız sınırı: IP başına 10 dakikada en fazla 5 randevu (form suistimaline karşı)
+  const rl = rateLimit(`booking:${clientIp(request)}`, 5, 10 * 60 * 1000)
+  if (!rl.ok) return tooManyRequests(rl.retryAfterSec)
+
   try {
     const body = (await request.json()) as {
       customerName?: string
@@ -146,6 +152,16 @@ export async function POST(request: Request) {
       include: { service: { select: { name: true } } },
     })
 
+    // Bildirim kancası: WhatsApp onay bağlantısı üret (konsol logu + istemci butonu)
+    const notification = sendBookingNotification({
+      customerName: customer.name,
+      customerPhone: customer.phone,
+      serviceName: service.name,
+      startAt: start,
+      price: service.priceChf,
+      notes: body.notes?.trim() || null,
+    })
+
     return Response.json(
       {
         booking: {
@@ -158,6 +174,7 @@ export async function POST(request: Request) {
           customerName: customer.name,
           customerPhone: customer.phone,
         },
+        whatsappUrl: notification.whatsappUrl,
       },
       { status: 201 },
     )
@@ -172,6 +189,10 @@ export async function POST(request: Request) {
 const ALLOWED_STATUS = ["bekliyor", "onaylandi", "tamamlandi", "iptal"]
 
 export async function PATCH(request: Request) {
+  // Hız sınırı: IP başına dakikada 30 durum değişikliği
+  const rl = rateLimit(`booking-patch:${clientIp(request)}`, 30, 60 * 1000)
+  if (!rl.ok) return tooManyRequests(rl.retryAfterSec)
+
   try {
     const body = (await request.json()) as { id?: string; status?: string; phone?: string }
     if (!body.id || !body.status || !ALLOWED_STATUS.includes(body.status)) {

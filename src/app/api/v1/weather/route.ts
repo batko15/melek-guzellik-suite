@@ -89,11 +89,54 @@ interface WeatherPayload {
     text: string
     icon: string
   }>
+  careTip: string
   updatedAt: string
 }
 
 let cache: { at: number; data: WeatherPayload } | null = null
 const CACHE_MS = 10 * 60 * 1000
+
+// ─── Duruma göre Türkçe bakım ipucu (güzellik & tırnak odaklı) ─────────────
+function careTipFor(code: number, temp: number, humidity: number, wind: number, isDay: boolean): string {
+  // Güneşli & sıcak → güneş koruması
+  if (code <= 1 && isDay && temp >= 25) {
+    return "Güneşli hava: SPF 30+ güneş koruyucu ve ellerinizi koruyan UV bazlı üst kat kullanın — jel cila sararmasını önler."
+  }
+  if (code === 2 && isDay && temp >= 20) {
+    return "Parçalı bulutlu: güneş aniden açabilir — yanınıza güneş koruyucu alın, kirpik dolgunuzun yapıştırıcısı sıcaktan etkilenmesin."
+  }
+  // Soğuk → nemlendirme
+  if (temp <= 5) {
+    return "Soğuk hava cilt ve kütikülleri kurutur — randevudan önce yoğun nemlendirici sürün, bol su için."
+  }
+  if (temp <= 12 && humidity < 60) {
+    return "Serin ve kuru hava: tırnak çevresi çatlamaya eğilimli — kütikül yağı (cuticle oil) gün içinde 2 kez uygulayın."
+  }
+  // Yağmur → saç & makyaj
+  if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) {
+    return "Yağışlı hava: saç kabarmasını önlemek için nemlendirici sprey, kalıcı oje renginizi koyu tonlardan seçin — daha uzun dayanır."
+  }
+  // Kar
+  if ((code >= 71 && code <= 77) || code === 85 || code === 86) {
+    return "Karlı hava: eldiven kullanın — jel tırnaklar ani ısı değişiminden korunsun, cilt için besleyici krem şart."
+  }
+  // Pus
+  if (code === 45 || code === 48) {
+    return "Puslu hava makyaj kalıcılığını artırır — bugün ıslak görünümlü makyaj ve parlak top coat için ideal bir gün."
+  }
+  // Fırtına
+  if (code >= 95) {
+    return "Fırtına yaklaşıyor: içeride bakım günü — manikür + cilt bakımı kombinasyonu tam size göre."
+  }
+  // Nem
+  if (humidity >= 75) {
+    return "Nemli hava: kirpik lifting daha kalıcı olur; saç için hafif yağsız serum tercih edin."
+  }
+  if (wind >= 30) {
+    return "Rüzgârlı hava: topuz saç modeli öneriyoruz — bugünün bakım sonrası fotoğraflarınız kusursuz olsun."
+  }
+  return "Bugün cildiniz için bol su ve hafif nemlendirici — randevunuzda kendinizi bir melek gibi hissedeceksiniz. ✨"
+}
 
 export async function GET() {
   const cfg = BRANDING.weather
@@ -153,6 +196,13 @@ export async function GET() {
         text: WMO_TR[raw.daily.weather_code[i]] ?? "Bilinmiyor",
         icon: WMO_ICON[raw.daily.weather_code[i]] ?? "cloud",
       })),
+      careTip: careTipFor(
+        cur.weather_code,
+        Math.round(cur.temperature_2m),
+        cur.relative_humidity_2m,
+        Math.round(cur.wind_speed_10m),
+        cur.is_day === 1,
+      ),
       updatedAt: new Date().toISOString(),
     }
 

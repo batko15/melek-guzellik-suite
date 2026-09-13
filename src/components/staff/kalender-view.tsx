@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { BOOKING_STATUS, type SalonBooking, timeStr, minutesLabel, chf } from "@/lib/salon"
+import { BOOKING_STATUS, type SalonBooking, timeStr, minutesLabel, para } from "@/lib/salon"
 
 const DAY_MS = 86_400_000
 
@@ -68,7 +68,7 @@ export function KalenderView() {
             Randevu takvimi — <span className="mk-gold-text">{weekLabel}</span>
           </h1>
           <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-            Önümüzdeki 2 haftada {bookings.length} randevu · toplam değeri CHF {chf(totalRevenue)}
+            Önümüzdeki 2 haftada {bookings.length} randevu · toplam değeri {para(totalRevenue)}
           </p>
         </div>
       </section>

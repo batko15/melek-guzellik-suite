@@ -59,7 +59,19 @@ rm -f db/custom.db && bun run db:push && bun run scripts/seed-beauty.ts
 - `GET /api/v1/weather` — canlı hava durumu (Open-Meteo, Türkçe, 10 dk önbellek)
 - `GET /api/v1/salon/customers` · `/stats` · `/gallery` — CRM, KPI'lar, galeri
 
-## 5. Bilinmesi gerekenler
+## 5. V2.1 eklentileri
+
+| Özellik | Nerede | Not |
+|---|---|---|
+| İnteraktif harita | `branding.ts → map` + `components/public/location-map.tsx` | Koyu CARTO karoları (anahtarsız), altın divIcon-iğne; koordinat/yakınlaştırma ayarlanabilir |
+| Konfeti kutlaması | `components/public/booking-flow.tsx` (canvas-confetti) | Altın tonları; yalnızca başarı ekranında bir kez |
+| WhatsApp bildirimleri | `src/lib/notify.ts` + bookings API | wa.me derin bağlantısı (önceden doldurulmuş Türkçe mesaj); gerçek SMS için Twilio/Meta Cloud API kancası hazır |
+| Hız sınırlama | `src/lib/rate-limit.ts` | Bellek-içi kayan pencere: randevu 5/10dk, yorum 3/10dk, işlemler 30/dk — 429 + Türkçe mesaj; çoklu sunucuda Redis'e taşının |
+| Hava durumu bakım ipuçları | `api/v1/weather/route.ts → careTipFor()` | WMO kodu + sıcaklık + neme göre Türkçe tırnak/cilt bakım önerisi |
+| Fiyat yönetimi | `PATCH /api/v1/salon/services` + hizmetler görünümü | Satır içi fiyat/süre düzenleme, popüler rozet anahtarı (0–100.000 aralık kontrolü) |
+| Yorum filtreleri | `components/public/reviews-page.tsx` | Yıldız (1–5) + hizmet filtresi, istemci tarafı |
+
+## 6. Bilinmesi gerekenler
 
 - **Ekip girişleri** demo amaçlı `branding.ts → users` içinde. Gerçek kullanım
   için NextAuth/Auth.js bağlayın (giriş katmanı `src/components/auth/` içinde
@@ -76,5 +88,6 @@ rm -f db/custom.db && bun run db:push && bun run scripts/seed-beauty.ts
 - **Ekip modülleri** `branding.ts → modules` içinde `enabled` bayrağıyla
   açılıp kapanır; yeni modül = yeni görünüm dosyası + `module-registry.ts`
   kaydı.
+- **Hız sınırlama** bellek-içidir; Vercel/Lambda gibi geçici örneklerde Redis'e taşınmalıdır.
 - SQLite dosyası `db/custom.db`; üretimde (Vercel vb.) düzenli yedekleyin veya
   Postgres'e geçin (Prisma ile kolay taşınır).

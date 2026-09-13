@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { BRANDING } from "@/config/branding"
-import { type SalonStats, BOOKING_STATUS, CATEGORY_META, chf, timeStr, minutesLabel, Stars } from "@/lib/salon"
+import { type SalonStats, BOOKING_STATUS, CATEGORY_META, para, timeStr, minutesLabel, Stars } from "@/lib/salon"
 import { WeatherWidget } from "@/components/weather-widget"
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar,
@@ -142,7 +142,7 @@ export function DashboardView() {
             <CardHeader className="pb-0 pt-4">
               <CardTitle className="flex items-center gap-2 text-sm font-bold">
                 <TrendingUp className="h-4 w-4 text-brand-text" /> Ciro gelişimi (8 hafta)
-                {stats && <span className="ml-auto text-xs font-normal text-muted-foreground">toplam CHF {chf(stats.total.revenueChf)}</span>}
+                {stats && <span className="ml-auto text-xs font-normal text-muted-foreground">toplam {para(stats.total.revenueChf)}</span>}
               </CardTitle>
             </CardHeader>
             <CardContent className="h-56 pt-4">
@@ -160,7 +160,7 @@ export function DashboardView() {
                     <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
                     <Tooltip
                       contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 10, color: "var(--popover-foreground)", fontSize: 12 }}
-                      formatter={(v: number) => [`CHF ${chf(v)}`, "Ciro"]}
+                      formatter={(v: number) => [`${para(v)}`, "Ciro"]}
                     />
                     <Area type="monotone" dataKey="volume" stroke="var(--chart-1)" strokeWidth={2.5} fill="url(#goldGrad)" />
                   </AreaChart>
@@ -188,7 +188,7 @@ export function DashboardView() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline justify-between gap-2">
                       <span className="truncate text-sm font-semibold">{s.name}</span>
-                      <span className="shrink-0 text-xs text-muted-foreground">{s.count}× · CHF {chf(s.volume)}</span>
+                      <span className="shrink-0 text-xs text-muted-foreground">{s.count}× · {para(s.volume)}</span>
                     </div>
                     <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-secondary">
                       <div className="h-full rounded-full bg-primary" style={{ width: `${(s.count / maxTop) * 100}%` }} />
@@ -228,10 +228,11 @@ export function DashboardView() {
 
           {/* ─── Hafta özeti ─── */}
           <Card className="mk-card border-border">
-            <CardContent className="grid grid-cols-3 divide-x divide-border/60 p-0 text-center">
+            <CardContent className="grid grid-cols-2 divide-x divide-border/60 p-0 text-center sm:grid-cols-4">
               {[
                 { label: "Haftalık randevu", value: stats ? String(stats.week.bookings) : "…" },
-                { label: "Haftalık ciro", value: stats ? `CHF ${chf(stats.week.revenueChf)}` : "…" },
+                { label: "Haftalık ciro", value: stats ? `${para(stats.week.revenueChf)}` : "…" },
+                { label: "Bu ayın cirosu", value: stats ? `${para(stats.month?.revenueChf ?? 0)}` : "…" },
                 { label: "Tamamlanan toplam", value: stats ? String(stats.total.completed) : "…" },
               ].map((s) => (
                 <div key={s.label} className="px-3 py-4">

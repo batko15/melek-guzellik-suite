@@ -240,6 +240,7 @@ export function AppShell() {
         if (!session) setStage(h === "" ? "landing" : (h as PublicView))
       }
     }
+    onHash() // doğrudan #randevu / #yorumlar ile açılışta da çalışsın
     window.addEventListener("hashchange", onHash)
     return () => window.removeEventListener("hashchange", onHash)
   }, [session])

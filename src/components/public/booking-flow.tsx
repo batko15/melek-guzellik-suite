@@ -8,11 +8,12 @@
 
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
+import confetti from "canvas-confetti"
 import {
   Sparkles, CalendarCheck, ChevronLeft, ChevronRight, Check, Clock, User, Phone, Mail,
-  MessageSquare, Search, CalendarX2, PartyPopper, Star,
+  MessageSquare, Search, CalendarX2, PartyPopper, Star, MessageCircle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -22,7 +23,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BRANDING } from "@/config/branding"
 import {
-  type SalonService, type SalonBooking, CATEGORY_META, chf, minutesLabel,
+  type SalonService, type SalonBooking, CATEGORY_META, para, minutesLabel,
   timeStr, dateStrShort, weekdayStr, isOpenDay, openSlots, BOOKING_STATUS,
 } from "@/lib/salon"
 
@@ -52,6 +53,24 @@ export function BookingFlow({
   const [error, setError] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState<{ startAt: string; priceChf: number; serviceName?: string } | null>(null)
+  const [whatsappUrl, setWhatsappUrl] = useState<string>("")
+
+  // ─── Altın konfeti kutlaması (randevu başarı ekranında — bir kez) ─────
+  useEffect(() => {
+    if (!done) return
+    const colors = ["#f5d77f", "#d4af37", "#b8860b", "#fff3c4", "#e8c66a"]
+    // Sağ patlama
+    confetti({ particleCount: 90, angle: 60, spread: 70, origin: { x: 0.85, y: 0.6 }, colors, scalar: 0.9 })
+    // Sol patlama
+    const t = setTimeout(() => {
+      confetti({ particleCount: 90, angle: 120, spread: 70, origin: { x: 0.15, y: 0.6 }, colors, scalar: 0.9 })
+    }, 150)
+    // Orta altın yağmuru
+    const t2 = setTimeout(() => {
+      confetti({ particleCount: 50, angle: 90, spread: 100, origin: { x: 0.5, y: 0.35 }, colors, scalar: 0.7 })
+    }, 350)
+    return () => { clearTimeout(t); clearTimeout(t2) }
+  }, [done?.startAt])
 
   // Hizmetleri yükle
   const { data: servicesData } = useQuery({
@@ -129,6 +148,7 @@ export function BookingFlow({
       })
       const json = (await res.json()) as {
         booking?: { id: string; startAt: string; priceChf: number; serviceName: string; customerName: string }
+        whatsappUrl?: string
         error?: string
       }
       if (!res.ok || !json.booking) {
@@ -140,6 +160,7 @@ export function BookingFlow({
         return
       }
       setDone(json.booking)
+      setWhatsappUrl(json.whatsappUrl ?? "")
       qc.invalidateQueries({ queryKey: ["salon-availability"] })
     } catch {
       setError("Bağlantı hatası — lütfen tekrar deneyin.")
@@ -149,7 +170,7 @@ export function BookingFlow({
   }
 
   const restart = () => {
-    setDone(null); setStep(0); setService(null); setDateKey(""); setTimeKey("")
+    setDone(null); setWhatsappUrl(""); setStep(0); setService(null); setDateKey(""); setTimeKey("")
     setName(""); setPhone(""); setEmail(""); setNote(""); setError("")
   }
 
@@ -202,7 +223,7 @@ export function BookingFlow({
                   <div className="flex justify-between"><span className="text-muted-foreground">Hizmet</span><span className="font-bold text-foreground">{done.serviceName ?? "—"}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Tarih</span><span className="font-bold text-foreground">{dateStrShort(done.startAt)} {weekdayStr(done.startAt)}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Saat</span><span className="font-bold text-foreground">{timeStr(done.startAt)}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Ücret</span><span className="font-bold text-brand-text">CHF {chf(done.priceChf ?? 0)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Ücret</span><span className="font-bold text-brand-text">{para(done.priceChf ?? 0)}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Durum</span><span className="font-bold text-amber-300">Onay bekliyor</span></div>
                 </div>
 
@@ -214,6 +235,19 @@ export function BookingFlow({
                     <Star className="mr-1.5 h-4 w-4" /> Değerlendirme yap
                   </Button>
                 </div>
+
+                {/* WhatsApp ile bilgileri gönder (stüdyoya önceden doldurulmuş mesaj) */}
+                {whatsappUrl && (
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="mk-focus mt-2.5 h-11 w-full rounded-full border-emerald-700/50 font-semibold text-emerald-400 hover:bg-emerald-950/30"
+                  >
+                    <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+                      <MessageCircle className="mr-1.5 h-4 w-4" /> WhatsApp'tan Randevuyu Gönder
+                    </a>
+                  </Button>
+                )}
                 <p className="mt-5 text-[11px] text-muted-foreground">
                   Randevunuzu «Randevularım» sekmesinden telefon numaranızla görüntüleyip iptal edebilirsiniz.
                 </p>
@@ -273,7 +307,7 @@ export function BookingFlow({
                         >
                           <div className="flex items-baseline justify-between gap-2">
                             <div className="mk-display text-[15px] font-bold text-foreground">{s.name}</div>
-                            <div className="mk-display shrink-0 text-base font-bold text-brand-text">CHF {chf(s.priceChf)}</div>
+                            <div className="mk-display shrink-0 text-base font-bold text-brand-text">{para(s.priceChf)}</div>
                           </div>
                           {s.description && <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{s.description}</p>}
                           <div className="mt-3 flex items-center justify-between">
@@ -300,7 +334,7 @@ export function BookingFlow({
                         <div className="mk-display mt-0.5 text-sm font-bold text-foreground">{service.name}</div>
                       </div>
                       <div className="text-right">
-                        <div className="mk-display text-base font-bold text-brand-text">CHF {chf(service.priceChf)}</div>
+                        <div className="mk-display text-base font-bold text-brand-text">{para(service.priceChf)}</div>
                         <div className="text-[11px] text-muted-foreground">{minutesLabel(service.durationMin)}</div>
                       </div>
                     </div>
@@ -395,7 +429,7 @@ export function BookingFlow({
                       <div className="flex justify-between"><span className="text-muted-foreground">Hizmet</span><span className="font-bold text-foreground">{service.name}</span></div>
                       <div className="flex justify-between"><span className="text-muted-foreground">Tarih</span><span className="font-bold text-foreground">{new Date(`${dateKey}T00:00:00`).toLocaleDateString("tr-TR", { day: "numeric", month: "long" })}</span></div>
                       <div className="flex justify-between"><span className="text-muted-foreground">Saat</span><span className="font-bold text-foreground">{timeKey}</span></div>
-                      <div className="flex justify-between"><span className="text-muted-foreground">Ücret</span><span className="font-bold text-brand-text">CHF {chf(service.priceChf)}</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">Ücret</span><span className="font-bold text-brand-text">{para(service.priceChf)}</span></div>
                     </div>
 
                     <div className="space-y-4">
@@ -620,7 +654,7 @@ function MyBookings() {
                             </span>
                           </div>
                           <div className="shrink-0 text-right">
-                            <div className="mk-display text-sm font-bold text-brand-text">CHF {chf(b.priceChf)}</div>
+                            <div className="mk-display text-sm font-bold text-brand-text">{para(b.priceChf)}</div>
                             <button
                               onClick={() => cancel(b.id)}
                               disabled={cancelling === b.id}

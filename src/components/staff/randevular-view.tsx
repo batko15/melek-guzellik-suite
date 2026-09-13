@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast"
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { type SalonBooking, BOOKING_STATUS, chf, timeStr, dateStr, weekdayStr, minutesLabel } from "@/lib/salon"
+import { type SalonBooking, BOOKING_STATUS, para, timeStr, dateStr, weekdayStr, minutesLabel } from "@/lib/salon"
 
 const STATUS_TABS = [
   { key: "tumu", label: "Tümü" },
@@ -103,7 +103,7 @@ export function RandevularView() {
             Randevu <span className="mk-gold-text">Yönetimi</span>
           </h1>
           <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-            Talepleri onaylayın, randevuları tamamlayın veya iptal edin — açık randevu değeri: <span className="font-semibold text-brand-text">CHF {chf(openVolume)}</span>
+            Talepleri onaylayın, randevuları tamamlayın veya iptal edin — açık randevu değeri: <span className="font-semibold text-brand-text">{para(openVolume)}</span>
           </p>
         </div>
       </section>
@@ -184,7 +184,7 @@ export function RandevularView() {
                         {b.notes && <div className="mt-0.5 max-w-[220px] truncate text-xs italic text-muted-foreground">«{b.notes}»</div>}
                       </td>
                       <td className="px-4 py-3 text-xs text-muted-foreground">{minutesLabel(b.durationMin)}</td>
-                      <td className="mk-display px-4 py-3 text-right font-bold text-brand-text">CHF {chf(b.priceChf)}</td>
+                      <td className="mk-display px-4 py-3 text-right font-bold text-brand-text">{para(b.priceChf)}</td>
                       <td className="px-4 py-3">
                         <Badge className={cn("border text-[10px]", BOOKING_STATUS[b.status]?.cls)} variant="outline">
                           {BOOKING_STATUS[b.status]?.label ?? b.status}
@@ -247,7 +247,7 @@ export function RandevularView() {
                   {b.notes && <div className="mt-1 truncate text-[11px] italic text-muted-foreground">«{b.notes}»</div>}
                 </div>
                 <div className="shrink-0 text-right">
-                  <div className="mk-display text-sm font-bold text-brand-text">CHF {chf(b.priceChf)}</div>
+                  <div className="mk-display text-sm font-bold text-brand-text">{para(b.priceChf)}</div>
                   <Badge className={cn("mt-1 border text-[9px]", BOOKING_STATUS[b.status]?.cls)} variant="outline">
                     {BOOKING_STATUS[b.status]?.label}
                   </Badge>

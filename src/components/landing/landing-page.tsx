@@ -6,13 +6,14 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
-import { Sparkles, Heart, Crown, Flower2, Instagram, MapPin, Phone, Clock, CalendarCheck, ChevronRight, Star, MessageSquareHeart, ArrowRight } from "lucide-react"
+import { Sparkles, Heart, Crown, Flower2, Instagram, MapPin, Phone, Clock, CalendarCheck, ChevronRight, Star, MessageSquareHeart, ArrowRight, MessageCircle, Navigation } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { BRANDING, BRAND_DISPLAY } from "@/config/branding"
-import { type SalonService, type GalleryEntry, type ReviewRow, type ReviewSummary, CATEGORY_META, chf, minutesLabel, Stars } from "@/lib/salon"
+import { type SalonService, type GalleryEntry, type ReviewRow, type ReviewSummary, CATEGORY_META, para, minutesLabel, Stars } from "@/lib/salon"
 import { WeatherWidget } from "@/components/weather-widget"
+import { LocationMap } from "@/components/public/location-map"
 
 const BRAND_ICONS: Record<string, React.ElementType> = { sparkles: Sparkles, heart: Heart, crown: Crown, flower: Flower2 }
 const BrandIcon = BRAND_ICONS[BRANDING.brand.icon] ?? Sparkles
@@ -215,7 +216,7 @@ export function LandingPage({
                     )}
                     <div className="flex items-baseline justify-between gap-3">
                       <div className="mk-display text-[15px] font-bold text-foreground">{s.name}</div>
-                      <div className="mk-display shrink-0 text-lg font-bold text-brand-text">CHF {chf(s.priceChf)}</div>
+                      <div className="mk-display shrink-0 text-lg font-bold text-brand-text">{para(s.priceChf)}</div>
                     </div>
                     {s.description && (
                       <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{s.description}</p>
@@ -422,6 +423,17 @@ export function LandingPage({
                 <span className="text-muted-foreground">{company.phone}</span>
               </div>
               <div className="flex items-center gap-3">
+                <MessageCircle className="h-4 w-4 shrink-0 text-brand-text/70" />
+                <a
+                  href={`https://wa.me/${(company.whatsapp ?? company.phone).replace(/\D/g, "")}?text=${encodeURIComponent("Merhaba! Randevu hakkında bilgi almak istiyorum. ✨")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-brand-text hover:underline"
+                >
+                  WhatsApp'tan yaz
+                </a>
+              </div>
+              <div className="flex items-center gap-3">
                 <Instagram className="h-4 w-4 shrink-0 text-brand-text/70" />
                 <a href={instagramUrl} target="_blank" rel="noopener noreferrer" className="text-brand-text hover:underline">
                   @{company.instagram}
@@ -436,8 +448,67 @@ export function LandingPage({
                 <CalendarCheck className="mr-1.5 h-4 w-4" /> Online randevu al
               </Button>
               <p className="mt-3 text-center text-[11px] text-muted-foreground">
-                Ya da klasik yollarla: telefon veya Instagram mesajı.
+                Ya da bize ulaşın: WhatsApp, telefon veya Instagram mesajı.
               </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ Konum & İnteraktif Harita ═══ */}
+      <section id="konum" className="border-t border-border/60 py-14 lg:py-20">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="mb-10 text-center">
+            <div className="text-[11px] font-bold uppercase tracking-[0.3em] text-brand-text">Konum</div>
+            <h2 className="mk-display mt-3 text-3xl font-bold sm:text-4xl">
+              Bizi <span className="mk-gold-text">Gelibolu'da</span> bulun
+            </h2>
+            <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground">
+              {company.street}, {company.city} — haritayı yakınlaştırıp yol tarifi alın ya da WhatsApp'tan yazın.
+            </p>
+          </div>
+
+          <div className="grid items-start gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <LocationMap />
+            </div>
+            <div className="mk-card space-y-3 rounded-2xl p-6">
+              <div className="flex items-center gap-2.5 text-[10px] font-bold uppercase tracking-[0.25em] text-brand-text">
+                <Navigation className="h-4 w-4" /> Yol Tarifi
+              </div>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                Stüdyomuza toplu taşıma veya özel araçla kolayca ulaşabilirsiniz. Randevu saatinizden 5 dakika önce gelmeniz yeterli.
+              </p>
+              <Button
+                asChild
+                className="mk-gold-glow h-11 w-full rounded-full bg-primary font-bold text-primary-foreground hover:bg-primary/90"
+              >
+                <a href={BRANDING.map.googleMapsUrl} target="_blank" rel="noopener noreferrer">
+                  <Navigation className="mr-1.5 h-4 w-4" /> Google Haritalar'da Aç
+                </a>
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                className="mk-focus h-11 w-full rounded-full border-emerald-700/50 font-semibold text-emerald-400 hover:bg-emerald-950/30"
+              >
+                <a
+                  href={`https://wa.me/${(company.whatsapp ?? company.phone).replace(/\D/g, "")}?text=${encodeURIComponent("Merhaba! Melek'çe Güzellik'te randevu almak istiyorum. ✨")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <MessageCircle className="mr-1.5 h-4 w-4" /> WhatsApp'tan Randevu
+                </a>
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                className="mk-focus h-11 w-full rounded-full border-border/70 font-semibold text-muted-foreground hover:border-primary/50 hover:text-foreground"
+              >
+                <a href={instagramUrl} target="_blank" rel="noopener noreferrer">
+                  <Instagram className="mr-1.5 h-4 w-4 text-brand-text" /> Instagram'ı Aç
+                </a>
+              </Button>
             </div>
           </div>
         </div>

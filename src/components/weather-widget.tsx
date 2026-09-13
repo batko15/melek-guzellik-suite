@@ -6,7 +6,7 @@
 
 import { useQuery } from "@tanstack/react-query"
 import {
-  Sun, Moon, CloudSun, Cloud, CloudFog, CloudDrizzle, CloudRain, CloudSnow, CloudLightning, Thermometer, Droplets, Wind, MapPin,
+  Sun, Moon, CloudSun, Cloud, CloudFog, CloudDrizzle, CloudRain, CloudSnow, CloudLightning, Thermometer, Droplets, Wind, MapPin, Sparkles,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { type WeatherData } from "@/lib/salon"
@@ -101,6 +101,14 @@ export function WeatherWidget({ variant = "panel" }: { variant?: "hero" | "panel
             ))}
           </div>
         )}
+
+        {/* Günlük bakım ipucu */}
+        {data.careTip && (
+          <div className="mt-3.5 flex items-start gap-2 rounded-xl border border-primary/25 bg-primary/8 px-3.5 py-3">
+            <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand-text" />
+            <p className="text-[11px] leading-relaxed text-foreground/90">{data.careTip}</p>
+          </div>
+        )}
       </div>
     )
   }
@@ -129,6 +137,12 @@ export function WeatherWidget({ variant = "panel" }: { variant?: "hero" | "panel
               <div className="mt-0.5 text-[11px] font-bold text-foreground">{d.max}°<span className="ml-1 font-normal text-muted-foreground">{d.min}°</span></div>
             </div>
           ))}
+        </div>
+      )}
+      {data.careTip && (
+        <div className="mt-3 flex items-start gap-2 rounded-xl border border-primary/25 bg-primary/8 px-3.5 py-2.5">
+          <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand-text" />
+          <p className="text-[11px] leading-relaxed text-foreground/90">{data.careTip}</p>
         </div>
       )}
     </div>

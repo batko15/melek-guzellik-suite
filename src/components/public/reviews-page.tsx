@@ -7,7 +7,7 @@
 
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   ChevronLeft, Star, MessageSquareHeart, Send, CheckCircle2, User, Sparkles, Quote,
@@ -69,6 +69,10 @@ export function ReviewsPage({
   const [submitting, setSubmitting] = useState(false)
   const [sent, setSent] = useState(false)
 
+  // Yorum filtreleri (yıldız + hizmet)
+  const [starFilter, setStarFilter] = useState<number | "tumu">("tumu")
+  const [serviceFilter, setServiceFilter] = useState<string>("")
+
   const { data: reviewsData, isLoading } = useQuery({
     queryKey: ["salon-reviews"],
     queryFn: async () => {
@@ -88,6 +92,18 @@ export function ReviewsPage({
 
   const reviews = reviewsData?.reviews ?? []
   const summary = reviewsData?.summary
+
+  // Filtrelenmiş yorum listesi + mevcut hizmet filtreleri
+  const serviceOptions = useMemo(
+    () => [...new Set(reviews.map((r) => r.serviceName).filter((s): s is string => !!s))],
+    [reviews],
+  )
+  const filteredReviews = useMemo(() => {
+    let list = reviews
+    if (starFilter !== "tumu") list = list.filter((r) => r.rating === starFilter)
+    if (serviceFilter) list = list.filter((r) => r.serviceName === serviceFilter)
+    return list
+  }, [reviews, starFilter, serviceFilter])
   const services = servicesData?.services ?? []
   const maxCount = Math.max(1, ...(summary?.distribution.map((d) => d.count) ?? [1]))
 
@@ -263,21 +279,64 @@ export function ReviewsPage({
             <Quote className="h-3.5 w-3.5 text-brand-text/70" /> Tüm yorumlar ({summary?.count ?? 0})
           </h2>
 
+          {/* Geribildirim filtreleri: yıldız + hizmet */}
+          {reviews.length > 0 && (
+            <div className="mb-5 flex flex-wrap items-center gap-2">
+              <div className="mk-scroll flex gap-1 overflow-x-auto rounded-full bg-secondary/50 p-1">
+                {(["tumu", 5, 4, 3, 2, 1] as const).map((f) => (
+                  <button
+                    key={String(f)}
+                    onClick={() => setStarFilter(f)}
+                    aria-pressed={starFilter === f}
+                    className={cn(
+                      "mk-focus whitespace-nowrap rounded-full px-3 py-1.5 text-[11px] font-bold transition-colors",
+                      starFilter === f ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {f === "tumu" ? "Tümü" : `${f} ★`}
+                  </button>
+                ))}
+              </div>
+              {serviceOptions.length > 1 && (
+                <select
+                  value={serviceFilter}
+                  onChange={(e) => setServiceFilter(e.target.value)}
+                  aria-label="Hizmete göre filtrele"
+                  className="mk-focus h-8 rounded-full border border-border/70 bg-secondary/50 px-3 text-[11px] font-semibold text-foreground"
+                >
+                  <option value="">Tüm hizmetler</option>
+                  {serviceOptions.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              )}
+              {(starFilter !== "tumu" || serviceFilter) && (
+                <button
+                  onClick={() => { setStarFilter("tumu"); setServiceFilter("") }}
+                  className="mk-focus rounded-full text-[11px] font-semibold text-brand-text hover:bg-primary/10 px-3 py-1.5"
+                >
+                  Filtreleri temizle ✕
+                </button>
+              )}
+            </div>
+          )}
+
           {isLoading ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => <div key={i} className="mk-card h-32 animate-pulse rounded-2xl" />)}
             </div>
-          ) : reviews.length === 0 ? (
+          ) : filteredReviews.length === 0 ? (
             <div className="mk-card rounded-2xl p-10 text-center">
               <MessageSquareHeart className="mx-auto h-10 w-10 text-muted-foreground/40" />
               <p className="mt-3 text-sm text-muted-foreground">
-                Henüz yayınlanmış yorum yok.<br />
-                <span className="text-xs">İlk değerlendirmeyi siz yazın — 1 dakikanızı alır.</span>
+                {reviews.length === 0
+                  ? <>Henüz yayınlanmış yorum yok.<br /><span className="text-xs">İlk değerlendirmeyi siz yazın — 1 dakikanızı alır.</span></>
+                  : <>Bu filtreyle eşleşen yorum yok.</>}
               </p>
             </div>
           ) : (
             <div className="space-y-3">
-              {reviews.map((r, i) => (
+              {filteredReviews.map((r, i) => (
                 <article key={r.id} className={cn("mk-card mk-anim-up rounded-2xl p-5", `mk-delay-${Math.min(6, (i % 6) + 1)}`)}>
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">

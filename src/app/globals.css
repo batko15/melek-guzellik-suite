@@ -257,3 +257,53 @@
 .mk-scroll::-webkit-scrollbar-track { background: transparent; }
 .mk-scroll::-webkit-scrollbar-thumb { background: oklch(0.35 0.02 78); border-radius: 8px; }
 .mk-scroll::-webkit-scrollbar-thumb:hover { background: color-mix(in oklch, var(--brand) 45%, oklch(0.4 0.02 78)); }
+
+/* ═══ Leaflet Harita — Black-Gold uyumu ═══════════════════════════════════ */
+.leaflet-container {
+  background: #0c0a08;
+  font: inherit;
+  z-index: 0; /* sticky üst çubuğun altında kalır */
+}
+
+.leaflet-container a {
+  color: var(--brand-text);
+}
+
+.mk-map-pin {
+  background: transparent;
+  border: none;
+}
+
+/* Popup: koyu kart + altın çerçeve */
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: oklch(0.2 0.01 78 / 0.97);
+  color: var(--foreground);
+  border: 1px solid color-mix(in oklch, var(--brand) 35%, transparent);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 14px color-mix(in oklch, var(--brand) 18%, transparent);
+  border-radius: 12px;
+}
+
+.leaflet-popup-content {
+  margin: 10px 14px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* Yakınlaştırma kontrolleri */
+.leaflet-bar a {
+  background: oklch(0.2 0.01 78);
+  color: var(--brand-text);
+  border-color: color-mix(in oklch, var(--brand) 25%, transparent);
+}
+
+.leaflet-bar a:hover {
+  background: color-mix(in oklch, var(--brand) 18%, oklch(0.2 0.01 78));
+  color: var(--brand-text);
+}
+
+.leaflet-control-attribution {
+  background: rgba(12, 10, 8, 0.75);
+  color: var(--muted-foreground);
+  font-size: 9px;
+}

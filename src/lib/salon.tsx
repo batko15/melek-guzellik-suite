@@ -76,6 +76,7 @@ export interface WeatherData {
     icon: string
   }
   daily?: Array<{ date: string; code: number; max: number; min: number; text: string; icon: string }>
+  careTip?: string
   updatedAt?: string
   error?: string
 }
@@ -84,6 +85,7 @@ export interface SalonStats {
   today: { count: number; bookings: Array<SalonBooking & { serviceName: string; customerName: string }> }
   pending: number
   week: { bookings: number; revenueChf: number; utilization: number }
+  month: { bookings: number; revenueChf: number }
   total: { bookings: number; completed: number; cancelled: number; customers: number; services: number; revenueChf: number }
   reviews: { total: number; approved: number; pending: number; average: number }
   topServices: Array<{ name: string; count: number; volume: number }>
@@ -92,12 +94,14 @@ export interface SalonStats {
 }
 
 // ─── Biçimlendirme yardımcıları ─────────────────────────────────────────────
-export function chf(value: number): string {
-  return new Intl.NumberFormat("de-CH", { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value)
+/** Para biçimi: "1.250 ₺" (Türkçe binlik ayraç + branding sembolü). */
+export function para(value: number): string {
+  return `${new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 0 }).format(Math.round(value))} ${BRANDING.locale.currencySymbol}`
 }
 
-export function chf2(value: number): string {
-  return new Intl.NumberFormat("de-CH", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)
+/** Kuruşlu para biçimi. */
+export function para2(value: number): string {
+  return `${new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)} ${BRANDING.locale.currencySymbol}`
 }
 
 export function timeStr(iso: string): string {

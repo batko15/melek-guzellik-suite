@@ -45,7 +45,7 @@ export interface ModuleConfig {
 
 export const BRANDING = {
   // ─── Sürüm (her yerde görünür şekilde işaretlenir) ───────────────────────
-  version: "2.0.0",
+  version: "2.1.0",
 
   // ─── Marka ────────────────────────────────────────────────────────────────
   // nameParts: 1. kısım normal, 2. kısım altın (vurgu rengi) yazılır.
@@ -59,27 +59,39 @@ export const BRANDING = {
   // ─── Stüdyo / Resmi Bilgiler ──────────────────────────────────────────────
   company: {
     legalName: "Melek'çe Güzellik",
-    street: "Örnek Caddesi 12", // ← Gerçek adresi buraya girin
-    city: "5000 Aarau", // ← Gerçek şehri buraya girin
-    phone: "+41 79 000 00 00", // ← Gerçek telefon numarasını buraya girin
+    street: "Yalı Caddesi 12", // ← Gerçek adresi buraya girin
+    city: "17500 Gelibolu / Çanakkale",
+    phone: "+90 530 000 00 00", // ← Gerçek telefon numarasını buraya girin
+    whatsapp: "+90 530 000 00 00", // ← WhatsApp bildirimleri için numara (ülke koduyla)
     instagram: "melekce_guzellik17",
-    website: "www.melekce-guzellik.ch", // ← İsteğe bağlı: kendi web siteniz
-    footerClaim: "Tırnak Sanatı · Güzellik · Kirpik",
+    website: "Gelibolu · Çanakkale · Türkiye",
+    footerClaim: "Tırnak Sanatı · Güzellik · Kirpik — 2022'den beri",
+  },
+
+  // ─── Konum & İnteraktif Harita (Leaflet, koyu CARTO karoları) ──────────
+  map: {
+    enabled: true,
+    label: "Melek'çe Güzellik — Gelibolu",
+    latitude: 40.4125,
+    longitude: 26.6672,
+    zoom: 15,
+    googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=Melek%27%C3%A7e+G%C3%BCzellik+Gelibolu",
   },
 
   // ─── Canlı Hava Durumu (Open-Meteo, ücretsiz, anahtar gerekmez) ──────────
   weather: {
     enabled: true,
-    cityName: "Aarau",
-    latitude: 47.39,
-    longitude: 8.05,
-    timezone: "Europe/Zurich",
+    cityName: "Gelibolu",
+    latitude: 40.4125,
+    longitude: 26.6672,
+    timezone: "Europe/Istanbul",
   },
 
   // ─── Yerel Ayarlar ────────────────────────────────────────────────────────
   locale: {
     language: "tr-TR",
-    currency: "CHF",
+    currency: "TRY",
+    currencySymbol: "₺",
   },
 
   // ─── Herkese Açık Açılış Sayfası ──────────────────────────────────────────
@@ -121,7 +133,7 @@ export const BRANDING = {
     myBookingsHint: "Telefon numaranızı girin — randevularınızı görün ve gerekirse iptal edin",
     successTitle: "Randevunuz alındı!",
     successText: "En kısa sürede onaylanacak. Sizi görmek için sabırsızlanıyoruz!",
-    demoPhone: "+41 79 111 22 33",
+    demoPhone: "+90 532 111 22 33",
   },
 
   // ─── Değerlendirmeler (herkese açık) ──────────────────────────────────────
