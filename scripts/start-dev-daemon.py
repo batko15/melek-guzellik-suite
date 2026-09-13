@@ -21,6 +21,10 @@ if os.fork() > 0:
 
 os.chdir(PROJECT)
 
+# Alte Shell-Rest-Umgebungsvariable entfernen — .env-Datei soll gewinnen
+# (Next.js: echte Umgebungsvariablen haben Vorrang vor .env-Dateien!)
+os.environ.pop("DATABASE_URL", None)
+
 # Alle FDs umleiten
 log_fd = os.open(LOG, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o644)
 devnull = os.open(os.devnull, os.O_RDONLY)

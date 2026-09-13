@@ -18,9 +18,11 @@ import { fileURLToPath } from "node:url"
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 
 function resolveDatabaseUrl() {
-  // 1) Umgebungsvariable (Vercel setzt diese beim Build)
-  if (process.env.DATABASE_URL) return process.env.DATABASE_URL
-  // 2) .env-Datei (lokale Entwicklung)
+  // 1) .env-Datei (lokale Entwicklung — Quelle der Wahrheit).
+  //    BEWUSST vor der Umgebungsvariable: Shells können veraltete
+  //    DATABASE_URL-Exports tragen (z. B. altes SQLite-Setup), die sonst
+  //    die .env überdecken würden. Auf Vercel existiert keine .env im Repo
+  //    (gitignored) → Umgebungsvariable greift dort automatisch.
   const envPath = resolve(root, ".env")
   if (existsSync(envPath)) {
     for (const line of readFileSync(envPath, "utf8").split("\n")) {
@@ -28,6 +30,8 @@ function resolveDatabaseUrl() {
       if (m) return m[1].trim().replace(/^["']|["']$/g, "")
     }
   }
+  // 2) Umgebungsvariable (Vercel setzt diese beim Build)
+  if (process.env.DATABASE_URL) return process.env.DATABASE_URL
   return null
 }
 

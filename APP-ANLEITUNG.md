@@ -17,12 +17,15 @@ und die Preise leer!**
 ### Schritt-für-Schritt:
 
 1. **Supabase-Projekt öffnen**: https://supabase.com → eigenes Projekt
-   (z. B. `salon-suite-db`) → unten links ⚙️ **Project Settings** → **Database**.
-2. **Connection String** → Reiter **URI** anklicken → kopieren.
-   Die Adresse sieht so aus:
+   (z. B. `salon-suite-db`) → oben rechts **Connect** (oder unten links ⚙️ **Project Settings** → **Database**).
+2. **Connection String** → Reiter **Connection Pooler** → Modus **Session** anklicken → kopieren.
+   Die Adresse sieht so aus (⚠️ **empfohlen — funktioniert immer, auch ohne IPv6**):
    ```
-   postgresql://postgres:[YOUR-PASSWORD]@db.xxxxxxxxx.supabase.co:5432/postgres
+   postgresql://postgres.xxxxxxxxx:[YOUR-PASSWORD]@aws-1-eu-west-1.pooler.supabase.com:5432/postgres
    ```
+   *(Alternativ funktioniert auch der Reiter **URI** mit `db.xxxxxxxxx.supabase.co` —
+   dieser ist allerdings reines IPv6 und kann je nach Vercel-Region connection errors verursachen. 
+   Der Pooler ist die sichere Wahl.)*
    ⚠️ `[YOUR-PASSWORD]` mit dem bei der Projekterstellung vergebenen Passwort ersetzen!
 3. **Vercel öffnen**: https://vercel.com → eigenes Projekt
    (`melek-guzellik-suite`) → oben **Settings** → **Environment Variables**.
@@ -38,6 +41,8 @@ und die Preise leer!**
 6. **Fertig!** Nach ca. 1–2 Minuten richtet die App die Cloud-Datenbank
    **vollautomatisch** ein: Tabellen, 17 Leistungen mit ₺-Preisen, 22 Galerie-Fotos.
    Es sind **keine Migrationen, kein CLI und keine weiteren Handgriffe nötig.**
+   ℹ️ Der allererste Seitenaufruf nach dem Redeploy kann bis zu einer Minute dauern
+   (Datenbank wird eingerichtet) — danach ist alles blitzschnell.
 
 > 🔍 **Selbst prüfen:** `https://melek-guzellik-suite.vercel.app/api/v1/diag` öffnen —
 > dort muss `"dbProtocol": "postgresql"` stehen (statt `"none"`).

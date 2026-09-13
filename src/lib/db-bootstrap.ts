@@ -7,6 +7,13 @@
 //    2. Grunddaten säen: 17 Hizmetler (₺), 22 Galerie-Fotos, Ekip
 //  Danach läuft alles wie gewohnt — ohne Migrationen, ohne CLI, ohne Setup.
 //  Lokal (SQLite) wird dieser Bootstrap vollständig übersprungen.
+//
+//  V5.2 — RENNEN-SCHUTZ: Vercel kann bei einem Kaltstart MEHRERE Lambda-
+//  Instanzen gleichzeitig hochfahren ( parallele API-Aufrufe beim ersten
+//  Laden der Seite). Ohne Schutz würden alle Instanzen gleichzeitig säen
+//  → doppelte Hizmetler/Galerie. Lösung: das komplette Bootstrap läuft in
+//  EINER Transaktion mit PostgreSQL-Advisory-Lock — DB-weit serialisiert.
+//  Die Lock-Nummer ist frei gewählt, muss nur projektweit eindeutig sein.
 // ═══════════════════════════════════════════════════════════════════════════
 
 import type { PrismaClient } from "@prisma/client"
@@ -90,54 +97,97 @@ export function ensureDatabase(prisma: PrismaClient): Promise<void> {
   return bootstrapPromise
 }
 
+/** Advisory-Lock-Kennung — DB-weit eindeutig, serialisiert parallele Kaltstarts. */
+const BOOTSTRAP_LOCK_ID = 727101
+
 async function runBootstrap(prisma: PrismaClient): Promise<void> {
   const started = Date.now()
 
-  // 1) Tabellen vorhanden?
-  const existing = await prisma.$queryRaw<{ exists: boolean }[]>`
-    SELECT EXISTS (
-      SELECT FROM information_schema.tables
-      WHERE table_schema = 'public' AND table_name = 'Service'
-    ) AS exists
-  `
-  const tablesExist = existing[0]?.exists === true
+  // ── Schneller Pfad OHNE Lock/Transaktion: alles schon eingerichtet? ──────
+  // (einmal pro Kaltstart — bei bestehender DB drei winzige Counts, kein Lock)
+  if (await isAlreadyBootstrapped(prisma)) return
 
-  if (!tablesExist) {
-    console.log("[bootstrap] Supabase-Datenbank leer → Tabellen werden erstellt …")
-    for (const stmt of PG_DDL) {
-      try {
-        await prisma.$executeRawUnsafe(stmt)
-      } catch (err) {
-        const msg = String((err as Error)?.message ?? err)
-        // Bereits vorhanden / bereits existierender Constraint → überspringen
-        if (/already exists|duplicate/i.test(msg)) continue
-        console.error("[bootstrap] DDL-Fehler:", msg.slice(0, 200))
-        throw err
+  // ── Phase 1: Tabellen (DDL) — eigene Transaktion + Lock ──────────────────
+  // Zwei GETRENNTE Transaktionen statt einer: sollte die Serverless-Funktion
+  // mitten drin sterben (Timeout), bleibt die fertige Phase erhalten und der
+  // nächste Request macht nahtlos weiter (Alles-oder-Nichts pro Phase).
+  // RENNEN-SCHUTZ: wer die Lock zuerst hält, setzt auf; alle anderen warten
+  // und sehen danach den frisch eingetragenen Stand (READ COMMITTED).
+  await prisma.$transaction(
+    async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(${BOOTSTRAP_LOCK_ID})`
+      const existing = await tx.$queryRaw<{ exists: boolean }[]>`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables
+          WHERE table_schema = 'public' AND table_name = 'Service'
+        ) AS exists
+      `
+      if (existing[0]?.exists === true) return
+
+      console.log("[bootstrap] Supabase-Datenbank leer → Tabellen werden erstellt …")
+      for (const stmt of PG_DDL) {
+        try {
+          await tx.$executeRawUnsafe(stmt)
+        } catch (err) {
+          const msg = String((err as Error)?.message ?? err)
+          // Bereits vorhanden / bereits existierender Constraint → überspringen
+          if (/already exists|duplicate/i.test(msg)) continue
+          console.error("[bootstrap] DDL-Fehler:", msg.slice(0, 200))
+          throw err
+        }
       }
-    }
-    console.log(`[bootstrap] ✓ ${PG_DDL.length} DDL-Statements ausgeführt`)
-  }
+      console.log(`[bootstrap] ✓ ${PG_DDL.length} DDL-Statements ausgeführt`)
+    },
+    { timeout: 90_000, maxWait: 15_000 },
+  )
 
-  // 2) Grunddaten säen (nur wenn Service-Tabelle leer ist)
-  const serviceCount = await prisma.service.count()
-  if (serviceCount === 0) {
-    console.log("[bootstrap] Hizmetler säen (17) …")
-    await prisma.service.createMany({ data: SERVICES })
-  }
+  // ── Phase 2: Grunddaten säen — eigene Transaktion + Lock ─────────────────
+  await prisma.$transaction(
+    async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(${BOOTSTRAP_LOCK_ID})`
 
-  const galleryCount = await prisma.galleryItem.count()
-  if (galleryCount === 0) {
-    console.log("[bootstrap] Galeri säen (22) …")
-    await prisma.galleryItem.createMany({ data: GALLERY })
-  }
+      const serviceCount = await tx.service.count()
+      if (serviceCount === 0) {
+        console.log("[bootstrap] Hizmetler säen (17) …")
+        await tx.service.createMany({ data: SERVICES })
+      }
 
-  const staffCount = await prisma.staffMember.count()
-  if (staffCount === 0) {
-    console.log("[bootstrap] Ekip säen …")
-    await prisma.staffMember.createMany({ data: STAFF })
-  }
+      const galleryCount = await tx.galleryItem.count()
+      if (galleryCount === 0) {
+        console.log("[bootstrap] Galeri säen (22) …")
+        await tx.galleryItem.createMany({ data: GALLERY })
+      }
 
-  if (Date.now() - started > 50) {
-    console.log(`[bootstrap] ✓ fertig in ${Date.now() - started} ms`)
+      const staffCount = await tx.staffMember.count()
+      if (staffCount === 0) {
+        console.log("[bootstrap] Ekip säen …")
+        await tx.staffMember.createMany({ data: STAFF })
+      }
+    },
+    { timeout: 60_000, maxWait: 15_000 },
+  )
+
+  console.log(`[bootstrap] ✓ fertig in ${Date.now() - started} ms`)
+}
+
+/** Fast-Path-Check: Tabellen + Grunddaten bereits vollständig vorhanden? */
+async function isAlreadyBootstrapped(prisma: PrismaClient): Promise<boolean> {
+  try {
+    const existing = await prisma.$queryRaw<{ exists: boolean }[]>`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_name = 'Service'
+      ) AS exists
+    `
+    if (existing[0]?.exists !== true) return false
+    const [svc, gal, staff] = await Promise.all([
+      prisma.service.count(),
+      prisma.galleryItem.count(),
+      prisma.staffMember.count(),
+    ])
+    return svc > 0 && gal > 0 && staff > 0
+  } catch {
+    // Tabelle noch nicht da o.ä. → Setup-Pfad laufen lassen
+    return false
   }
 }
