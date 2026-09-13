@@ -1,4 +1,4 @@
-# 💅 Melek'çe Güzellik Suite — V5.4 EŞSİZ
+# 💅 Melek'çe Güzellik Suite — V5.5 MOBİL & CANLI İZLEME
 
 **Die komplette Salon-Software für Nagelstudios & Beauty-Studios — öffentliche Webseite, Kundinnen-Buchungsportal und Team-Verwaltung in einer Anwendung.**
 
@@ -6,7 +6,7 @@
 
 ---
 
-## ✨ Feature-Highlights (V5.4 EŞSİZ)
+## ✨ Feature-Highlights (V5.5 MOBİL & CANLI İZLEME)
 
 ### 🌐 Öffentliche Webseite (ohne Login)
 - **Luxury-Design** «Black-Gold-Champagner» mit echtem Studio-Logo (Engelsflügel), Gold-Eck-Ornamenten und Rauten-Trennern — mobil, Tablet & Desktop optimiert
@@ -17,6 +17,7 @@
 - ⭐ **V5 GALERIE**: 22 echte Instagram-Fotos des Studios (die 6 neuesten Arbeiten direkt von @melekce_guzellik17 übernommen)
 - Leistungen & Preise im **Menü-Stil** (punktierte Preisführung), **Galerie mit Kategorie-Filter** (Tırnak / Güzellik / Kirpik / Stüdyo)
 - Live-**Wetter-Widget** mit türkischen Pflege-Tipps (Open-Meteo, schlüssellos), **interaktive Karte** (Leaflet, dunkle CARTO-Tiles)
+- ⭐ **V5.5 Mobil Uygulama**: App-Download-Bereich im Footer mit **QR-Code in Markenfarben** (Champagner-Gold auf Samt) — zeigt immer auf das neueste GitHub-Release; dazu PWA-Installationshinweis für iPhone
 - Gästebewertungen mit Sternen — jeder darf ohne Login bewerten (moderiert)
 
 ### 👩 Kundinnen-Portal (ohne Login)
@@ -44,7 +45,7 @@
 | **Yorumlar** | Bewertungs-Moderation (genehmigen / ablehnen), Filter nach Sternen & Leistung |
 | **Hizmetler** | Preis-Editor (Preis, Dauer, Beschreibung, Beliebtheit) direkt in der Zeile |
 | **Galeri** | Verwaltung der öffentlichen Galerie + Kundinnen-Portfolio-Zuordnung |
-| **Ayarlar** | Studio-Daten, Öffnungszeiten, Team, System |
+| **Ayarlar** | Studio-Daten, Öffnungszeiten, Team, System · ⭐ **NEU V5.5 Sistem Durumu**: Live-Systemmonitor (Bulut-DB-Latenz, **Supabase-API-Gateway-Check** mit Free-Tier-Pausen-Warnung, SMTP/Twilio-Bereitschaft) |
 
 ### 🔔 Benachrichtigungen & Rückstellung (Recherche-Best Practices)
 - ⭐ **V5.4 Vercel Cron**: `/api/v1/cron/reminders` läuft täglich 11:00 TSİ — versendet automatisch 24-h-Erinnerungen (E-Mail + WhatsApp) und protokolliert sie; mit `CRON_SECRET` absicherbar
@@ -212,6 +213,14 @@ public/gallery/real/          # echte Studio-Fotos
 ---
 
 ## 📋 Changelog
+
+### V5.5 — «MOBİL & CANLI İZLEME» (Android-App V2 + Supabase-API-Monitoring)
+- 📱 **Android-APK neu gebaut** (App 5.5.0, Build 3): Startscreen-Shortcuts für **Randevu**, **Hediye Kartı** und **Yorumlar** (langer Druck aufs App-Icon); gleiche Signatur wie V5.1 → Updates installieren sich drüber; APK + AAB wieder im GitHub-Release
+- 🩺 **Sistem Durumu (Live-Systemmonitor)**: neue Karte im Ekip-Portal → Ayarlar — prüft auf einen Klick die Bulut-Datenbank (Latenz, Hizmet-Zählung) UND das **Supabase-API-Gateway** (`https://pmudlcpusvwvmejirpsq.supabase.co`) live ab; warnt rot, wenn das Free-Tier-Projekt nach 7 Tagen Inaktivität pausiert wurde (Restore-Anleitung gleich mit dabei); zeigt SMTP/Twilio-Bereitschaft als Badges
+- 🔌 **Neuer Endpunkt** `/api/v1/salon/system-status` (Rate-Limit 10/min) + `diag` zeigt jetzt `supabaseApi: { active: true }` — Supabase-URL wird automatisch aus der `DATABASE_URL` abgeleitet (`SUPABASE_API_URL` überschreibbar)
+- 📲 **App-Download-Bereich** auf der öffentlichen Webseite (Footer): QR-Code in Markenfarben (Champagner-Gold auf Samt) verlinkt auf `releases/latest` — veraltet nie; «Android için indir»-Button + iPhone-PWA-Hinweis
+- ⚡ **PWA-Manifest**: Shortcuts um **Hediye Kartı** und **Yorumlar** erweitert
+- ✅ ESLint 0 / TSC 0 (src/) · Production-Build sauber · APK mit aapt2 + apksigner verifiziert (Paket, Version, Signatur, Shortcuts)
 
 ### V5.4 — «EŞSİZ» (Marktanalyse-Upgrade: Geschenkkarten · Warteliste · Cron)
 - 🎁 **Hediye Kartı (Digitale Geschenkkarten)**: Buchsy/Mangomint-Standard — Kundinnen erstellen auf der Webseite eine Kartenanfrage (Betrag, Empfängerin, Notiz) → Studio aktiviert nach Zahlungseingang → Guthaben wird pro Termin (auch Teilbeträge) abgebucht; öffentliche Bakiye-Abfrage per Code `MELEK-XXXX-XXXX`; Admin-Modul mit Statistiken + WhatsApp-Aktivierungsbenachrichtigung

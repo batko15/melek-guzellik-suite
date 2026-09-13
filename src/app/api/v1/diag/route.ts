@@ -4,7 +4,7 @@
 // ein eigener PrismaClient pro Aufruf wäre eine zusätzliche Verbindungsquelle.
 
 import { db } from "@/lib/db"
-import { isPostgres } from "@/lib/db-bootstrap"
+import { isPostgres, SUPABASE_PROJECT_REF } from "@/lib/db-bootstrap"
 
 export async function GET() {
   const url = process.env.DATABASE_URL ?? ""
@@ -18,6 +18,22 @@ export async function GET() {
     dbProtocol: url.split("://")[0] || "none",
     dbUrlMasked: masked.slice(0, 90),
     isPostgres: isPostgres(),
+    supabaseProjectRef: SUPABASE_PROJECT_REF,
+  }
+
+  // V5.5 — Supabase-API-Gateway (nicht-blockierend, 3 s Timeout):
+  // 401 von /rest/v1/ = Projekt AKTİF (anon anahtar yok, beklenen).
+  try {
+    const ctrl = new AbortController()
+    const t = setTimeout(() => ctrl.abort(), 3000)
+    const r = await fetch(`https://${SUPABASE_PROJECT_REF}.supabase.co/rest/v1/`, {
+      signal: ctrl.signal,
+      cache: "no-store",
+    })
+    clearTimeout(t)
+    info.supabaseApi = { reachable: true, httpCode: r.status, active: r.status === 401 || r.status === 200 }
+  } catch {
+    info.supabaseApi = { reachable: false, active: false }
   }
 
   if (!isPostgres()) {

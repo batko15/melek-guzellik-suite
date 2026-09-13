@@ -47,6 +47,20 @@
       "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     },
     {
+      "name": "Hediye Kartı",
+      "short_name": "Hediye",
+      "description": "Dijital hediye kartı oluştur",
+      "url": "/#hediye-karti",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Yorumlar",
+      "short_name": "Yorumlar",
+      "description": "Müşteri değerlendirmelerini gör",
+      "url": "/yorumlar",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
       "name": "Randevularım",
       "short_name": "Randevularım",
       "description": "Telefon numaranızla randevularınızı görün",

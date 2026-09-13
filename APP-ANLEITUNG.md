@@ -79,7 +79,7 @@ App mit eigenem Icon und Vollbild — auf Android **und** iPhone.
 ## 3️⃣ Echte Android-APK-Datei (für direkte Installation)
 
 Im GitHub-Release liegt eine **fertig signierte APK**:
-`Code → Releases → V5.1 → melekce-guzellik.apk` herunterladen.
+`Code → Releases → V5.5 → melekce-guzellik.apk` herunterladen.
 
 - ✅ **Eine APK für alle Architekturen** (arm64-v8a, armeabi-v7a, x86, x86_64) —
   es ist eine reine Web-App-Hülle ohne nativen Code.
@@ -88,6 +88,13 @@ Im GitHub-Release liegt eine **fertig signierte APK**:
 - **Installation**: APK auf dem Handy öffnen → «Installation aus unbekannten
   Quellen erlauben» bestätigen. Die App öffnet die Salon-Seite im Vollbild-Modus
   (Adressleiste wird automatisch ausgeblendet, sobald sie online ist).
+- 🆕 **V5.5 (App-Version 5.5.0, Build 3)**: Startscreen-Verknüpfungen für
+  **Randevu**, **Hediye Kartı** und **Yorumlar** (langer Druck aufs App-Icon).
+  Wer die alte V5.1-App installiert hat: einfach APK drüberinstallieren —
+  gleiche Signatur, alle Daten bleiben.
+- 📲 **QR-Code**: Auf der Salon-Webseite ganz unten («Melek'çe mobil
+  uygulaması») — Handy-Kamera darauf richten → landet direkt beim neuesten
+  Release. Der Code zeigt immer auf «latest», veraltet also nie.
 
 ### APK später selbst neu bauen (optional)
 ```bash
@@ -97,6 +104,9 @@ bubblewrap build
 ```
 Details: https://docs.pwabuilder.com · Alternativ über https://www.pwabuilder.com
 (Manifest-URL eingeben → Android-Paket herunterladen).
+⚠️ Wichtig: Updates nur mit demselben Keystore signieren
+(`download/melekce-signing-keystore`, Passwort siehe KEYSTORE-INFO.txt) —
+sonst verweigert Android die Installation über die Bestands-App.
 
 ---
 
@@ -184,6 +194,29 @@ WhatsApp · SMS · E-Mail · Instagram«**:
   Endpunkt nur mit `Authorization: Bearer <geheimnis>` erreichbar
 - (**Hinweis:** Auf dem Hobby-Plan läuft Cron 1× täglich. Manuell jederzeit
   aufrufbar: `…/api/v1/cron/reminders` im Browser.)
+
+---
+
+## 5️⃣e NEU V5.5 — Sistem Durumu (Live-Systemmonitor) 🩺
+
+Im **Ekip-Portal → Ayarlar** steht oben jetzt die Karte **«Sistem durumu»**:
+
+- **Bulut veritabanı**: Verbindung, Modus (Bulut/lokal), Antwortzeit in ms,
+  Anzahl erfasster Hizmetler — Grün = alles gut
+- **Supabase API ağ geçidi**: prüft `https://pmudlcpusvwvmejirpsq.supabase.co`
+  live ab. Wichtig für den **Free-Tier-Pauschalter**: Nach 7 Tagen ohne
+  Datenbankaktivität pausiert Supabase das Projekt — die Karte zeigt dann
+  rot **«duraklatılmış»** mit Anleitung (Supabase → Settings → General →
+  *Restore project* — Daten bleiben erhalten)
+- **Bildirim altyapısı**: zeigt auf einen Blick, ob E-Mail (SMTP) und
+  WhatsApp (Twilio) aktiviert sind oder im manuellen Modus laufen
+- Button **«Yenile»** = sofortige Neuprüfung; darunter Version, Umgebung
+  (üretim) und Vercel-Region (dub1) mit Uhrzeit des Checks
+
+Technisch: Endpunkt `/api/v1/salon/system-status` (10 Abrufe/Minute/IP),
+Supabase-URL wird automatisch aus der `DATABASE_URL` abgeleitet — nichts
+zu konfigurieren. Der Diagnose-Endpunkt `/api/v1/diag` zeigt ergänzend
+`supabaseApi: { active: true }`.
 
 ---
 

@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { SystemStatusCard } from "@/components/staff/system-status-card"
 import { BRANDING, BRAND_DISPLAY } from "@/config/branding"
 
 const todayIdx = (new Date().getDay() + 6) % 7
@@ -35,6 +36,8 @@ export function AyarlarView() {
       </section>
 
       <section className="mx-auto max-w-7xl space-y-5 px-4 py-6 sm:px-6">
+        {/* ─── V5.5: Sistem durumu — canlı bulut izleme ─── */}
+        <SystemStatusCard />
         <div className="grid gap-4 lg:grid-cols-2">
           {/* ─── Stüdyo bilgileri ─── */}
           <Card className="mk-card">

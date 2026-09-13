@@ -9,7 +9,7 @@
 
 import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { Instagram, MapPin, Phone, Clock, CalendarCheck, ChevronRight, MessageSquareHeart, ArrowRight, MessageCircle, Navigation, Sparkles, Heart, Crown, Mail, Gift, Copy, Check, User, MessageSquare } from "lucide-react"
+import { Instagram, MapPin, Phone, Clock, CalendarCheck, ChevronRight, MessageSquareHeart, ArrowRight, MessageCircle, Navigation, Sparkles, Heart, Crown, Mail, Gift, Copy, Check, User, MessageSquare, Smartphone, Download } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -694,6 +694,48 @@ export function LandingPage({
               <button onClick={onReviews} className="mk-focus rounded hover:text-foreground">Yorumlar</button>
               <button onClick={onBook} className="mk-focus rounded hover:text-foreground">Randevu Al</button>
               <button onClick={onStaffLogin} className="mk-focus rounded hover:text-foreground">Ekip Girişi</button>
+            </div>
+
+            {/* ═══ V5.5: Mobil uygulama — APK indirme (QR) + PWA ipucu ═══ */}
+            <div className="mt-7 rounded-xl border border-border/60 bg-background/40 p-4 sm:p-5">
+              <div className="flex flex-col items-center gap-4 sm:flex-row sm:gap-5">
+                <a
+                  href="https://github.com/batko15/melek-guzellik-suite/releases/latest"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mk-focus mk-ornament mk-logo-frame rounded-lg p-2 transition-transform hover:scale-[1.03]"
+                  aria-label="Melek'çe Android uygulamasını indir (GitHub)"
+                >
+                  <img
+                    src="/brand/app-qr.png"
+                    alt="Melek'çe Android uygulaması indirme QR kodu"
+                    className="h-24 w-24 rounded"
+                    width={96}
+                    height={96}
+                  />
+                </a>
+                <div className="text-center sm:text-left">
+                  <div className="flex items-center justify-center gap-1.5 sm:justify-start">
+                    <Smartphone className="h-4 w-4 text-brand-text" />
+                    <span className="text-sm font-bold">Melek'çe mobil uygulaması</span>
+                  </div>
+                  <p className="mt-1.5 max-w-xs text-[11px] leading-relaxed text-muted-foreground">
+                    Android uygulaması ücretsizdir: telefonun kamerasıyla kodu okutun — randevu,
+                    galeri ve hediye kartı tek dokunuşta cebinizde.
+                  </p>
+                  <a
+                    href="https://github.com/batko15/melek-guzellik-suite/releases/latest"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mk-focus mt-2.5 inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3 py-1.5 text-[11px] font-semibold text-brand-text transition-colors hover:bg-primary/20"
+                  >
+                    <Download className="h-3.5 w-3.5" /> Android için indir (APK)
+                  </a>
+                  <div className="mt-1.5 text-[10px] text-muted-foreground/70">
+                    iPhone kullanıyorsanız: Safari → Paylaş → «Ana Ekrana Ekle»
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="mt-7 flex items-center gap-2.5 text-[9px] uppercase tracking-[0.3em] text-muted-foreground/50">

@@ -101,6 +101,23 @@ export function isPostgres(): boolean {
   return /^postgres(ql)?:\/\//i.test(process.env.DATABASE_URL ?? "")
 }
 
+/** V5.5 — Supabase-Projekt-Ref aus der Pooler-DATABASE_URL ableiten.
+ *  Pooler-Benutzername hat die Form «postgres.<proje-ref>»; für lokale
+ *  SQLite oder fremde Postgres-Hosts gilt der Salon-Standard ( unten).
+ *  Wird für den Supabase-API-Gesundheitscheck (system-status) genutzt. */
+export const SUPABASE_PROJECT_REF: string = (() => {
+  const url = process.env.DATABASE_URL ?? ""
+  const m = url.match(/^postgres(?:ql)?:\/\/[^:]+\.([a-z0-9]{20,})@/i)
+  if (m && /[a-z0-9]{20,}\.supabase\.co/i.test(url) === false && m[1]) {
+    // Pooler-Form: postgres.<ref>@…pooler.supabase.com
+  }
+  if (m?.[1]) return m[1]
+  // Fallback: direkte Supabase-Host-Form <ref>.db.supabase.co / <ref>.supabase.co
+  const h = url.match(/\/\/([a-z0-9]{20,})\.(?:db\.)?supabase\.co/i)
+  if (h?.[1]) return h[1]
+  return "pmudlcpusvwvmejirpsq" // Salon-Melek'çe-Standardprojekt
+})()
+
 let bootstrapPromise: Promise<void> | null = null
 
 /**
