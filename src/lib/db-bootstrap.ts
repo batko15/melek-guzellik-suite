@@ -64,6 +64,7 @@ const GALLERY = [
   { title: "Deniz Kabuğu French", category: "tirnak", imagePath: "/gallery/real/yeni-nesil-protez-deniz-kabugu.jpg", sortOrder: 20 },
   { title: "İnci Tozu Sarısı", category: "tirnak", imagePath: "/gallery/real/tereyagi-sarisi-inci-tozu.jpg", sortOrder: 21 },
   { title: "Nar Çiçeği Nail Art", category: "tirnak", imagePath: "/gallery/real/nar-cicegi-deniz-yildizi.jpg", sortOrder: 22 },
+  { title: "Melek'çe Instagram Markası", category: "studyo", imagePath: "/gallery/real/melekce-instagram-markasi.jpg", sortOrder: 23 },
 ]
 
 const STAFF = [

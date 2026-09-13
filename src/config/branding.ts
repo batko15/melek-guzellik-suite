@@ -45,7 +45,7 @@ export interface ModuleConfig {
 
 export const BRANDING = {
   // ─── Sürüm (her yerde görünür şekilde işaretlenir) ───────────────────────
-  version: "5.0.0",
+  version: "5.3.0",
 
   // ─── Marka ────────────────────────────────────────────────────────────────
   // nameParts: 1. kısım normal, 2. kısım altın (vurgu rengi) yazılır.

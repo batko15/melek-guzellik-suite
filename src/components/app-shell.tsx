@@ -203,9 +203,22 @@ function useClock() {
   return now
 }
 
-export function AppShell() {
+/** V5.3: Öffentliche Ansicht → echter URL-Pfad (SEO + teilbare Links). */
+function pathForView(v: PublicView): string {
+  return v === "landing" ? "/" : `/${v}`
+}
+
+/** V5.3: URL-Pfad → öffentliche Ansicht („/randevu“ → „randevu“). */
+function viewForPath(p: string): PublicView {
+  const clean = p.replace(/\/+$/, "")
+  if (clean === "/randevu") return "randevu"
+  if (clean === "/yorumlar") return "yorumlar"
+  return "landing"
+}
+
+export function AppShell({ initialStage }: { initialStage?: PublicView }) {
   const [session, setSession] = useState<StaffSession | null>(null)
-  const [stage, setStage] = useState<Stage>("landing")
+  const [stage, setStage] = useState<Stage>(initialStage ?? "landing")
   const [view, setView] = useState<string>(resolveDefaultView())
   const [mobileOpen, setMobileOpen] = useState(false)
   const now = useClock()
@@ -243,12 +256,12 @@ export function AppShell() {
     return () => window.removeEventListener("mk-goto", onGoto)
   }, [])
 
-  // Tarayıcı geçmişi: herkese açık görünümler için hash kullan
+  // Tarayıcı geçmişi: hash (eski bağlantılar) + gerçek URL yolları (V5.3)
   useEffect(() => {
     const onHash = () => {
       const h = window.location.hash.replace("#", "")
       if (h === "randevu" || h === "yorumlar" || h === "") {
-        if (!session) setStage(h === "" ? "landing" : (h as PublicView))
+        if (!session) setStage(h === "" ? viewForPath(window.location.pathname) : (h as PublicView))
       }
     }
     onHash() // doğrudan #randevu / #yorumlar ile açılışta da çalışsın
@@ -256,8 +269,27 @@ export function AppShell() {
     return () => window.removeEventListener("hashchange", onHash)
   }, [session])
 
+  // V5.3: Zurück/Vorwärts-Knöpfe des Browsers synchronisieren
+  useEffect(() => {
+    const onPop = () => {
+      if (session) return
+      const h = window.location.hash.replace("#", "")
+      if (h === "randevu" || h === "yorumlar") {
+        setStage(h)
+        return
+      }
+      setStage(viewForPath(window.location.pathname))
+    }
+    window.addEventListener("popstate", onPop)
+    return () => window.removeEventListener("popstate", onPop)
+  }, [session])
+
   const goPublic = (v: PublicView) => {
-    window.location.hash = v === "landing" ? "" : v
+    // V5.3: echte URL-Pfade — teilbar, SEO-fähig, Back-Button-freundlich
+    const target = pathForView(v)
+    if (window.location.pathname !== target) {
+      window.history.pushState({}, "", target)
+    }
     setStage(v)
     window.scrollTo({ top: 0 })
   }

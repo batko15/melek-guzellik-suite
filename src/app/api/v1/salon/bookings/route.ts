@@ -9,6 +9,7 @@
 import { db } from "@/lib/db"
 import { rateLimit, clientIp, tooManyRequests } from "@/lib/rate-limit"
 import { sendBookingNotification, buildMessage, type NotifyKind } from "@/lib/notify"
+import { notifyStudioNewBooking, notifyCustomer } from "@/lib/notify-send"
 import { phoneDigits, canonicalPhone } from "@/lib/phone"
 
 const STATUS_ACTIVE = ["bekliyor", "onaylandi"]
@@ -281,6 +282,24 @@ export async function POST(request: Request) {
       notes: body.notes?.trim() || null,
     })
 
+    // V5.3 — Gerçek stüdyo bildirimi: SMTP e-posta + Twilio WhatsApp
+    // (yapılandırılmışsa gerçekten gönderilir, değilse sessizce atlanır;
+    //  her durumda NotificationLog'a yazılır, asla akışı bozmaz)
+    try {
+      await notifyStudioNewBooking({
+        bookingId: booking.id,
+        customerName: customer.name,
+        customerPhone: customer.phone,
+        customerEmail: customer.email,
+        serviceName: service.name,
+        startAt: start,
+        price: service.priceChf,
+        notes: body.notes?.trim() || null,
+      })
+    } catch {
+      // Bildirim başarısızlığı randevuyu oluşturmayı engellemez
+    }
+
     return Response.json(
       {
         booking: {
@@ -374,6 +393,25 @@ export async function PATCH(request: Request) {
           })
         : null
 
+    // V5.3 — Otomatik müşteri bildirimi (yalnızca ekip eylemi, misafir iptali değil):
+    // E-posta (müşteri adresi varsa) + WhatsApp (Twilio yapılandırılmışsa) gerçekten
+    // gönderilir. Derin bağlantılar (wa.me) manuel kanal olarak yanıtta kalır.
+    let autoSend: { emailSent: boolean; whatsappSent: boolean } | null = null
+    if (message && kind && !body.phone) {
+      try {
+        autoSend = await notifyCustomer({
+          bookingId: booking.id,
+          customerName: booking.customer.name,
+          customerPhone: booking.customer.phone,
+          customerEmail: booking.customer.email,
+          kind,
+          message,
+        })
+      } catch {
+        autoSend = null
+      }
+    }
+
     return Response.json({
       booking: {
         id: booking.id,
@@ -383,6 +421,7 @@ export async function PATCH(request: Request) {
       },
       ...(loyalty ? { loyalty } : {}),
       ...(message ? { notifyMessage: message, notifyKind: kind } : {}),
+      ...(autoSend ? { autoSend } : {}),
     })
   } catch {
     return Response.json({ error: "Randevu bulunamadı." }, { status: 404 })
