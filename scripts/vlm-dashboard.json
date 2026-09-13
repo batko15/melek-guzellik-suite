@@ -1,0 +1,28 @@
+{
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "content": "Görseldeki **Melek'e Güzellik** yönetim paneli (v2.0.0) için kısa değerlendirmem:\n\n**1) KPI Kartları ve Grafikler:** ✅ **Düzgün.** \n- Üst kısımda 4 adet KPI kartı (Bugünkü Randevu, Bekleyen Talep, Haftalık Doluluk, Toplam Müşteri) net ve okunabilir.\n- \"Ciro gelişimi\" için altın rengi çizgi grafik, \"Kategori dağılımı\" için bar/alan grafiği mevcut.\n- \"En çok tercih edilen hizmetler\" için yatay progress bar listesi var.\n\n**2) Hava Durumu Kartı:** ✅ **Var.**\n- Sağ üstte **11° Pulsu** (Bulutlu/Puslu) bilgisi, 4 günlük tahmin (Bugün 26°/9°, Pzt 24°/14° vb.) ve ay simgesi ile gece modu göstergesi mevcut.\n\n**3) Misafir Değerlendirmeleri Özeti:** ✅ **Var.**\n- Sağ tarafta **4.7 puan** (5 yıldız), \"7 yorumlanmış yorum\" notu ve \"3 yorum inceleme bekliyor\" uyarısı (turuncu kutu içinde) görünüyor.\n\n**4) Layout Sorunu:** ⚠️ **Minör sorunlar var.**\n- Sol sidebar (menü) ile ana içerik arası denge iyi ancak alt kısımdaki \"Kategori dağılımı\" grafiğinde veri boş görünürken (0 değerleri), sağdaki \"Haftalık randevu/ciro/toplam\" özet kartı biraz boş duruyor.\n- Genel olarak grid yapısı düzenli, responsive görünüyor (kartlar sığmış durumda).\n\n---\n\n### **Genel Puan: 8.5 / 10**\n\n**Artıları:** \n- Siyah-altın teması lüks bir güzellik stüdyosuna çok yakışmış, profesyonel duruyor.\n- Bilgi hiyerarşisi mantıklı (KPI'lar → Detay grafikler → Özetler).\n- Türkçe terminoloji tutarlı (Randevu, Talep, Ciro, Hizmetler).\n\n**Eksileri (-1.5 puan):**\n- Bazı grafiklerde veri yokluğu (boş state) tasarım olarak biraz kasvetli bırakmış.\n- \"Haftalık Doluluk %0\" gibi sıfır değerlerin görsel vurgusu biraz agresif (belki de gerçek veri bu şekilde).\n- Alt kısımdaki footer ile içerik arası boşluk biraz dar kalabilmiş.\n\n**Sonuç:** Görsel olarak başarılı, işlevsel ve temaya uygun bir dashboard tasarımı. Sadece bazı veri boşluklarının görsel treatment'ı iyileştirilebilir.",
+        "role": "assistant"
+      }
+    }
+  ],
+  "created": 1789263942,
+  "id": "2026091309452594ff4d7b76a24484",
+  "model": "glm-5v-turbo",
+  "object": "chat.completion",
+  "request_id": "2026091309452594ff4d7b76a24484",
+  "usage": {
+    "completion_tokens": 685,
+    "completion_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "prompt_tokens": 2562,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "total_tokens": 3247
+  }
+}

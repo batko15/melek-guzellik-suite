@@ -1,0 +1,28 @@
+{
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "content": "Görseldeki Instagram profilinden çıkarılabilecek tüm detaylar aşağıdadır:\n\n**1) Profil adı ve kullanıcı adı**\n*   **Profil Adı:** MELEK'CE GÜZELLİK\n*   **Kullanıcı Adı:** (Görselde görünmüyor, muhtemelen @melekceguzellik veya benzeri bir isim)\n\n**2) Bio metni tam olarak**\n```\nMELEK'CE\nGÜZELLİK\n♦ NAIL ARTIST ♦\n\nHER KADIN BİR MELEK GİBİ GÜZELDİR\n```\n*(Alt sağ köşede ek olarak \"Since 2022\" ibaresi bulunmakta)*\n\n**3) Konum/şehir bilgisi**\n*   Görselde **konum/şehir bilgisi bulunmamaktadır.** (Sadece \"Since 2022\" yazısı mevcut)\n\n**4) Telefon/WhatsApp numarası**\n*   Görselde **telefon numarası veya WhatsApp bilgisi yoktur.**\n\n**5) Görünen fiyat bilgisi**\n*   Görselde **hiçbir fiyat bilgisi yer almamaktadır.**\n\n**6) Marka renkleri ve logo tarzı**\n*   **Ana Renkler:** Koyu kahverengi/siyah arka plan üzerine **altın rengi (gold)** baskı\n*   **Logo:** Stilize edilmiş, 3 boyutlu görünümlü **altın kanat (melek kanatı)** simgesi. Kanadın iç kısmında abstrakt bir şekil veya harf izlenimi var.\n*   **Tipografi:** Şık, serif (karakterli) büyük harfler; alt kısımda daha ince, elegant bir font kullanılmış.\n*   **Dekoratif Elementler:** Köşelerde ince altın çerçeve hatları, metinlerin arasında yatay ayırıcı çizgiler ve elmas (♦) sembolleri bulunuyor.\n*   **Genel Tarz:** Lüks, premium, zarif ve feminen bir \"dark luxury\" (karanlık lüks) estetiği hakim.\n\n**7) Takipçi sayısı**\n*   Bu görsel sadece **profil fotoğrafı/kapak görseli** olduğu için takipçi sayısı, gönderi sayısı ve takip edilen sayısı **görünmemektedir.**\n\n**8) Profil resminde ne var?**\nProfil resmi aslında özel tasarlanmış bir **marka kimliği kartı/görselidir** ve şunları içerir:\n*   Ortada büyük, parlak altın renkli bir **melek kanadı logosu**\n*   Logonun altında \"MELEK'CE GÜZELLİK\" başlığı\n*   Onun altında \"NAIL ARTIST\" (Tırnak Sanatçısı) unvanı\n*   En altta markanın sloganı: *\"HER KADIN BİR MELEK GİBİ GÜZELDİR\"*\n*   Sağ alt köşede kuruluş yılı: *\"Since 2022\"*\n*   Tüm bunlar koyu, mat bir zemin üzerinde altın rengiyle sunulmuş durumda.\n\n**Özetle:** Bu, Gelibolu/Çanakkale bölgesinde hizmet veren (ancak konum bu görselde belirtilmemiş) lüks bir tırnak stüdyosunun (nail studio) premium tasarımlı profil kapak görselidir. İletişim bilgileri ve fiyatlar bu görselde yer almamış olup, muhtemelen bio'nun diğer kısımlarında veya vurgulanmış hikayelerde bulunmaktadır.",
+        "role": "assistant"
+      }
+    }
+  ],
+  "created": 1789264586,
+  "id": "2026091309555865f448c7f5e04134",
+  "model": "glm-5v-turbo",
+  "object": "chat.completion",
+  "request_id": "2026091309555865f448c7f5e04134",
+  "usage": {
+    "completion_tokens": 867,
+    "completion_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "prompt_tokens": 1166,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "total_tokens": 2033
+  }
+}

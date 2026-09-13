@@ -1,0 +1,81 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+
+# vercel
+.vercel
+
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+local-*
+.claude
+.z-ai-config
+*.log
+dev.log
+dev.out.log
+test
+prompt
+
+server.log
+# Skills directory
+/skills/
+# ─── lokale Artefakte (nicht ins Repo) ──────────────────────────────────────
+/tool-results/
+/upload/
+/archive/
+/examples/
+/mini-services/
+/af-suite-v3/
+/autofaszimation-suite
+/db/*.db
+dev.log
+check-*.png
+shot-*.png
+scripts/test_github_token.py
+
+# Lokales Backup der Alt-Daten (nie einchecken)
+/.local-backup/
+
+# Token-haltige lokale Dateien (nie einchecken — Secret-Scanning!)
+worklog.md
+scripts/release-v30.sh
+scripts/test_github_token.py
+/download/
+*.zip
+
+# Recherche-Artefakte
+scripts/extracted/
+scripts/search-results/

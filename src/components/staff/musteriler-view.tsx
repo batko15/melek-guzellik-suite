@@ -1,0 +1,540 @@
+// Ekip Portalı — Müşteri Yönetimi V4 ULTIMATE
+// Müşteri kartı: alerji beyanı, hassasiyet, tercih (form/jel/renkler),
+// sadakat damgalı kartı (10 damga = ödül), portfolyo fotoğrafları, puan geçmişi
+
+"use client"
+
+import { useMemo, useState } from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { Users, Search, Phone, Mail, CalendarDays, Crown, AlertTriangle, Pencil, Gift, Plus, Minus, Image as ImageIcon } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { useToast } from "@/hooks/use-toast"
+import {
+  type SalonCustomerRow, type SalonBooking, BOOKING_STATUS, para, para2, dateStr, timeStr,
+  SHAPE_LABELS, GEL_TYPE_LABELS, LOYALTY_REWARD_AT,
+} from "@/lib/salon"
+
+const SHAPES = Object.keys(SHAPE_LABELS)
+const GEL_TYPES = Object.keys(GEL_TYPE_LABELS)
+
+// ═══ Sadakat damgalı kartı (10 damga) ═══════════════════════════════════════
+function StampCard({ points, onAdd, onRedeem }: { points: number; onAdd: () => void; onRedeem: () => void }) {
+  const ready = points >= LOYALTY_REWARD_AT
+  return (
+    <div className="mk-ornament mk-logo-frame rounded-xl p-4">
+      <div className="flex items-center justify-between">
+        <div className="text-[10px] font-bold uppercase tracking-wider text-brand-text">Sadakat Kartı</div>
+        <div className="mk-display text-sm font-bold text-brand-text">{points} / {LOYALTY_REWARD_AT} damga</div>
+      </div>
+      <div className="mt-3 grid grid-cols-10 gap-1.5">
+        {Array.from({ length: LOYALTY_REWARD_AT }).map((_, i) => (
+          <span
+            key={i}
+            className={cn(
+              "flex aspect-square items-center justify-center rounded-full border text-[10px]",
+              i < points
+                ? "border-primary/60 bg-primary/20 text-brand-text mk-gold-glow"
+                : "border-border/60 bg-secondary/30 text-muted-foreground/40",
+              i === LOYALTY_REWARD_AT - 1 && "border-dashed",
+            )}
+            aria-hidden
+          >
+            {i < points ? "◆" : i === LOYALTY_REWARD_AT - 1 ? "🎁" : ""}
+          </span>
+        ))}
+      </div>
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <span className={cn("text-[11px] font-semibold", ready ? "text-brand-text" : "text-muted-foreground")}>
+          {ready ? <span className="mk-rose-chip rounded-full px-2.5 py-1 font-bold">🎁 Ödül hazır — indirim uygulanabilir!</span> : `${LOYALTY_REWARD_AT - points} damga sonra ödül`}
+        </span>
+        <div className="flex gap-1.5">
+          <button onClick={onAdd} aria-label="Puan ekle" className="mk-focus flex h-7 w-7 items-center justify-center rounded-full border border-primary/40 bg-primary/10 text-brand-text hover:bg-primary/20">
+            <Plus className="h-3.5 w-3.5" />
+          </button>
+          <button onClick={onRedeem} disabled={!ready} aria-label="Ödülü kullan" className="mk-focus flex h-7 w-7 items-center justify-center rounded-full border border-primary/40 bg-primary/10 text-brand-text hover:bg-primary/20 disabled:opacity-30">
+            <Minus className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ═══ Ana görünüm ═════════════════════════════════════════════════════════════
+export function MusterilerView() {
+  const { toast } = useToast()
+  const qc = useQueryClient()
+  const [search, setSearch] = useState("")
+  const [selected, setSelected] = useState<SalonCustomerRow | null>(null)
+  const [cardOpen, setCardOpen] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [card, setCard] = useState({ allergies: "", sensitive: false, prefShape: "", prefGel: "", prefColors: "" })
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["salon-customers"],
+    queryFn: async () => {
+      const res = await fetch("/api/v1/salon/customers")
+      if (!res.ok) return { customers: [] as SalonCustomerRow[] }
+      return (await res.json()) as { customers: SalonCustomerRow[] }
+    },
+  })
+
+  const { data: selectedBookings } = useQuery({
+    queryKey: ["customer-bookings", selected?.phone],
+    queryFn: async () => {
+      if (!selected) return { bookings: [] as SalonBooking[] }
+      const res = await fetch(`/api/v1/salon/bookings?phone=${encodeURIComponent(selected.phone)}`)
+      if (!res.ok) return { bookings: [] as SalonBooking[] }
+      return (await res.json()) as { bookings: SalonBooking[] }
+    },
+    enabled: !!selected,
+  })
+
+  const customers = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    let list = data?.customers ?? []
+    if (q) {
+      list = list.filter((c) =>
+        c.name.toLowerCase().includes(q) ||
+        (c.phone ?? "").toLowerCase().includes(q) ||
+        (c.email ?? "").toLowerCase().includes(q) ||
+        (c.allergies ?? "").toLowerCase().includes(q),
+      )
+    }
+    return list
+  }, [data, search])
+
+  const all = data?.customers ?? []
+  const totalVolume = all.reduce((s, c) => s + c.volumeChf, 0)
+  const regulars = all.filter((c) => c.completedBookings >= 3).length
+  const withAllergies = all.filter((c) => c.allergies || c.sensitive).length
+  const loyaltyReady = all.filter((c) => c.loyaltyPoints >= LOYALTY_REWARD_AT).length
+
+  function openCard(c: SalonCustomerRow) {
+    setCard({
+      allergies: c.allergies ?? "",
+      sensitive: c.sensitive,
+      prefShape: c.prefShape ?? "",
+      prefGel: c.prefGel ?? "",
+      prefColors: c.prefColors ?? "",
+    })
+    setCardOpen(true)
+  }
+
+  async function saveCard() {
+    if (!selected) return
+    setBusy(true)
+    try {
+      const res = await fetch("/api/v1/salon/customers", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: selected.id,
+          allergies: card.allergies || null,
+          sensitive: card.sensitive,
+          prefShape: card.prefShape || null,
+          prefGel: card.prefGel || null,
+          prefColors: card.prefColors || null,
+        }),
+      })
+      const out = (await res.json()) as { error?: string }
+      if (!res.ok) {
+        toast({ title: "Hata", description: out.error ?? "Kaydedilemedi.", variant: "destructive" })
+        return
+      }
+      toast({ title: "Müşteri kartı güncellendi", description: selected.name })
+      setCardOpen(false)
+      qc.invalidateQueries({ queryKey: ["salon-customers"] })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function adjustPoints(c: SalonCustomerRow, points: number, reason: string) {
+    const res = await fetch("/api/v1/salon/customers", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: c.id, points, reason }),
+    })
+    const out = (await res.json()) as { error?: string }
+    if (!res.ok) {
+      toast({ title: "Hata", description: out.error ?? "Puan güncellenemedi.", variant: "destructive" })
+      return
+    }
+    toast({
+      title: points > 0 ? "Damga eklendi" : "Ödül kullanıldı",
+      description: `${c.name} — yeni bakiye: ${c.loyaltyPoints + points} damga`,
+    })
+    qc.invalidateQueries({ queryKey: ["salon-customers"] })
+    // Seçili müşteriyi güncelle (sheet içindeki gösterim)
+    if (selected?.id === c.id) {
+      setSelected({ ...c, loyaltyPoints: c.loyaltyPoints + points })
+    }
+  }
+
+  return (
+    <div className="mk-velvet">
+      <section className="border-b border-border/60">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+          <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-xs font-semibold text-brand-text">
+            <Users className="h-3.5 w-3.5" /> CRM · V4 Müşteri Kartı
+          </div>
+          <h1 className="mk-display text-2xl font-bold tracking-tight sm:text-3xl">
+            Müşteri <span className="mk-gold-text">Yönetimi</span>
+          </h1>
+          <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+            {all.length} müşteri · {regulars} sadık · {withAllergies} alerji beyanı · {loyaltyReady} ödül hazır · ciro {para(totalVolume)}
+          </p>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl space-y-5 px-4 py-6 sm:px-6">
+        {/* Arama */}
+        <div className="relative max-w-sm">
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Ara: ad, telefon, e-posta veya alerji…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="mk-focus h-10 rounded-full pl-10"
+          />
+        </div>
+
+        {/* Kartlar */}
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {isLoading && [1, 2, 3, 4, 5, 6].map((i) => <Skeleton key={i} className="h-36 w-full rounded-xl" />)}
+          {customers.map((c, i) => (
+            <button
+              key={c.id}
+              onClick={() => setSelected(c)}
+              className={cn(
+                "mk-card mk-kpi mk-anim-up group relative overflow-hidden rounded-xl p-5 text-left",
+                (c.allergies || c.sensitive) && "border-red-900/50",
+                `mk-delay-${Math.min(6, (i % 6) + 1)}`,
+              )}
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="mk-display flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-sm font-bold text-brand-text">
+                    {c.name.split(" ").map((p) => p[0]).join("").slice(0, 2)}
+                  </span>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="truncate text-sm font-bold" title={c.name}>{c.name}</span>
+                      {(c.allergies || c.sensitive) && (
+                        <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-red-400" aria-label="Alerji beyanı var" />
+                      )}
+                    </div>
+                    <div className="truncate text-[11px] text-muted-foreground" title={c.phone}>{c.phone}</div>
+                  </div>
+                </div>
+                <div className="flex shrink-0 flex-col items-end gap-1">
+                  {c.completedBookings >= 3 && (
+                    <Badge className="border-primary/40 bg-primary/10 text-[9px] font-bold text-brand-text">
+                      <Crown className="mr-0.5 h-2.5 w-2.5" /> Sadık
+                    </Badge>
+                  )}
+                  {c.loyaltyPoints >= LOYALTY_REWARD_AT && (
+                    <Badge className="border-primary/40 bg-primary/15 text-[9px] font-bold text-brand-text">
+                      <Gift className="mr-0.5 h-2.5 w-2.5" /> {c.loyaltyPoints} damga
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              {/* V4: mini damga göstergesi + tercihler */}
+              <div className="mt-3 flex items-center gap-1">
+                {Array.from({ length: LOYALTY_REWARD_AT }).map((_, j) => (
+                  <span
+                    key={j}
+                    className={cn("h-1.5 flex-1 rounded-full", j < c.loyaltyPoints ? "bg-primary/70" : "bg-border/60")}
+                    aria-hidden
+                  />
+                ))}
+              </div>
+              <div className="mt-2 flex items-center justify-between text-[10px] text-muted-foreground">
+                <span className="truncate">
+                  {c.prefGel ? `${GEL_TYPE_LABELS[c.prefGel] ?? c.prefGel}` : "Tercih belirtilmedi"}
+                  {c.prefShape ? ` · ${SHAPE_LABELS[c.prefShape] ?? c.prefShape}` : ""}
+                </span>
+                <span className="shrink-0 font-semibold text-brand-text">{c.loyaltyPoints}/{LOYALTY_REWARD_AT}</span>
+              </div>
+              <div className="mt-3 grid grid-cols-3 gap-2 border-t border-border/50 pt-3 text-center">
+                <div>
+                  <div className="mk-display text-base font-bold tabular-nums">{c.completedBookings}</div>
+                  <div className="text-[9px] uppercase tracking-wide text-muted-foreground">Ziyaret</div>
+                </div>
+                <div>
+                  <div className="mk-display text-base font-bold tabular-nums text-brand-text">{para(c.volumeChf)}</div>
+                  <div className="text-[9px] uppercase tracking-wide text-muted-foreground">Ciro</div>
+                </div>
+                <div>
+                  <div className="mk-display text-base font-bold tabular-nums">{c.upcomingBookings}</div>
+                  <div className="text-[9px] uppercase tracking-wide text-muted-foreground">Yaklaşan</div>
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+        {!isLoading && customers.length === 0 && (
+          <div className="rounded-xl border border-dashed border-border/60 p-10 text-center text-sm text-muted-foreground">
+            Müşteri bulunamadı — aramayı değiştirin.
+          </div>
+        )}
+      </section>
+
+      {/* ─── Detay sayfası ─── */}
+      <Sheet open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
+        <SheetContent className="mk-scroll w-full overflow-y-auto border-border bg-background sm:max-w-md">
+          {selected && (
+            <>
+              <SheetHeader className="pb-0">
+                <SheetTitle className="mk-display flex items-center gap-3 text-left">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-sm font-bold text-brand-text">
+                    {selected.name.split(" ").map((p) => p[0]).join("").slice(0, 2)}
+                  </span>
+                  <span className="truncate">{selected.name}</span>
+                  <button
+                    onClick={() => openCard(selected)}
+                    className="mk-focus ml-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground"
+                    aria-label="Müşteri kartını düzenle"
+                    title="Müşteri kartını düzenle"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                </SheetTitle>
+                <SheetDescription className="text-left">
+                  {dateStr(selected.since)} tarihinden beri müşteri
+                </SheetDescription>
+              </SheetHeader>
+              <div className="space-y-5 px-4 pb-8">
+                {/* İletişim */}
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Phone className="h-3.5 w-3.5 shrink-0 text-brand-text/70" />
+                    <span className="truncate" title={selected.phone}>{selected.phone}</span>
+                  </div>
+                  {selected.email && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Mail className="h-3.5 w-3.5 shrink-0 text-brand-text/70" />
+                      <span className="truncate" title={selected.email}>{selected.email}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* V4: Alerji beyanı — KIRMIZI uyarı */}
+                {(selected.allergies || selected.sensitive) && (
+                  <div className="rounded-xl border border-red-800/60 bg-red-950/30 p-3.5">
+                    <div className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-red-300">
+                      <AlertTriangle className="h-3.5 w-3.5" /> Alerji & Hassasiyet Beyanı
+                    </div>
+                    {selected.allergies && (
+                      <p className="text-xs font-semibold leading-relaxed text-red-200">{selected.allergies}</p>
+                    )}
+                    {selected.sensitive && (
+                      <p className="mt-1 text-[11px] font-semibold text-red-300">⚠️ Hassas cilt / tırnak yatağı</p>
+                    )}
+                  </div>
+                )}
+
+                {/* V4: Tercihler */}
+                {(selected.prefGel || selected.prefShape || selected.prefColors) && (
+                  <div className="mk-nude-panel rounded-xl p-3.5">
+                    <div className="mb-2 text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--nude)" }}>Tercihleri</div>
+                    <div className="grid grid-cols-2 gap-2 text-[11px]">
+                      {selected.prefGel && (
+                        <div><span className="text-muted-foreground">Uygulama:</span> <b>{GEL_TYPE_LABELS[selected.prefGel] ?? selected.prefGel}</b></div>
+                      )}
+                      {selected.prefShape && (
+                        <div><span className="text-muted-foreground">Form:</span> <b>{SHAPE_LABELS[selected.prefShape] ?? selected.prefShape}</b></div>
+                      )}
+                      {selected.prefColors && (
+                        <div className="col-span-2"><span className="text-muted-foreground">Renkler:</span> <b>{selected.prefColors}</b></div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* V4: Sadakat damgalı kartı */}
+                <StampCard
+                  points={selected.loyaltyPoints}
+                  onAdd={() => adjustPoints(selected, 1, "Manuel damga ekleme")}
+                  onRedeem={() => adjustPoints(selected, -LOYALTY_REWARD_AT, "Ödül kullanıldı (10 damga)")}
+                />
+
+                {/* V4: Sadakat geçmişi */}
+                {selected.loyaltyHistory.length > 0 && (
+                  <div>
+                    <div className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">Damga geçmişi</div>
+                    <div className="space-y-1">
+                      {selected.loyaltyHistory.slice(0, 5).map((l, i) => (
+                        <div key={i} className="flex items-center justify-between rounded-lg border border-border/50 bg-secondary/30 px-3 py-1.5 text-[11px]">
+                          <span className="truncate text-muted-foreground">{l.reason}</span>
+                          <span className={cn("mk-display shrink-0 font-bold", l.points > 0 ? "text-brand-text" : "text-red-300")}>
+                            {l.points > 0 ? `+${l.points}` : l.points}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Notlar */}
+                {selected.notes && (
+                  <div className="rounded-xl border border-primary/25 bg-primary/8 p-3.5">
+                    <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-brand-text">Stüdyo notları</div>
+                    <p className="text-xs leading-relaxed text-foreground/90">{selected.notes}</p>
+                  </div>
+                )}
+
+                {/* İstatistik */}
+                <div className="grid grid-cols-3 divide-x divide-border/60 rounded-xl border border-border/60 text-center">
+                  <div className="px-2 py-3">
+                    <div className="mk-display text-lg font-bold">{selected.completedBookings}</div>
+                    <div className="text-[9px] uppercase tracking-wide text-muted-foreground">Ziyaret</div>
+                  </div>
+                  <div className="px-2 py-3">
+                    <div className="mk-display text-lg font-bold text-brand-text">{para(selected.volumeChf)}</div>
+                    <div className="text-[9px] uppercase tracking-wide text-muted-foreground">Ciro</div>
+                  </div>
+                  <div className="px-2 py-3">
+                    <div className="mk-display text-lg font-bold">{selected.upcomingBookings}</div>
+                    <div className="text-[9px] uppercase tracking-wide text-muted-foreground">Yaklaşan</div>
+                  </div>
+                </div>
+
+                {/* V4: Portfolyo — müşterinin kendi çalışmaları */}
+                {selected.portfolio.length > 0 && (
+                  <div>
+                    <div className="mb-2 flex items-center gap-2">
+                      <ImageIcon className="h-3.5 w-3.5 text-brand-text" />
+                      <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Portfolyosu ({selected.portfolio.length})</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {selected.portfolio.slice(0, 6).map((p) => (
+                        <figure key={p.id} className="mk-photo-frame relative overflow-hidden rounded-lg border border-border/60">
+                          <img src={p.imagePath} alt={p.title} className="aspect-square w-full object-cover" loading="lazy" />
+                          <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/90 to-transparent px-1.5 pb-1 pt-4 text-[9px] font-bold text-foreground">
+                            <span className="block truncate">{p.title}</span>
+                          </figcaption>
+                        </figure>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Geçmiş */}
+                <div>
+                  <div className="mb-2 flex items-center gap-2">
+                    <CalendarDays className="h-3.5 w-3.5 text-brand-text" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Randevu geçmişi</span>
+                  </div>
+                  <div className="space-y-1.5">
+                    {(selectedBookings?.bookings ?? []).map((b) => (
+                      <div key={b.id} className="flex items-center justify-between gap-2 rounded-lg border border-border/50 bg-secondary/30 px-3 py-2 text-xs">
+                        <div className="min-w-0">
+                          <div className="truncate font-semibold">{b.service.name}</div>
+                          <div className="text-[10px] text-muted-foreground">{dateStr(b.startAt)} · {timeStr(b.startAt)}</div>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-2">
+                          <span className="mk-display font-bold text-brand-text">{para(b.priceChf)}</span>
+                          <Badge className={cn("border text-[9px]", BOOKING_STATUS[b.status]?.cls)} variant="outline">
+                            {BOOKING_STATUS[b.status]?.label}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                    {(selectedBookings?.bookings ?? []).length === 0 && (
+                      <div className="rounded-lg border border-dashed border-border/60 p-4 text-center text-xs text-muted-foreground">
+                        Henüz randevu yok.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      {/* V4: Müşteri kartı düzenleme dialogu */}
+      <Dialog open={cardOpen} onOpenChange={setCardOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="mk-display">Müşteri Kartı — {selected?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-2">
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-red-300">Alerji beyanı</Label>
+              <Input
+                value={card.allergies}
+                onChange={(e) => setCard({ ...card, allergies: e.target.value })}
+                placeholder="örn. Jel çözücülere hassasiyet, HEMA alerjisi"
+                className="mk-focus h-10 rounded-xl"
+              />
+            </div>
+            <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-border/60 bg-secondary/30 px-3.5 py-3">
+              <input
+                type="checkbox"
+                checked={card.sensitive}
+                onChange={(e) => setCard({ ...card, sensitive: e.target.checked })}
+                className="h-4 w-4 accent-[var(--brand)]"
+              />
+              <span className="text-sm font-medium">Hassas cilt / tırnak yatağı</span>
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Uygulama tercihi</Label>
+                <select
+                  value={card.prefGel}
+                  onChange={(e) => setCard({ ...card, prefGel: e.target.value })}
+                  className="mk-focus h-10 w-full rounded-xl border border-input bg-background px-3 text-sm"
+                >
+                  <option value="">— Seçilmedi —</option>
+                  {GEL_TYPES.map((g) => (
+                    <option key={g} value={g}>{GEL_TYPE_LABELS[g]}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Tırnak formu</Label>
+                <select
+                  value={card.prefShape}
+                  onChange={(e) => setCard({ ...card, prefShape: e.target.value })}
+                  className="mk-focus h-10 w-full rounded-xl border border-input bg-background px-3 text-sm"
+                >
+                  <option value="">— Seçilmedi —</option>
+                  {SHAPES.map((s) => (
+                    <option key={s} value={s}>{SHAPE_LABELS[s]}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Favori renkler</Label>
+              <Input
+                value={card.prefColors}
+                onChange={(e) => setCard({ ...card, prefColors: e.target.value })}
+                placeholder="örn. bordo, pudra pembe, şampanya altın"
+                className="mk-focus h-10 rounded-xl"
+              />
+            </div>
+            <Button
+              onClick={saveCard}
+              disabled={busy}
+              className="mk-gold-glow h-11 w-full rounded-full bg-primary font-bold text-primary-foreground hover:bg-primary/90"
+            >
+              Müşteri Kartını Kaydet
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}

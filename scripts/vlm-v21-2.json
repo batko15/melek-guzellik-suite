@@ -1,0 +1,28 @@
+{
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "content": "Evet, görseldeki ekran istenen tüm kriterleri karşılıyor:\n\n1. **Konfeti:** Ekranın üst kısmında **altın/sarı tonlarda** konfeti parçacıkları (\"sabirsizlaniyoruz!\" yazısının üzerinde) görünüyor.\n2. **Başlık ve Özet Kartı:** **\"Randevunuz alındı\"** başlığı ve içinde Hizmet (Jel Manikür), Tarih (16.09.2026 Çar), Saat (13:00), Ücret (600 ₺) bilgilerini içeren özet kartı düzgün bir şekilde yer alıyor.\n3. **WhatsApp Butonu:** Kartın altında **\"WhatsApp'tan Randevuyu Gönder\"** butonu mevcut.\n\nEk olarak \"Yeni randevu al\" ve \"Değerlendirme yap\" butonları da bulunuyor.",
+        "role": "assistant"
+      }
+    }
+  ],
+  "created": 1789266170,
+  "id": "2026091310224521b0df4e5cd94be7",
+  "model": "glm-5v-turbo",
+  "object": "chat.completion",
+  "request_id": "2026091310224521b0df4e5cd94be7",
+  "usage": {
+    "completion_tokens": 204,
+    "completion_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "prompt_tokens": 985,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "total_tokens": 1189
+  }
+}

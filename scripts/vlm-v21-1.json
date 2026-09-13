@@ -1,0 +1,28 @@
+{
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "content": "İşte bu Türkçe güzellik salonu web sitesinin (Gelibolu, siyah-altın tema) masaüstü görünümüne ait kısa değerlendirmem:\n\n**1) Harita Görünümü:**\n**Evet**, Leaflet tabanlı **koyu tema harita** görünür durumda. Harita üzerinde Gelibolu konumu belirtilmiş ve **altın rengi iğne işareti (pin)** mevcuttur. Ayrıca harita üzerinde sıcaklık (22°), rüzgar hızı gibi hava durumu bilgileri de altın tonlarında gösterilmiştir.\n\n**2) Galeri Fotoğrafları:**\n**Evet**, \"Çalışmalarımız\" bölümünde gerçek çalışma fotoğrafları grid halinde görüntülenmektedir. İçerisinde;\n*   **Tırnak** çalışmaları (Jel Manikür, Ombre, Pudra Pembe vb. renklerde),\n*   **Kirpik** uygulamaları (Kirpik Bakımı, Kirpik Uzatma detayları),\n*   **Kaş** tasarımları (Kaş Tasarımı)\ngibi gerçek müşteri örnekleri net bir şekilde yer almaktadır.\n\n**3) Fiyat Formatı:**\n**Evet**, tüm hizmetlerin fiyatları **Türk Lirası (₺)** sembolü ile birlikte listelenmiştir (Örn: 600 ₺, 1.200 ₺, 1.500 ₺). Fiyatlar altın renginde vurgulanmış ve sağa dayalı olarak düzgün bir şekilde gösterilmiştir.\n\n**4) Layout ve Taşma Durumu:**\nLayout **tek sütunlu (single-column), mobil uyumlu veya dar ekranlı bir desktop** görünümündedir. Herhangi bir **taşma (overflow)** sorunu gözükmemektedir; kartlar, butonlar ve metinler konteyner sınırları içinde kalmaktadır. Ancak görseldeki uzunluk, sayfanın çok aşağıya doğru uzandığını (long-scroll) göstermektedir.\n\n---\n**Genel Puan: 9/10**\n*(Görsel bütünlük, lüks hissi veren siyah-altın paleti, okunabilirlik ve bilgi verimliliği açısından çok başarılı bir tasarım. Tek eksiği, geniş ekranlarda boşluk kalabilecek tek sütunlu yapısı olabilir.)*",
+        "role": "assistant"
+      }
+    }
+  ],
+  "created": 1789266157,
+  "id": "202609131022183586f348fb6c434f",
+  "model": "glm-5v-turbo",
+  "object": "chat.completion",
+  "request_id": "202609131022183586f348fb6c434f",
+  "usage": {
+    "completion_tokens": 558,
+    "completion_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "prompt_tokens": 4318,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "total_tokens": 4876
+  }
+}

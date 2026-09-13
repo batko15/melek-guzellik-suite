@@ -1,0 +1,28 @@
+{
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "content": "1. Stüdyo Logosu ve Marka Tanıtımı\n2. Doğal Kaş Tasarımı (Microblading)\n3. Kıvrık Kirpik Uzatma (Eyelash Extension)\n4. Dolgun Kirpik Uzunluğu ve Bakımı",
+        "role": "assistant"
+      }
+    }
+  ],
+  "created": 1789264608,
+  "id": "2026091309563997bc318a0d624fa6",
+  "model": "glm-5v-turbo",
+  "object": "chat.completion",
+  "request_id": "2026091309563997bc318a0d624fa6",
+  "usage": {
+    "completion_tokens": 66,
+    "completion_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "prompt_tokens": 5933,
+    "prompt_tokens_details": {
+      "cached_tokens": 2
+    },
+    "total_tokens": 5999
+  }
+}

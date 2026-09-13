@@ -1,0 +1,30 @@
+# ═══ Melek'çe Güzellik Suite — Docker Compose ══════════════════════════════
+# Start:      docker compose up -d
+# Stop:       docker compose down
+# Erster Start mit Demo-Daten:
+#             docker compose exec app npx tsx scripts/seed-beauty.ts
+#             docker compose exec app npx tsx scripts/seed-v4-upgrade.ts
+
+services:
+  app:
+    build: .
+    container_name: melekce-suite
+    ports:
+      - "3000:3000"          # Salon-Portal — im Studio-Netz erreichbar
+    environment:
+      - DATABASE_URL=file:/app/data/custom.db
+      - NEXT_TELEMETRY_DISABLED=1
+    volumes:
+      - melek-data:/app/data     # SQLite + Uploads überleben Neustarts
+      - melek-next:/app/.next    # Build-Cache
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/v1/salon/services"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+
+volumes:
+  melek-data:
+  melek-next:

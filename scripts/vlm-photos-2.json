@@ -1,0 +1,28 @@
+{
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "content": "1. Bordo Kedi Gözü (Cat Eye) Oje Tasarımı\n2. Parlak Bordo Yumuşak Geçişli (Ombre) Tırnaklar\n3. Yumuşak Pudra Pembe ve Bordo Tonlarında Işıltılı Tırnak\n4. Özel Günler İçin Bej Takım Elbise ve Aksesuar Uyumu",
+        "role": "assistant"
+      }
+    }
+  ],
+  "created": 1789264625,
+  "id": "202609130956591c1e2a41eaac4631",
+  "model": "glm-5v-turbo",
+  "object": "chat.completion",
+  "request_id": "202609130956591c1e2a41eaac4631",
+  "usage": {
+    "completion_tokens": 91,
+    "completion_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "prompt_tokens": 8245,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "total_tokens": 8336
+  }
+}

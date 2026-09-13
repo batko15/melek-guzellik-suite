@@ -1,0 +1,468 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  /* ─── White-Label-Typografie: lokale Fonts aus public/fonts ──────────
+     Noto Serif SC = Display (elegant, Serifen) · Inter = Text           */
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-serif: "Noto Serif SC", Georgia, serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-brand-text: var(--brand-text);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+/* ─── Dark Luxury Theme: Tiefes Schwarz / Champagner-Gold ─────────────── */
+:root {
+  /* ═════════════════════════════════════════════════════════════════════
+     WHITE-LABEL-AKZENTFARBE — NUR DIESEN EINEN WERT ÄNDERN
+     Die komplette Suite (Buttons, Glow, Charts, Badges, aktive
+     Navigation) folgt automatisch. Beispiele:
+       Champagner-Gold (Melek'ce):  oklch(0.75 0.12 85)
+       Rosé:                        oklch(0.72 0.12 15)
+       Silber-Platin:               oklch(0.72 0.02 260)
+       Türkis:                      oklch(0.68 0.11 195)
+     Umrechnen: https://oklch.com
+     ═════════════════════════════════════════════════════════════════════ */
+  --brand: oklch(0.76 0.11 86); /* V4: Champagner-Gold — etwas weicher/wärmer als Reingold */
+  /* Text-Variante mit besserem Kontrast für kleine Gold-Texte */
+  --brand-text: oklch(0.83 0.105 86);
+  /* V4 Luxury Beauty: Nude & Soft-Rose Akzent-Token (Stempelkarten, Tercih-Blokları) */
+  --nude: oklch(0.78 0.045 75);
+  --rose: oklch(0.7 0.09 15);
+  --rose-soft: oklch(0.82 0.06 20);
+
+  --radius: 0.875rem; /* weicher, eleganter als Standard */
+  --background: oklch(0.135 0.006 75);
+  --foreground: oklch(0.94 0.005 80);
+  --card: oklch(0.175 0.008 75);
+  --card-foreground: oklch(0.94 0.005 80);
+  --popover: oklch(0.16 0.008 75);
+  --popover-foreground: oklch(0.94 0.005 80);
+  --primary: var(--brand);
+  --primary-foreground: oklch(0.15 0.01 75);
+  --secondary: oklch(0.225 0.01 75);
+  --secondary-foreground: oklch(0.88 0.008 75);
+  --muted: oklch(0.22 0.01 75);
+  --muted-foreground: oklch(0.67 0.012 78);
+  --accent: oklch(0.26 0.02 82);
+  --accent-foreground: oklch(0.95 0.005 80);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.99 0 0);
+  --border: oklch(0.29 0.015 78);
+  --input: oklch(0.25 0.015 78);
+  --ring: var(--brand);
+  --chart-1: var(--brand);
+  --chart-2: oklch(0.72 0.02 80); /* warmes Silber */
+  --chart-3: oklch(0.52 0.01 78);
+  --chart-4: oklch(0.85 0.01 80);
+  --chart-5: oklch(0.62 0.08 70); /* gedämpftes Bronze */
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* ─── Premium-Typografie: Noto Serif SC (Display) + Inter (Text) ───────── */
+@font-face {
+  font-family: "Noto Serif SC";
+  src: url("/fonts/NotoSerifSC-Light.ttf") format("truetype");
+  font-weight: 300;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Noto Serif SC";
+  src: url("/fonts/NotoSerifSC-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Noto Serif SC";
+  src: url("/fonts/NotoSerifSC-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/Inter-400.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/Inter-500.ttf") format("truetype");
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/Inter-600.ttf") format("truetype");
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/Inter-700.ttf") format("truetype");
+  font-weight: 700;
+  font-display: swap;
+}
+
+/* ─── Velvet-Look Hintergrund (sanfter goldener Schein) ────────────────── */
+.mk-velvet {
+  background-image:
+    radial-gradient(1200px 500px at 80% -10%, color-mix(in oklch, var(--brand) 6%, transparent), transparent 60%),
+    radial-gradient(900px 420px at 0% 110%, color-mix(in oklch, var(--brand) 4%, transparent), transparent 60%);
+}
+
+.mk-display {
+  font-family: "Noto Serif SC", Georgia, serif;
+  letter-spacing: 0.01em;
+}
+
+/* Gold-Schrift-Verlauf (Titel-Akzente) */
+.mk-gold-text {
+  background: linear-gradient(135deg, oklch(0.88 0.09 88) 0%, oklch(0.75 0.12 85) 45%, oklch(0.82 0.08 78) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Zarte Gold-Trennlinie */
+.mk-gold-line {
+  background: linear-gradient(90deg, transparent, color-mix(in oklch, var(--brand) 55%, transparent), transparent);
+}
+
+.mk-gold-glow {
+  box-shadow: 0 0 24px -6px color-mix(in oklch, var(--brand) 35%, transparent);
+}
+
+.mk-gold-glow-soft {
+  box-shadow: 0 0 44px -14px color-mix(in oklch, var(--brand) 28%, transparent);
+}
+
+/* ─── Animationen (sanft & edel) ────────────────────────────────────────── */
+@keyframes mk-fade-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes mk-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes mk-slide-right {
+  from { opacity: 0; transform: translateX(-18px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes mk-shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+@keyframes mk-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+@keyframes mk-pulse-glow {
+  0%, 100% { box-shadow: 0 0 22px -10px color-mix(in oklch, var(--brand) 25%, transparent); }
+  50% { box-shadow: 0 0 36px -8px color-mix(in oklch, var(--brand) 45%, transparent); }
+}
+
+.mk-anim-up { animation: mk-fade-up 0.6s cubic-bezier(0.22, 0.61, 0.36, 1) both; }
+.mk-anim-in { animation: mk-fade-in 0.7s ease-out both; }
+.mk-anim-right { animation: mk-slide-right 0.55s cubic-bezier(0.22, 0.61, 0.36, 1) both; }
+.mk-anim-blink { animation: mk-blink 2s ease-in-out infinite; }
+.mk-anim-pulse { animation: mk-pulse-glow 3.6s ease-in-out infinite; }
+
+/* Gold-Schimmer für_special Highlights */
+.mk-shimmer {
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklch, var(--brand) 70%, transparent) 0%,
+    oklch(0.95 0.06 88) 50%,
+    color-mix(in oklch, var(--brand) 70%, transparent) 100%
+  );
+  background-size: 200% auto;
+  animation: mk-shimmer 3.5s linear infinite;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.mk-delay-1 { animation-delay: 0.08s; }
+.mk-delay-2 { animation-delay: 0.16s; }
+.mk-delay-3 { animation-delay: 0.24s; }
+.mk-delay-4 { animation-delay: 0.32s; }
+.mk-delay-5 { animation-delay: 0.4s; }
+.mk-delay-6 { animation-delay: 0.48s; }
+
+/* ─── Karten & Interaktion ──────────────────────────────────────────────── */
+.mk-card {
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.022), rgba(255, 255, 255, 0)), var(--card);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+}
+.mk-card:hover {
+  border-color: color-mix(in oklch, var(--brand) 35%, var(--border));
+  box-shadow: 0 10px 34px -16px color-mix(in oklch, var(--brand) 22%, transparent);
+}
+
+.mk-kpi::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(380px 110px at 100% 0%, color-mix(in oklch, var(--brand) 7%, transparent), transparent 60%);
+  pointer-events: none;
+}
+
+.mk-focus:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: color-mix(in oklch, var(--brand) 45%, transparent);
+  color: #fff;
+}
+
+/* ═══ Marka Kimliği — Logo-DNA Design-Elemente (V3.1) ═════════════════════ */
+
+/* Goldene L-förmige Eck-Ornamente (wie im echten Logo) — für edle Rahmen */
+.mk-ornament {
+  position: relative;
+}
+.mk-ornament::before,
+.mk-ornament::after {
+  content: "";
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  pointer-events: none;
+  border-color: color-mix(in oklch, var(--brand) 75%, transparent);
+  border-style: solid;
+  border-width: 0;
+}
+.mk-ornament::before {
+  top: 10px;
+  left: 10px;
+  border-top-width: 1.5px;
+  border-left-width: 1.5px;
+  border-top-left-radius: 6px;
+}
+.mk-ornament::after {
+  bottom: 10px;
+  right: 10px;
+  border-bottom-width: 1.5px;
+  border-right-width: 1.5px;
+  border-bottom-right-radius: 6px;
+}
+
+/* Logo-Ehrenrahmen: Samt-Hintergrund + sanfter Gold-Schein */
+.mk-logo-frame {
+  background:
+    radial-gradient(420px 210px at 50% 0%, color-mix(in oklch, var(--brand) 10%, transparent), transparent 70%),
+    linear-gradient(180deg, oklch(0.19 0.012 80), oklch(0.145 0.008 78));
+  border: 1px solid color-mix(in oklch, var(--brand) 30%, transparent);
+}
+
+/* Goldene Raute ◆ — Trennzeichen wie im Logo */
+.mk-diamond {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  transform: rotate(45deg);
+  background: linear-gradient(135deg, oklch(0.88 0.09 88), oklch(0.75 0.12 85));
+  box-shadow: 0 0 8px color-mix(in oklch, var(--brand) 45%, transparent);
+}
+
+/* Sektions-Kopf mit Rauten-Ornamentlinie: —— ◆ —— */
+.mk-ornament-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.mk-ornament-line::before,
+.mk-ornament-line::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  background: linear-gradient(90deg, transparent, color-mix(in oklch, var(--brand) 50%, transparent));
+}
+.mk-ornament-line::after {
+  background: linear-gradient(90deg, color-mix(in oklch, var(--brand) 50%, transparent), transparent);
+}
+
+/* Feine goldene Punktkante für Foto-Karten */
+.mk-photo-frame {
+  position: relative;
+  overflow: hidden;
+}
+.mk-photo-frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--brand) 22%, transparent);
+  pointer-events: none;
+}
+
+/* "Since"-Jahr-Badge — diskret & edel */
+.mk-since-badge {
+  font-family: "Noto Serif SC", Georgia, serif;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+}
+
+/* Sanfter Schimmer-Verlauf über dem Logo (Signatureffekt) */
+.mk-logo-sheen {
+  position: relative;
+  overflow: hidden;
+}
+.mk-logo-sheen::before {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  background: linear-gradient(
+    115deg,
+    transparent 42%,
+    color-mix(in oklch, 0.95 0.06 88 / 14%, transparent) 50%,
+    transparent 58%
+  );
+  transform: translateX(-70%);
+  animation: mk-sheen-slide 6.5s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes mk-sheen-slide {
+  0%, 55% { transform: translateX(-70%); }
+  85%, 100% { transform: translateX(70%); }
+}
+
+/* Galerie-Hover: Gold-Rahmen verstärken */
+.mk-gallery-tile img {
+  transition: transform 0.6s cubic-bezier(0.22, 0.61, 0.36, 1), filter 0.4s ease;
+}
+.mk-gallery-tile:hover img {
+  transform: scale(1.06);
+  filter: brightness(1.06) saturate(1.05);
+}
+
+/* CTA-Button: sanfter Anhebe-Effekt beim Hover */
+.mk-btn-lift {
+  transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
+}
+.mk-btn-lift:hover {
+  transform: translateY(-2px) scale(1.015);
+  box-shadow: 0 12px 34px -10px color-mix(in oklch, var(--brand) 45%, transparent);
+}
+
+/* ═══ V4 ULTIMATE — Tablet & Touch-Optimierung ═════════════════════════════ */
+/* Empfangstresen-Tablets: schnellere Interaktion ohne 300ms Verzögerung */
+button, a, [role="button"], [role="tab"], summary, input, select, textarea {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Tablet (768–1024px): großzügigere Touch-Ziele für den Tresen-Betrieb */
+@media (pointer: coarse) and (min-width: 768px) and (max-width: 1024px) {
+  table td, table th { padding-top: 0.9rem; padding-bottom: 0.9rem; }
+  .mk-card { border-radius: 1rem; }
+}
+
+/* V4: Nude/Rose Akzent-Bausteine (Sadakat-Stempel, Tercih-Blokları) */
+.mk-nude-panel {
+  background: linear-gradient(180deg, color-mix(in oklch, var(--nude) 10%, transparent), transparent),
+    var(--card);
+  border: 1px solid color-mix(in oklch, var(--nude) 28%, var(--border));
+}
+.mk-rose-chip {
+  background: color-mix(in oklch, var(--rose-soft) 14%, transparent);
+  border: 1px solid color-mix(in oklch, var(--rose) 45%, transparent);
+  color: var(--rose-soft);
+}
+
+/* Custom Scrollbar */
+.mk-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+.mk-scroll::-webkit-scrollbar-track { background: transparent; }
+.mk-scroll::-webkit-scrollbar-thumb { background: oklch(0.35 0.02 78); border-radius: 8px; }
+.mk-scroll::-webkit-scrollbar-thumb:hover { background: color-mix(in oklch, var(--brand) 45%, oklch(0.4 0.02 78)); }
+
+/* ═══ Leaflet Harita — Black-Gold uyumu ═══════════════════════════════════ */
+.leaflet-container {
+  background: #0c0a08;
+  font: inherit;
+  z-index: 0; /* sticky üst çubuğun altında kalır */
+}
+
+.leaflet-container a {
+  color: var(--brand-text);
+}
+
+.mk-map-pin {
+  background: transparent;
+  border: none;
+}
+
+/* Popup: koyu kart + altın çerçeve */
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: oklch(0.2 0.01 78 / 0.97);
+  color: var(--foreground);
+  border: 1px solid color-mix(in oklch, var(--brand) 35%, transparent);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 14px color-mix(in oklch, var(--brand) 18%, transparent);
+  border-radius: 12px;
+}
+
+.leaflet-popup-content {
+  margin: 10px 14px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* Yakınlaştırma kontrolleri */
+.leaflet-bar a {
+  background: oklch(0.2 0.01 78);
+  color: var(--brand-text);
+  border-color: color-mix(in oklch, var(--brand) 25%, transparent);
+}
+
+.leaflet-bar a:hover {
+  background: color-mix(in oklch, var(--brand) 18%, oklch(0.2 0.01 78));
+  color: var(--brand-text);
+}
+
+.leaflet-control-attribution {
+  background: rgba(12, 10, 8, 0.75);
+  color: var(--muted-foreground);
+  font-size: 9px;
+}
