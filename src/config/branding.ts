@@ -46,11 +46,11 @@ export interface ModuleConfig {
 
 export const BRANDING = {
   // ─── Sürüm (her yerde görünür şekilde işaretlenir) ───────────────────────
-  version: "5.8.0",
-  versionFull: "5.8.0",
-  versionDate: "2026-09-13",
-  versionCodename: "Canlı Studio Edition",
-  lastUpdate: "Telefonnummer +905365726610",
+  version: "6.0.0",
+  versionFull: "6.0.0",
+  versionDate: "2026-09-14",
+  versionCodename: "Profesyonel Edition",
+  lastUpdate: "Yeni tasarım + SSS + canlı durum + akıllı randevu",
 
   // ─── Marka ────────────────────────────────────────────────────────────────
   // nameParts: 1. kısım normal, 2. kısım altın (vurgu rengi) yazılır.
@@ -117,8 +117,42 @@ export const BRANDING = {
     stats: [
       { value: "17+", label: "Uygulama" },
       { value: "1000+", label: "mutlu misafir" },
-      { value: "5★", label: "misafir favorisi" },
+      { value: "4.9", label: "ortalama puan" },
     ] as BrandStat[],
+    // V6: Güven şeridi (hero altı) — kısa, profesyonel
+    trustStrip: [
+      { icon: "calendar", title: "Online randevu", text: "7/24 — aramaya gerek yok" },
+      { icon: "wand", title: "Canlı nail studio", text: "Tasarımını kendin seç" },
+      { icon: "shield", title: "Giriş gerekmez", text: "Saniyeler içinde randevu" },
+      { icon: "heart", title: "Hijyen & kalite", text: "Her misafire steril set" },
+    ] as Array<{ icon: string; title: string; text: string }>,
+    // V6: SSS — sıkça sorulan sorular (SEO: FAQPage JSON-LD ile birlikte)
+    faq: [
+      {
+        q: "Randevu almak için üye olmam gerekiyor mu?",
+        a: "Hayır. Sadece adınız ve telefon numaranızla saniyeler içinde randevu alabilirsiniz. Randevularınızı «Randevularım» bölümünden takip edebilir, gerektiğinde iptal edebilirsiniz.",
+      },
+      {
+        q: "Randevumu iptal etmek istersem ne yapmalıyım?",
+        a: "Randevunuzdan en az 24 saat önce iptal etmenizi rica ederiz — «Randevularım» bölümünden telefon numaranızla kolayca iptal edebilirsiniz. Böylece başka bir misafirimize yer açılmış olur.",
+      },
+      {
+        q: "Canlı Nail Studio nedir, nasıl kullanılır?",
+        a: "Stüdyomuzun dijital deneme masasıdır: tırnak formu, uzunluk, renk ve nail art efektlerini gerçek zamanlı seçip tasarımınızı görürsünüz. Beğendiğiniz tasarım tek dokunuşla randevunuza eklenir — stüdyoda aynen o tasarımı uyguluyoruz.",
+      },
+      {
+        q: "Hangi ürünleri kullanıyorsunuz?",
+        a: "Cilt dostu, yüksek kaliteli jel ve kirpik malzemeleri kullanıyoruz. Tüm setler her misafir için sterilize edilir; hassas tırnak veya cilde sahip misafirlerimiz lütfen randevu notunda belirtsin.",
+      },
+      {
+        q: "Hediye kartı nasıl çalışıyor?",
+        a: "Dijital hediye kartı istediğiniz tutarla anında oluşturulur. Ödeme (nakit veya havale) yapıldığında kart aktifleşir ve bakiyesi birden fazla randevuda kullanılabilir. Kodu WhatsApp ile hediye edeceğiniz kişiye gönderebilirsiniz.",
+      },
+      {
+        q: "Ödemeyi nasıl yapabilirim?",
+        a: "Ödemeyi stüdyoda nakit veya havale ile yapabilirsiniz. Online randevu tamamen ücretsizdir — sadece hizmetin ücreti ödenir.",
+      },
+    ] as Array<{ q: string; a: string }>,
     aboutTitle: "Rahatlama Stüdyonuz",
     aboutText:
       "Melek'çe Güzellik'te güzelliğiniz merkezdedir. Zarif bir atmosferde sizi yüksek kaliteli ürünler, hassas tırnak tasarımı ve nazik güzellik uygulamalarıyla ağırlıyoruz. Klasik manikürden iddialı tırnak sanatına veya kusursuz kirpiklere kadar — isteklerinize zaman ayırıyoruz.",

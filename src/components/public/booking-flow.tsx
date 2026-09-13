@@ -8,7 +8,7 @@
 
 "use client"
 
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react"
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import confetti from "canvas-confetti"
 import {
@@ -46,11 +46,13 @@ function useToday(): Date | null {
 }
 
 export function BookingFlow({
-  onBack, onReviews, onStaffLogin,
+  onBack, onReviews, onStaffLogin, initialServiceId,
 }: {
   onBack: () => void
   onReviews: () => void
   onStaffLogin: () => void
+  /** V6: Hizmet listesinden önceden seçilen hizmet — «Randevu Al →» akıllı geçişi */
+  initialServiceId?: string | null
 }) {
   const qc = useQueryClient()
   const { guestBooking } = BRANDING
@@ -104,6 +106,20 @@ export function BookingFlow({
   const services = servicesData?.services ?? []
   const categories = ["tirnak", "guzellik", "kirpik", "paket"].filter((c) => services.some((s) => s.category === c))
   const [cat, setCat] = useState<string>("tirnak")
+
+  // V6: Landing «Randevu Al →» ile önceden seçilen hizmeti otomatik seç —
+  // (yalnızca bir kez, hizmetler yüklendikten sonra; kullanıcı adımlardan geri dönüp değiştirebilir)
+  const preselectApplied = useRef(false)
+  useEffect(() => {
+    if (preselectApplied.current || !initialServiceId || services.length === 0) return
+    const pre = services.find((s) => s.id === initialServiceId)
+    if (pre) {
+      preselectApplied.current = true
+      setService(pre)
+      setCat(pre.category)
+      setStep(1) // doğrudan tarih & saat adımına geç — seçim özeti en üstte görünür
+    }
+  }, [initialServiceId, services])
 
   // Önümüzdeki günler (yalnızca açık günler, en fazla 10)
   // «Bugün» tarayıcıda hesaplanır — sunucuda donmuş tarih + hydration uyarısı olmasın

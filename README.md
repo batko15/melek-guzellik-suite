@@ -216,6 +216,16 @@ public/gallery/real/          # echte Studio-Fotos
 
 ## 📋 Changelog
 
+### V6.0 — «PROFESYONEL EDITION» (Design-Überarbeitung + KMS Signed Tokens)
+- 🎨 **Landing-Page neu komponiert** — aufgeräumt & höchst professionell, komplett in der Samt-Schwarz-Gold-DNA: Live-«Şu an açık/kapalı»-Badge im Hero (echte Öffnungszeiten-Auswertung), Trust-Strip (4 Karten), «Nasıl Çalışır» in 3 Schritten mit großen Serifen-Ziffern, SSS-Accordion (6 Fragen + `FAQPage`-JSON-LD für Google-Rich-Snippets)
+- 🖼️ **Galerie-Lightbox V2** (yet-another-react-lightbox): Zoom + Thumbnail-Leiste + Zähler direkt auf der Landing-Galerie
+- ⭐ **Rezensionen als Embla-Carousel** (Gruppen à 3, Pfeile + Dots, Loop) und **Hero-Stats mit CountUp-Animation** (17+ Jahre, 1000+ Kundinnen, 4.9★)
+- 🦶 **Footer V2**: 3 Spalten (Marke + Social | Hızlı Bağlantılar | Öffnungszeiten mit Heute-Markierung + App-QR-Code), sauberes Bottom-Band
+- 💅 **Randevu-Preselect**: «Randevu Al» auf der Landing übergibt die gewählte Leistung **direkt** in die Buchung (Schritt 2 mit Zusammenfassung) — Kundinnen wählen schneller
+- 🐛 **Bugfixes**: Navbar-/Galerie-CTAs sind jetzt echte SPA-Buttons (kein Seiten-Neuladen mehr), Service-Übergabe aus dem Landing funktioniert, Hydration-Mismatch durch `img-comparison-slider` behoben (neuer hydration-sicherer `compare-slider`)
+- 🔐 **NEU: Vercel KMS Signed Tokens** — `GET /api/v1/kms/token` signiert Tokens mit dem Account-Signing-Key (`@vercel/kms`); Verifikation über JWKS bzw. `docs/vercel-kms-public-key.pem`; Issuer konfigurierbar via `VERCEL_KMS_ISSUER_ID`
+- 📱 Mobile & Desktop browser-verifiziert (1440 px + 390 px, 0 Console-Fehler); ESLint 0 Fehler
+
 ### V5.7 — «CANLI NAIL STUDIO» (Live-Nageldesign-Konfigurator)
 - 🪄 **Neue öffentliche Route `/nailstudio`** (SEO + Sitemap + PWA-Shortcut): Kundinnen erstellen ihr Nageldesign **selbst und live** — reine SVG-Vorschau (keine Bilder, ultra-schnell, offline-fähig)
 - 🖐️ **Live-Hand-Vorschau**: 5 Finger mit individuell gezeichneten Nägeln — alle 6 Formen (Kare/Yuvarlak/Oval/Badem/Stiletto/Balerina) als echte SVG-Pfade, Längen ändern die Nagelgröße sichtbar, Effekte (Kedi Gözü mit Magnetlinie, Sim-Partikel, Krom-Verlauf, Sedef-Schimmer, Mat/Parlak) und alle 8 Nail-Art-Muster werden live darüber gerendert

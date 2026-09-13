@@ -1,6 +1,6 @@
 # 📱 Melek'çe Güzellik — App & Betrieb Anleitung
 
-**Stand: V5.1 · Live-Adresse: https://melek-guzellik-suite.vercel.app**
+**Stand: V6.0 «Profesyonel Edition» · Live-Adresse: https://melek-guzellik-suite.vercel.app**
 
 Diese Anleitung steht im GitHub-Repository und kann jederzeit von dort heruntergeladen
 (`Code → Download ZIP` oder Datei öffnen → `Raw`) werden.

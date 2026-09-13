@@ -228,6 +228,8 @@ export function AppShell({ initialStage }: { initialStage?: PublicView }) {
   const [stage, setStage] = useState<Stage>(initialStage ?? "landing")
   const [view, setView] = useState<string>(resolveDefaultView())
   const [mobileOpen, setMobileOpen] = useState(false)
+  // V6: Landing hizmet listesinden önceden seçilen hizmet (akıllı randevu geçişi)
+  const [bookingServiceId, setBookingServiceId] = useState<string | null>(null)
   const now = useClock()
 
   // Bekleyen randevular + bekleyen yorumlar (rozetler)
@@ -291,11 +293,15 @@ export function AppShell({ initialStage }: { initialStage?: PublicView }) {
     return () => window.removeEventListener("popstate", onPop)
   }, [session])
 
-  const goPublic = (v: PublicView) => {
+  const goPublic = (v: PublicView, serviceId?: string | null) => {
     // V5.3: echte URL-Pfade — teilbar, SEO-fähig, Back-Button-freundlich
     const target = pathForView(v)
     if (window.location.pathname !== target) {
       window.history.pushState({}, "", target)
+    }
+    if (v === "randevu") {
+      // V6: hizmet ön seçimi — null ise sıfırla (dolu gün sonrası temiz açılış)
+      setBookingServiceId(serviceId ?? null)
     }
     setStage(v)
     window.scrollTo({ top: 0 })
@@ -306,10 +312,11 @@ export function AppShell({ initialStage }: { initialStage?: PublicView }) {
     return (
       <>
         <LandingPage
-          onBook={() => goPublic("randevu")}
+          onBook={(serviceId) => goPublic("randevu", serviceId)}
           onReviews={() => goPublic("yorumlar")}
           onStaffLogin={() => setStage("login")}
           onStudio={() => goPublic("nailstudio")}
+          onNailArt={() => goPublic("nailart")}
         />
         <MobileBottomNav view="landing" setView={goPublic} />
         {/* V4-c: yüzen WhatsApp — yalnızca herkese açık görünümler */}
@@ -326,6 +333,7 @@ export function AppShell({ initialStage }: { initialStage?: PublicView }) {
           onBack={() => goPublic("landing")}
           onReviews={() => goPublic("yorumlar")}
           onStaffLogin={() => setStage("login")}
+          initialServiceId={bookingServiceId}
         />
         <MobileBottomNav view="randevu" setView={goPublic} />
         <FloatingWhatsApp />

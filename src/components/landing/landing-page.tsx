@@ -1,49 +1,41 @@
-// Herkese açık açılış sayfası — Melek'çe Güzellik (V5.8, tamamen Türkçe)
+// Herkese açık açılış sayfası — Melek'çe Güzellik (V6, tamamen Türkçe)
 // GERÇEK MARKA: Logo (public/brand/) Navbar · Hero · Footer'da
 // Logo-DNA: Gold-Eck-Ornamente · Rauten-Trenner · «Since 2022» · Samt-Schwarz-Gold
-// Hero + Canlı hava durumu · Hizmetler (Menü-Stil) · Galeri (Filter) · ÖNCESİ & SONRASI (V5.8) ·
-// Değerlendirmeler · Hakkımızda · Çalışma Saatleri · İletişim · İnteraktif Harita
+// Hero + Canlı hava durumu + Canlı «Şu an açık» durumu · Güven şeridi ·
+// Hizmetler (Menü-Stil + akıllı randevu ön seçimi) · Nasıl Çalışır · Galeri (Lightbox) ·
+// ÖNCESİ & SONRASI · Yorumlar (Carousel) · SSS (FAQ + JSON-LD) · Hakkımızda ·
+// Çalışma Saatleri · İletişim · İnteraktif Harita
 // Randevu almak ve değerlendirme yazmak için giriş GEREKMEZ.
-// V5.8: framer-motion «Reveal» ile bölümler ekrana girince yumuşakça belirir
-//       (prefers-reduced-motion destekli — hareket azaltılmışsa animasyon yok)
+// V6 «Profesyonel Edition»: tek sayfa SPA — tüm gezinme istemci tarafında,
+// URL değişmez; sayfa dışı <a href> yok (sandbox uyumlu + daha hızlı)
 
 "use client"
 
-import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react"
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react"
 import { useQuery } from "@tanstack/react-query"
-import Image from "next/image"
-import "img-comparison-slider"
-import "img-comparison-slider/dist/styles.css"
-import { Instagram, MapPin, Phone, Clock, CalendarCheck, ChevronRight, MessageSquareHeart, ArrowRight, MessageCircle, Navigation, Sparkles, Heart, Crown, Mail, Gift, Copy, Check, User, MessageSquare, Smartphone, Download, Wand2, ChevronsLeftRight } from "lucide-react"
+import CountUp from "react-countup"
+import useEmblaCarousel from "embla-carousel-react"
+import Lightbox from "yet-another-react-lightbox"
+import Zoom from "yet-another-react-lightbox/plugins/zoom"
+import Thumbnails from "yet-another-react-lightbox/plugins/thumbnails"
+import Counter from "yet-another-react-lightbox/plugins/counter"
+import "yet-another-react-lightbox/styles.css"
+import "yet-another-react-lightbox/plugins/thumbnails.css"
+import "yet-another-react-lightbox/plugins/counter.css"
+import { Instagram, MapPin, Phone, Clock, CalendarCheck, ChevronRight, ChevronLeft, MessageSquareHeart, ArrowRight, MessageCircle, Navigation, Sparkles, Heart, Crown, Mail, Gift, Copy, Check, User, MessageSquare, Smartphone, Download, Wand2, ShieldCheck, HelpCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { BRANDING, BRAND_DISPLAY } from "@/config/branding"
 import { type SalonService, type GalleryEntry, type ReviewRow, type ReviewSummary, CATEGORY_META, para, minutesLabel, Stars } from "@/lib/salon"
 import { WeatherWidget } from "@/components/weather-widget"
 import { LocationMap } from "@/components/public/location-map"
 import { Reveal } from "@/components/public/reveal"
-
-// ─── img-comparison-slider (Web Component) — React 19 JSX tip bildirimi ───
-// Paket yalnızca ham Web Component sağlar; bu bildirim <img-comparison-slider>
-// etiketini TypeScript için yazılabilir hale getirir (değer: 0–100 maruziyet).
-// Not: Modül genişletme (augmentation) için namespace söz dizimi zorunludur.
-/* eslint-disable @typescript-eslint/no-namespace -- JSX augmentation requires namespace syntax */
-declare module "react" {
-  namespace JSX {
-    interface IntrinsicElements {
-      "img-comparison-slider": React.DetailedHTMLProps<
-        React.HTMLAttributes<HTMLElement>,
-        HTMLElement
-      > & {
-        value?: number
-      }
-    }
-  }
-}
-/* eslint-enable @typescript-eslint/no-namespace */
+import { CompareSlider } from "@/components/public/compare-slider"
 
 // ─── V5.8: Öncesi & Sonrası — dönüşüm karşılaştırmaları (görseller public/gallery) ───
+// V6: karşılaştırma kaydırıcısı CompareSlider bileşenine taşındı (hidrasyon güvenli)
 const BEFORE_AFTER = [
   {
     id: "klasik-bordo",
@@ -72,6 +64,49 @@ const getClientToday = (): Date => (todayCache ??= new Date())
 /** useSyncExternalStore tabanlı — hidrasyon güvenli, kademeli render yok. */
 function useToday(): Date | null {
   return useSyncExternalStore<Date | null>(emptySubscribe, getClientToday, getServerToday)
+}
+
+// ═══ V6: «Şu an açık/kapalı» canlı durum rozeti ═══════════════════════════
+// openingHours: hafta Pzt = 0 · Date.getDay(): Paz = 0 → eşleme: [6,0,1,2,3,4,5]
+const DAY_MAP = [6, 0, 1, 2, 3, 4, 5]
+
+function parseHours(hours: string): { start: number; end: number } | null {
+  // «09:00 – 18:00» / «09:00-18:00» biçimlerini esnekçe çözümle
+  const m = hours.match(/(\d{1,2}):(\d{2})\s*[\u2013\u2014-]\s*(\d{1,2}):(\d{2})/)
+  if (!m) return null
+  const start = Number(m[1]) * 60 + Number(m[2])
+  const end = Number(m[3]) * 60 + Number(m[4])
+  return end > start ? { start, end } : null
+}
+
+function useOpenStatus(now: Date | null): { open: boolean; todayText: string; nextDay?: string } | null {
+  if (!now) return null
+  const entry = BRANDING.openingHours[DAY_MAP[now.getDay()]]
+  if (!entry) return null
+  const mins = now.getHours() * 60 + now.getMinutes()
+  const range = entry.closed ? null : parseHours(entry.hours)
+  if (range && mins >= range.start && mins < range.end) {
+    return { open: true, todayText: entry.hours }
+  }
+  // Bugün daha açılacak mı?
+  if (range && mins < range.start) {
+    return { open: false, todayText: entry.hours, nextDay: `Bugün ${entry.hours.split(/\s*[\u2013\u2014-]\s*/)[0]}` }
+  }
+  // Gelecekteki ilk açık gün (en fazla 7 gün ileri bak)
+  for (let i = 1; i <= 7; i++) {
+    const e = BRANDING.openingHours[DAY_MAP[(now.getDay() + i) % 7]]
+    if (e && !e.closed && parseHours(e.hours)) {
+      return { open: false, todayText: entry.hours, nextDay: i === 1 ? `Yarın ${e.day}` : e.day }
+    }
+  }
+  return { open: false, todayText: entry.hours }
+}
+
+/** V6: İstatistik değerini «17+» → { end: 17, suffix: "+", decimals: 0 } olarak ayrıştır */
+function parseStat(value: string): { end: number; suffix: string; decimals: number } | null {
+  const m = value.match(/^(\d+(?:\.\d+)?)(.*)$/)
+  if (!m) return null
+  return { end: Number(m[1]), suffix: m[2] ?? "", decimals: m[1].includes(".") ? 1 : 0 }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -124,12 +159,13 @@ function BrandMark({ size = 44, className }: { size?: number; className?: string
 }
 
 export function LandingPage({
-  onBook, onReviews, onStaffLogin, onStudio,
+  onBook, onReviews, onStaffLogin, onStudio, onNailArt,
 }: {
-  onBook: () => void
+  onBook: (serviceId?: string | null) => void
   onReviews: () => void
   onStaffLogin: () => void
   onStudio: () => void
+  onNailArt?: () => void
 }) {
   const { company, landing, brand } = BRANDING
   const instagramUrl = `https://www.instagram.com/${company.instagram}`
@@ -162,7 +198,7 @@ export function LandingPage({
 
   const services = servicesData?.services ?? []
   const galleryAll = galleryData?.items ?? []
-  const reviews = (reviewsData?.reviews ?? []).slice(0, 3)
+  const reviews = reviewsData?.reviews ?? []
   const summary = reviewsData?.summary
   const categories = ["tirnak", "guzellik", "kirpik", "paket"].filter((c) => services.some((s) => s.category === c))
   const galleryCategories = ["tumu", ...Array.from(new Set(galleryAll.map((g) => g.category)))]
@@ -170,6 +206,31 @@ export function LandingPage({
   // «Bugün» vurgusu yalnızca tarayıcıda hesaplanır — sunucuda tarih sabitlenmez
   const today = useToday()
   const todayIdx = today ? (today.getDay() + 6) % 7 : -1
+  // V6: canlı açık/kapalı durumu + sayfa yüklendikten sonra istatistik sayacı
+  const openStatus = useOpenStatus(today)
+  const mounted = today !== null
+
+  // V6: Galeri lightbox (Zoom + Küçük resimler + Sayaç)
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
+  const lightboxSlides = useMemo(() => gallery.map((g) => ({ src: g.imagePath, description: `${g.title} · ${CATEGORY_META[g.category]?.label ?? g.category}` })), [gallery])
+
+  // V6: Misafir yorumları — embla carousel ( Profesyonel döngü + oklar )
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: "start", slidesToScroll: 1 })
+  const [emblaIndex, setEmblaIndex] = useState(0)
+  useEffect(() => {
+    if (!emblaApi) return
+    const onSelect = () => setEmblaIndex(emblaApi.selectedScrollSnap())
+    emblaApi.on("select", onSelect)
+    onSelect()
+    return () => { emblaApi.off("select", onSelect) }
+  }, [emblaApi])
+  const reviewSlides = useMemo(() => {
+    const list = reviewsData?.reviews ?? []
+    if (list.length <= 3) return [list]
+    const chunks: typeof list[] = []
+    for (let i = 0; i < list.length; i += 3) chunks.push(list.slice(i, i + 3))
+    return chunks
+  }, [reviewsData?.reviews])
 
   return (
     <div className="mk-velvet min-h-screen bg-background pb-24 md:pb-0">
@@ -192,14 +253,14 @@ export function LandingPage({
           <nav className="ml-auto hidden items-center gap-7 text-sm text-muted-foreground md:flex">
             <a href="#hizmetler" className="mk-focus rounded transition-colors hover:text-foreground">Hizmetler</a>
             <a href="#galeri" className="mk-focus rounded transition-colors hover:text-foreground">Galeri</a>
-            <a href="/nailstudio" className="mk-focus rounded font-semibold text-brand-text transition-colors hover:text-foreground">Canlı Studio 💅</a>
-            <a href="/nailart" className="mk-focus rounded transition-colors hover:text-foreground">Nail Art ✨</a>
+            <button onClick={onStudio} className="mk-focus rounded font-semibold text-brand-text transition-colors hover:text-foreground">Canlı Studio 💅</button>
+            {onNailArt && <button onClick={onNailArt} className="mk-focus rounded transition-colors hover:text-foreground">Nail Art ✨</button>}
             <a href="#yorumlar" className="mk-focus rounded transition-colors hover:text-foreground">Yorumlar</a>
             <a href="#iletisim" className="mk-focus rounded transition-colors hover:text-foreground">İletişim</a>
           </nav>
           <div className="ml-auto flex items-center gap-2 md:ml-0">
             <Button
-              onClick={onBook}
+              onClick={() => onBook(null)}
               className="mk-gold-glow mk-btn-lift h-10 rounded-full bg-primary px-4 text-sm font-bold text-primary-foreground hover:bg-primary/90 sm:px-5"
             >
               <CalendarCheck className="h-4 w-4 sm:mr-1.5" />
@@ -228,11 +289,24 @@ export function LandingPage({
         <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 py-14 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:py-24">
           {/* Sol: Metin */}
           <div className="mk-anim-right">
-            <div className="inline-flex items-center gap-2.5 rounded-full border border-primary/30 bg-primary/8 px-4 py-1.5">
+            <div className="inline-flex flex-wrap items-center gap-2.5 rounded-full border border-primary/30 bg-primary/8 px-4 py-1.5">
               <span className="mk-diamond" />
               <span className="mk-since-badge text-[10px] font-semibold text-brand-text">Since {brand.since}</span>
               <span className="h-3 w-px bg-border" />
               <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Gelibolu · Çanakkale</span>
+              {/* V6: canlı açık/kapalı rozeti (yalnızca tarayıcıda) */}
+              {openStatus && (
+                <>
+                  <span className="h-3 w-px bg-border" />
+                  <span
+                    className={cn("inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.14em]", openStatus.open ? "text-emerald-400" : "text-rose-400")}
+                    title={openStatus.open ? "Şu an açık" : `Şu an kapalı — ${openStatus.nextDay ?? ""}`}
+                  >
+                    <span className={cn("h-1.5 w-1.5 rounded-full", openStatus.open ? "bg-emerald-400 mk-anim-blink" : "bg-rose-400/80")} />
+                    {openStatus.open ? "Şu an açık" : "Şu an kapalı"}
+                  </span>
+                </>
+              )}
             </div>
 
             <h1 className="mk-display mt-6 text-balance text-4xl font-bold leading-[1.12] tracking-tight sm:text-5xl lg:text-[3.4rem]">
@@ -246,7 +320,7 @@ export function LandingPage({
 
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Button
-                onClick={onBook}
+                onClick={() => onBook(null)}
                 className="mk-gold-glow mk-btn-lift h-12 rounded-full bg-primary px-7 text-base font-bold text-primary-foreground hover:bg-primary/90"
               >
                 {landing.ctaButton}
@@ -273,14 +347,23 @@ export function LandingPage({
               <span className="font-semibold text-brand-text">{landing.guestNote}</span> · {landing.ctaHint}
             </p>
 
-            {/* İstatistikler */}
+            {/* İstatistikler — V6: yumuşak sayaç animasyonu (hidrasyon güvenli) */}
             <div className="mt-10 grid max-w-md grid-cols-3 gap-3">
-              {landing.stats.map((s, i) => (
-                <div key={s.label} className={cn("mk-card mk-anim-up rounded-xl px-4 py-4 text-center sm:text-left", `mk-delay-${i + 1}`)}>
-                  <div className="mk-display text-2xl font-bold text-brand-text">{s.value}</div>
-                  <div className="mt-1 text-[11px] font-medium leading-tight text-muted-foreground">{s.label}</div>
-                </div>
-              ))}
+              {landing.stats.map((s, i) => {
+                const num = parseStat(s.value)
+                return (
+                  <div key={s.label} className={cn("mk-card mk-anim-up rounded-xl px-4 py-4 text-center sm:text-left", `mk-delay-${i + 1}`)}>
+                    <div className="mk-display text-2xl font-bold text-brand-text">
+                      {mounted && num ? (
+                        <CountUp end={num.end} duration={1.6} decimals={num.decimals} separator="." suffix={num.suffix} useEasing />
+                      ) : (
+                        s.value
+                      )}
+                    </div>
+                    <div className="mt-1 text-[11px] font-medium leading-tight text-muted-foreground">{s.label}</div>
+                  </div>
+                )
+              })}
             </div>
           </div>
 
@@ -305,6 +388,28 @@ export function LandingPage({
             <div className="mt-7">
               <WeatherWidget variant="hero" />
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ V6: Güven şeridi — hero altı profesyonel güven bandı ═══ */}
+      <section className="border-t border-border/60 py-8" aria-label="Neden biz">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {landing.trustStrip?.map((t, i) => {
+              const Icon = t.icon === "calendar" ? CalendarCheck : t.icon === "wand" ? Wand2 : t.icon === "shield" ? ShieldCheck : Heart
+              return (
+                <div key={t.title} className={cn("mk-card mk-anim-up flex items-start gap-3 rounded-xl px-4 py-3.5", `mk-delay-${Math.min(6, i + 1)}`)}>
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-primary/8">
+                    <Icon className="h-4 w-4 text-brand-text" strokeWidth={1.8} />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-[13px] font-bold leading-tight text-foreground">{t.title}</span>
+                    <span className="mt-0.5 block text-[11px] leading-snug text-muted-foreground">{t.text}</span>
+                  </span>
+                </div>
+              )
+            })}
           </div>
         </div>
       </section>
@@ -352,7 +457,7 @@ export function LandingPage({
           </Reveal>
 
           {categories.map((cat) => (
-            <div key={cat} className="mb-10 last:mb-0">
+            <div key={cat} id={`hizmet-${cat}`} className="mb-10 scroll-mt-28 last:mb-0">
               <div className="mb-4 flex items-center gap-3">
                 <span className="text-xl">{CATEGORY_META[cat]?.emoji}</span>
                 <h3 className="mk-display text-xl font-bold">{CATEGORY_META[cat]?.label}</h3>
@@ -386,8 +491,9 @@ export function LandingPage({
                         <Clock className="h-3 w-3 text-brand-text/70" />
                         {minutesLabel(s.durationMin)}
                       </div>
+                      {/* V6: akıllı randevu — hizmet önceden seçili olarak açılır */}
                       <button
-                        onClick={onBook}
+                        onClick={() => onBook(s.id)}
                         className="mk-focus rounded-full px-3 py-1 text-[11px] font-bold text-brand-text transition-colors hover:bg-primary/10"
                       >
                         Randevu Al →
@@ -406,13 +512,65 @@ export function LandingPage({
                 <div className="mt-1 text-sm text-muted-foreground">1 dakikada online alın — hizmeti, saati ve tarihi kendiniz seçin. Giriş gerekmez.</div>
               </div>
               <Button
-                onClick={onBook}
+                onClick={() => onBook(null)}
                 className="mk-gold-glow h-11 shrink-0 rounded-full bg-primary px-6 font-bold text-primary-foreground hover:bg-primary/90"
               >
                 <CalendarCheck className="mr-1.5 h-4 w-4" /> Hemen Al
               </Button>
             </div>
           </Reveal>
+        </div>
+      </section>
+
+      {/* ═══ V6: Nasıl Çalışır — 3 adımda randevu ═══ */}
+      <section id="nasil-calisir" className="scroll-mt-24 border-t border-border/60 py-14 lg:py-20">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <Reveal>
+            <SectionHeader
+              eyebrow="Nasıl Çalışır"
+              title="3 adımda"
+              accent="randevunuz"
+              description="Karmaşık formlar yok, telefon trafiği yok — sadece seçin, onaylayın, gelin."
+            />
+          </Reveal>
+          <div className="grid gap-4 md:grid-cols-3">
+            {[
+              {
+                no: "01",
+                title: "Hizmetinizi seçin",
+                text: "Fiyat listemizden tırnak, güzellik veya kirpik hizmetinizi seçin — isterseniz Canlı Studio'da tasarımınızı kendiniz oluşturun.",
+                icon: Sparkles,
+              },
+              {
+                no: "02",
+                title: "Saat & gün seçin",
+                text: "Açık günleri ve boş saatleri gerçek zamanlı görün — çakışma yok, bekleme yok. Dolu günler için bekleme listemize yazılabilirsiniz.",
+                icon: Clock,
+              },
+              {
+                no: "03",
+                title: "Onayınızı alın",
+                text: "Adınız ve telefon numaranız yeterli. Randevunuz anında stüdyomuza düşer — «Randevularım» bölümünden her zaman takip edebilirsiniz.",
+                icon: CalendarCheck,
+              },
+            ].map((step, i) => (
+              <Reveal key={step.no} delay={i * 0.12} className="min-w-0">
+                <div className="mk-card mk-ornament relative h-full overflow-hidden rounded-2xl p-6">
+                  <span className="mk-display pointer-events-none absolute -right-1 -top-3 select-none text-[64px] font-bold leading-none text-primary/10" aria-hidden="true">
+                    {step.no}
+                  </span>
+                  <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-primary/35 bg-primary/10">
+                    <step.icon className="h-5 w-5 text-brand-text" strokeWidth={1.8} />
+                  </span>
+                  <h3 className="mk-display mt-4 text-lg font-bold">{step.title}</h3>
+                  <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">{step.text}</p>
+                  {i < 2 && (
+                    <ArrowRight className="absolute right-4 top-6 hidden h-4 w-4 text-primary/40 md:block" aria-hidden="true" />
+                  )}
+                </div>
+              </Reveal>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -467,17 +625,24 @@ export function LandingPage({
               <figure
                 key={g.id}
                 className={cn(
-                  "mk-gallery-tile mk-photo-frame mk-anim-up mk-card group relative overflow-hidden rounded-2xl",
+                  "mk-gallery-tile mk-photo-frame mk-anim-up mk-card group relative cursor-zoom-in overflow-hidden rounded-2xl",
                   `mk-delay-${Math.min(6, (i % 6) + 1)}`,
                 )}
               >
-                <img
-                  src={g.imagePath}
-                  alt={`${g.title} — Melek'çe Güzellik ${CATEGORY_META[g.category]?.label ?? g.category} çalışması`}
-                  className="aspect-square w-full object-cover"
-                  loading="lazy"
-                />
-                <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/90 via-background/40 to-transparent px-3 pb-2.5 pt-10">
+                <button
+                  type="button"
+                  onClick={() => setLightboxIndex(gallery.findIndex((x) => x.id === g.id))}
+                  className="mk-focus block w-full"
+                  aria-label={`${g.title} — büyütmek için aç`}
+                >
+                  <img
+                    src={g.imagePath}
+                    alt={`${g.title} — Melek'çe Güzellik ${CATEGORY_META[g.category]?.label ?? g.category} çalışması`}
+                    className="aspect-square w-full object-cover"
+                    loading="lazy"
+                  />
+                </button>
+                <figcaption className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/90 via-background/40 to-transparent px-3 pb-2.5 pt-10">
                   <div className="truncate text-xs font-bold text-foreground">{g.title}</div>
                   <div className="text-[10px] text-muted-foreground">{CATEGORY_META[g.category]?.label ?? g.category}</div>
                 </figcaption>
@@ -485,13 +650,13 @@ export function LandingPage({
             ))}
           </div>
           <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-            <a
-              href="/nailart"
+            <button
+              onClick={() => onNailArt?.()}
               className="mk-focus mk-gold-glow inline-flex h-11 items-center gap-2 rounded-full bg-primary px-6 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90"
             >
               <Sparkles className="h-4 w-4" /> Tüm tırnak sanatı galerisini gör
               <ArrowRight className="h-4 w-4" />
-            </a>
+            </button>
             <a
               href={instagramUrl}
               target="_blank"
@@ -502,6 +667,17 @@ export function LandingPage({
               Instagram'da daha fazlası · @{company.instagram}
             </a>
           </div>
+          {/* V6: Galeri Lightbox — Zoom + Küçük resimler + Sayaç */}
+          <Lightbox
+            open={lightboxIndex !== null}
+            index={lightboxIndex ?? 0}
+            slides={lightboxSlides}
+            close={() => setLightboxIndex(null)}
+            plugins={[Zoom, Thumbnails, Counter]}
+            animation={{ zoom: 350 }}
+            zoom={{ maxZoomPixelRatio: 3 }}
+            controller={{ closeOnBackdropClick: true }}
+          />
         </div>
       </section>
 
@@ -523,44 +699,8 @@ export function LandingPage({
               <Reveal key={c.id} delay={i * 0.12} className="min-w-0">
                 <figure className="mk-card mk-photo-frame h-full overflow-hidden rounded-2xl p-2.5 sm:p-3">
                   <div className="relative overflow-hidden rounded-xl">
-                    <img-comparison-slider
-                      value={50}
-                      suppressHydrationWarning={true}
-                      className="block w-full"
-                      aria-label={`${c.title} — öncesi ve sonrası karşılaştırması (ok tuşlarıyla da kaydırabilirsiniz)`}
-                      style={
-                        {
-                          "--divider-color": "color-mix(in oklch, var(--brand) 65%, transparent)",
-                          "--divider-width": "2px",
-                          "--divider-shadow": "0 0 12px rgba(0, 0, 0, 0.45)",
-                        } as CSSProperties
-                      }
-                    >
-                      <Image
-                        slot="first"
-                        src={c.before}
-                        alt={c.beforeAlt}
-                        width={1344}
-                        height={768}
-                        sizes="(min-width: 768px) 50vw, 100vw"
-                        className="h-auto w-full select-none"
-                        draggable={false}
-                      />
-                      <Image
-                        slot="second"
-                        src={c.after}
-                        alt={c.afterAlt}
-                        width={1344}
-                        height={768}
-                        sizes="(min-width: 768px) 50vw, 100vw"
-                        className="h-auto w-full select-none"
-                        draggable={false}
-                      />
-                      {/* Özel altın tutamak — bileşen konumlandırır, sürükleme tüm yüzeyde çalışır */}
-                      <span slot="handle" className="mk-compare-handle" aria-hidden="true">
-                        <ChevronsLeftRight className="h-5 w-5" />
-                      </span>
-                    </img-comparison-slider>
+                    {/* V6: hidrasyon güvenli karşılaştırma kaydırıcısı */}
+                    <CompareSlider pair={c} />
                     <span className="pointer-events-none absolute left-3 top-3 rounded-full border border-border/60 bg-background/70 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-foreground/90 backdrop-blur-md">
                       Önce
                     </span>
@@ -595,23 +735,67 @@ export function LandingPage({
             </div>
           )}
 
-          {reviews.length > 0 ? (
-            <div className="grid gap-4 md:grid-cols-3">
-              {reviews.map((r, i) => (
-                <figure key={r.id} className={cn("mk-card mk-anim-up rounded-2xl p-6", `mk-delay-${i + 1}`)}>
-                  <Stars value={r.rating} />
-                  <blockquote className="mt-3 text-sm leading-relaxed text-foreground/90">«{r.comment}»</blockquote>
-                  <figcaption className="mt-4 flex items-center gap-3 border-t border-border/60 pt-4">
-                    <span className="mk-display flex h-9 w-9 items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-xs font-bold text-brand-text">
-                      {r.authorName.split(" ").map((p) => p[0]).join("").slice(0, 2)}
-                    </span>
-                    <div className="leading-tight">
-                      <div className="text-xs font-bold text-foreground">{r.authorName}</div>
-                      <div className="text-[10px] text-muted-foreground">{r.serviceName ?? BRANDING.reviews.anonymousLabel}</div>
+          {reviewSlides.length > 0 && reviewSlides[0]?.length > 0 ? (
+            <div className="relative">
+              {/* V6: embla carousel — profesyonel, dokunmatik + ok tuşları */}
+              <div ref={emblaRef} className="overflow-hidden" aria-roledescription="carousel" aria-label="Misafir değerlendirmeleri">
+                <div className="flex">
+                  {reviewSlides.map((group, gi) => (
+                    <div key={gi} className="min-w-0 flex-[0_0_100%]">
+                      <div className="grid gap-4 px-0.5 md:grid-cols-3">
+                        {group.map((r) => (
+                          <figure key={r.id} className="mk-card h-full rounded-2xl p-6">
+                            <Stars value={r.rating} />
+                            <blockquote className="mt-3 text-sm leading-relaxed text-foreground/90">«{r.comment}»</blockquote>
+                            <figcaption className="mt-4 flex items-center gap-3 border-t border-border/60 pt-4">
+                              <span className="mk-display flex h-9 w-9 items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-xs font-bold text-brand-text">
+                                {r.authorName.split(" ").map((p) => p[0]).join("").slice(0, 2)}
+                              </span>
+                              <div className="leading-tight">
+                                <div className="text-xs font-bold text-foreground">{r.authorName}</div>
+                                <div className="text-[10px] text-muted-foreground">{r.serviceName ?? BRANDING.reviews.anonymousLabel}</div>
+                              </div>
+                            </figcaption>
+                          </figure>
+                        ))}
+                      </div>
                     </div>
-                  </figcaption>
-                </figure>
-              ))}
+                  ))}
+                </div>
+              </div>
+              {reviewSlides.length > 1 && (
+                <div className="mt-5 flex items-center justify-center gap-4">
+                  <button
+                    onClick={() => emblaApi?.scrollPrev()}
+                    aria-label="Önceki yorumlar"
+                    className="mk-focus flex h-9 w-9 items-center justify-center rounded-full border border-border/70 text-muted-foreground transition-colors hover:border-primary/50 hover:text-brand-text"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <div className="flex items-center gap-1.5" role="tablist" aria-label="Yorum sayfaları">
+                    {reviewSlides.map((_, di) => (
+                      <button
+                        key={di}
+                        role="tab"
+                        aria-selected={emblaIndex === di}
+                        aria-label={`${di + 1}. yorum sayfası`}
+                        onClick={() => emblaApi?.scrollTo(di)}
+                        className={cn(
+                          "h-1.5 rounded-full transition-all",
+                          emblaIndex === di ? "w-6 bg-primary mk-gold-glow" : "w-1.5 bg-muted-foreground/40 hover:bg-muted-foreground/70",
+                        )}
+                      />
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => emblaApi?.scrollNext()}
+                    aria-label="Sonraki yorumlar"
+                    className="mk-focus flex h-9 w-9 items-center justify-center rounded-full border border-border/70 text-muted-foreground transition-colors hover:border-primary/50 hover:text-brand-text"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <p className="text-center text-sm text-muted-foreground">Henüz yayınlanmış değerlendirme yok — ilk siz olun!</p>
@@ -627,6 +811,52 @@ export function LandingPage({
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
+        </div>
+      </section>
+
+      {/* ═══ V6: SSS — sıkça sorulan sorular (FAQPage JSON-LD ile SEO) ═══ */}
+      <section id="sss" className="scroll-mt-24 border-t border-border/60 py-14 lg:py-20">
+        {/* Google/Farklı arama motorları için FAQPage yapılandırılmış verisi */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              mainEntity: landing.faq.map((f) => ({
+                "@type": "Question",
+                name: f.q,
+                acceptedAnswer: { "@type": "Answer", text: f.a },
+              })),
+            }),
+          }}
+        />
+        <div className="mx-auto max-w-3xl px-4 sm:px-6">
+          <Reveal>
+            <SectionHeader
+              eyebrow="SSS"
+              title="Sıkça sorulan"
+              accent="sorular"
+              description="Merak edilenler — aradığınızı bulamazsanız WhatsApp'tan yazın, hemen yardımcı olalım."
+            />
+          </Reveal>
+          <Reveal delay={0.1}>
+            <Accordion type="single" collapsible className="mk-card rounded-2xl px-5 py-2">
+              {landing.faq.map((f, i) => (
+                <AccordionItem key={f.q} value={`faq-${i}`} className="border-border/50 last:border-b-0">
+                  <AccordionTrigger className="mk-focus gap-3 py-4 text-left hover:no-underline">
+                    <span className="flex items-start gap-3">
+                      <HelpCircle className="mt-0.5 h-4 w-4 shrink-0 text-brand-text" strokeWidth={1.8} />
+                      <span className="text-[14px] font-semibold leading-snug text-foreground">{f.q}</span>
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-4 pl-7 text-[13px] leading-relaxed text-muted-foreground">
+                    {f.a}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </Reveal>
         </div>
       </section>
 
@@ -752,7 +982,7 @@ export function LandingPage({
               </div>
               <div className="mt-6 border-t border-border/60 pt-5">
                 <Button
-                  onClick={onBook}
+                  onClick={() => onBook(null)}
                   className="mk-gold-glow h-11 w-full rounded-full bg-primary font-bold text-primary-foreground hover:bg-primary/90"
                 >
                   <CalendarCheck className="mr-1.5 h-4 w-4" /> Online randevu al
@@ -827,93 +1057,153 @@ export function LandingPage({
         </div>
       </section>
 
-      {/* ═══ Alt bilgi — Gerçek logo ile marka kapanışı ═══ */}
+      {/* ═══ Alt bilgi — V6: profesyonel 3 kolonlu marka kapanışı ═══ */}
       <footer className="mt-auto border-t border-border/60 bg-card/30">
         <div className="mk-gold-line h-[2px] w-full" />
         <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-          <div className="flex flex-col items-center text-center">
-            <div className="mk-ornament mk-logo-frame mk-logo-sheen mk-gold-glow-soft rounded-xl p-2.5">
-              <img
-                src={brand.logoWing}
-                alt="Melek'çe Güzellik melek kanadı"
-                className="h-16 w-16 rounded-lg object-cover"
-              />
-            </div>
-            <div className="mk-display mt-4 text-lg font-bold tracking-wide">
-              <span className="text-foreground">{BRAND_DISPLAY.part1}</span>{" "}
-              <span className="mk-gold-text">{BRAND_DISPLAY.part2}</span>
-            </div>
-            <div className="mt-1.5 text-[10px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-              {brand.tagline}
+          <div className="grid gap-10 md:grid-cols-[1.2fr_0.8fr_1fr]">
+            {/* Kolon 1: Marka */}
+            <div className="flex flex-col items-center text-center md:items-start md:text-left">
+              <div className="flex items-center gap-3">
+                <div className="mk-ornament mk-logo-frame mk-logo-sheen mk-gold-glow-soft rounded-xl p-2">
+                  <img
+                    src={brand.logoWing}
+                    alt="Melek'çe Güzellik melek kanadı"
+                    className="h-12 w-12 rounded-lg object-cover"
+                  />
+                </div>
+                <div className="leading-none">
+                  <div className="mk-display text-base font-bold tracking-wide">
+                    <span className="text-foreground">{BRAND_DISPLAY.part1}</span>{" "}
+                    <span className="mk-gold-text">{BRAND_DISPLAY.part2}</span>
+                  </div>
+                  <div className="mt-1.5 text-[9px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+                    {brand.tagline}
+                  </div>
+                </div>
+              </div>
+              <p className="mt-4 max-w-xs text-[12px] leading-relaxed text-muted-foreground">
+                {company.legalName} · {company.street}, {company.city}
+                <br />
+                {company.footerClaim}
+              </p>
+              <div className="mt-4 flex items-center gap-2.5">
+                <a
+                  href={instagramUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Instagram sayfamız"
+                  className="mk-focus flex h-9 w-9 items-center justify-center rounded-full border border-border/70 text-muted-foreground transition-colors hover:border-primary/50 hover:text-brand-text"
+                >
+                  <Instagram className="h-4 w-4" />
+                </a>
+                <a
+                  href={`https://wa.me/${(company.whatsapp ?? company.phone).replace(/\D/g, "")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="WhatsApp'tan yazın"
+                  className="mk-focus flex h-9 w-9 items-center justify-center rounded-full border border-border/70 text-muted-foreground transition-colors hover:border-primary/50 hover:text-brand-text"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                </a>
+                <a
+                  href={`tel:${company.phone.replace(/\s/g, "")}`}
+                  aria-label="Bizi arayın"
+                  className="mk-focus flex h-9 w-9 items-center justify-center rounded-full border border-border/70 text-muted-foreground transition-colors hover:border-primary/50 hover:text-brand-text"
+                >
+                  <Phone className="h-4 w-4" />
+                </a>
+              </div>
+              <div className="mk-display mt-5 text-[11px] italic tracking-wide text-muted-foreground">«{brand.slogan}»</div>
             </div>
 
-            <div className="mt-6 flex items-center justify-center gap-3">
-              <span className="mk-gold-line h-px w-12" />
-              <span className="mk-diamond" />
-              <span className="mk-display text-[11px] italic tracking-wide text-muted-foreground">«{brand.slogan}»</span>
-              <span className="mk-diamond" />
-              <span className="mk-gold-line h-px w-12" />
+            {/* Kolon 2: Hızlı bağlantılar */}
+            <div className="text-center md:text-left">
+              <div className="text-[10px] font-bold uppercase tracking-[0.28em] text-brand-text">Hızlı Bağlantılar</div>
+              <ul className="mt-4 space-y-2.5 text-[13px]">
+                {[
+                  { label: "Randevu Al", action: () => onBook(null), icon: CalendarCheck },
+                  { label: "Canlı Nail Studio", action: onStudio, icon: Wand2 },
+                  { label: "Nail Art Galerisi", action: () => onNailArt?.(), icon: Sparkles },
+                  { label: "Hediye Kartı", action: () => document.getElementById("hediye-karti")?.scrollIntoView({ behavior: "smooth" }), icon: Gift },
+                  { label: "Misafir Yorumları", action: onReviews, icon: MessageSquareHeart },
+                  { label: "Ekip Girişi", action: onStaffLogin, icon: ShieldCheck },
+                ].map((l) => (
+                  <li key={l.label}>
+                    <button
+                      onClick={l.action}
+                      className="mk-focus group inline-flex items-center gap-2 rounded text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      <l.icon className="h-3.5 w-3.5 text-brand-text/70 transition-colors group-hover:text-brand-text" />
+                      {l.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
             </div>
 
-            <div className="mt-6 text-[11px] leading-relaxed text-muted-foreground">
-              {company.legalName} · {company.street}, {company.city} · {company.footerClaim}
-            </div>
-
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[11px] text-muted-foreground">
-              <a href={instagramUrl} target="_blank" rel="noopener noreferrer" className="mk-focus flex items-center gap-1.5 rounded hover:text-foreground">
-                <Instagram className="h-3.5 w-3.5 text-brand-text/70" /> Instagram
-              </a>
-              <button onClick={onReviews} className="mk-focus rounded hover:text-foreground">Yorumlar</button>
-              <button onClick={onBook} className="mk-focus rounded hover:text-foreground">Randevu Al</button>
-              <button onClick={onStaffLogin} className="mk-focus rounded hover:text-foreground">Ekip Girişi</button>
-            </div>
-
-            {/* ═══ V5.5: Mobil uygulama — APK indirme (QR) + PWA ipucu ═══ */}
-            <div className="mt-7 rounded-xl border border-border/60 bg-background/40 p-4 sm:p-5">
-              <div className="flex flex-col items-center gap-4 sm:flex-row sm:gap-5">
+            {/* Kolon 3: Saatler + mobil uygulama */}
+            <div className="text-center md:text-left">
+              <div className="text-[10px] font-bold uppercase tracking-[0.28em] text-brand-text">Çalışma Saatleri</div>
+              <ul className="mt-4 space-y-1.5 text-[12px]">
+                {BRANDING.openingHours.map((h, i) => (
+                  <li key={h.day} className="flex items-center justify-between gap-3 md:justify-start">
+                    <span className={cn("font-medium", h.closed ? "text-muted-foreground/70" : "text-foreground")}>{h.day}</span>
+                    <span className="ml-auto inline-flex items-center gap-2">
+                      <span className="h-px w-4 bg-border md:hidden" aria-hidden="true" />
+                      <span className={cn("font-mono text-[11px]", i === todayIdx ? "font-bold text-brand-text" : "text-muted-foreground")}>
+                        {h.hours}
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-5 flex items-center justify-center gap-3 rounded-xl border border-border/60 bg-background/40 p-3 md:justify-start">
                 <a
                   href="https://github.com/batko15/melek-guzellik-suite/releases/latest"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mk-focus mk-ornament mk-logo-frame rounded-lg p-2 transition-transform hover:scale-[1.03]"
+                  className="mk-focus mk-ornament mk-logo-frame shrink-0 rounded-lg p-1.5 transition-transform hover:scale-[1.03]"
                   aria-label="Melek'çe Android uygulamasını indir (GitHub)"
                 >
                   <img
                     src="/brand/app-qr.png"
                     alt="Melek'çe Android uygulaması indirme QR kodu"
-                    className="h-24 w-24 rounded"
-                    width={96}
-                    height={96}
+                    className="h-16 w-16 rounded"
+                    width={64}
+                    height={64}
                   />
                 </a>
-                <div className="text-center sm:text-left">
-                  <div className="flex items-center justify-center gap-1.5 sm:justify-start">
-                    <Smartphone className="h-4 w-4 text-brand-text" />
-                    <span className="text-sm font-bold">Melek'çe mobil uygulaması</span>
+                <div className="text-left">
+                  <div className="flex items-center gap-1.5">
+                    <Smartphone className="h-3.5 w-3.5 text-brand-text" />
+                    <span className="text-[12px] font-bold">Mobil uygulama</span>
                   </div>
-                  <p className="mt-1.5 max-w-xs text-[11px] leading-relaxed text-muted-foreground">
-                    Android uygulaması ücretsizdir: telefonun kamerasıyla kodu okutun — randevu,
-                    galeri ve hediye kartı tek dokunuşta cebinizde.
+                  <p className="mt-1 max-w-[210px] text-[10px] leading-relaxed text-muted-foreground">
+                    Randevu, galeri ve hediye kartı tek dokunuşta cebinizde. iPhone: Safari → «Ana Ekrana Ekle».
                   </p>
                   <a
                     href="https://github.com/batko15/melek-guzellik-suite/releases/latest"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mk-focus mt-2.5 inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3 py-1.5 text-[11px] font-semibold text-brand-text transition-colors hover:bg-primary/20"
+                    className="mk-focus mt-1.5 inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2.5 py-1 text-[10px] font-semibold text-brand-text transition-colors hover:bg-primary/20"
                   >
-                    <Download className="h-3.5 w-3.5" /> Android için indir (APK)
+                    <Download className="h-3 w-3" /> APK indir
                   </a>
-                  <div className="mt-1.5 text-[10px] text-muted-foreground/70">
-                    iPhone kullanıyorsanız: Safari → Paylaş → «Ana Ekrana Ekle»
-                  </div>
                 </div>
               </div>
             </div>
+          </div>
 
-            <div className="mt-7 flex items-center gap-2.5 text-[9px] uppercase tracking-[0.3em] text-muted-foreground/70">
+          {/* Alt bant */}
+          <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t border-border/50 pt-5 sm:flex-row">
+            <div className="flex items-center gap-2.5 text-[9px] uppercase tracking-[0.3em] text-muted-foreground/70">
               <span className="mk-since-badge">Since {brand.since}</span>
               <span className="mk-diamond scale-75 opacity-50" />
               <span>Gelibolu</span>
+            </div>
+            <div className="text-[10px] text-muted-foreground/70">
+              Melek'çe Güzellik Suite <span className="font-semibold text-brand-text/80">V{BRANDING.version}</span> · {BRANDING.versionCodename}
             </div>
           </div>
         </div>

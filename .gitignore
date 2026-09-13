@@ -81,3 +81,6 @@ scripts/test_github_token.py
 scripts/extracted/
 scripts/search-results/
 apk-build/
+
+# Öffentliche Schlüssel in docs/ sind committbar (nur PRIVATE Keys bleiben ignoriert)
+!docs/*.pem
