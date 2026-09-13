@@ -1,4 +1,4 @@
-# 💅 Melek'çe Güzellik Suite — V5.0.0 CLOUD
+# 💅 Melek'çe Güzellik Suite — V5.2 CLOUD
 
 **Die komplette Salon-Software für Nagelstudios & Beauty-Studios — öffentliche Webseite, Kundinnen-Buchungsportal und Team-Verwaltung in einer Anwendung.**
 
@@ -6,11 +6,13 @@
 
 ---
 
-## ✨ Feature-Highlights (V5.0.0 CLOUD)
+## ✨ Feature-Highlights (V5.2 CLOUD)
 
 ### 🌐 Öffentliche Webseite (ohne Login)
 - **Luxury-Design** «Black-Gold-Champagner» mit echtem Studio-Logo (Engelsflügel), Gold-Eck-Ornamenten und Rauten-Trennern — mobil, Tablet & Desktop optimiert
 - ⭐ **V5 CLOUD**: Komplett Vercel- + Supabase-fähig — PostgreSQL-Unterstützung mit **vollautomatischem Datenbank-Setup** (Tabellen + Grunddaten beim ersten Aufruf, ohne CLI/Migrationen)
+- ⭐ **V5.2 Serverless-Härtung**: Supabase-**Transaction-Pooler** wird automatisch genutzt (Port 6543, `pgbouncer=true`, 1 Verbindung pro Funktion) — kein «max clients reached» mehr; Vercel-Funktionen in **Dublin (dub1)** neben der Datenbank (eu-west-1) für minimale Latenz; `maxDuration 60 s` für den Erste-Aufruf-Bootstrap
+- ⭐ **V5.2 SEO**: `robots.txt` + `sitemap.xml` automatisch generiert
 - ⭐ **V5 ECHT-DATEN**: echte Adresse (Hoca Hamza Mah. 1023. Sk No: 2, Gelibolu), echte Telefon-/WhatsApp-Nummer (+90 542 633 15 70), exakte Karten-Koordinaten + Google-Maps-Ortslink
 - ⭐ **V5 GALERIE**: 22 echte Instagram-Fotos des Studios (die 6 neuesten Arbeiten direkt von @melekce_guzellik17 übernommen)
 - Leistungen & Preise im **Menü-Stil** (punktierte Preisführung), **Galerie mit Kategorie-Filter** (Tırnak / Güzellik / Kirpik / Stüdyo)
@@ -203,6 +205,15 @@ public/gallery/real/          # echte Studio-Fotos
 ---
 
 ## 📋 Changelog
+
+### V5.2 — «Serverless-Härtung» (Supabase-Pooler-Fix)
+- 🔧 **EMAXCONNSESSION-Fehler behoben**: Der Session-Pooler (Port 5432) erlaubt nur ~15 Clients — mit je ~12 API-Routen als eigenen Vercel-Funktionen war das Limit sofort erschöpft. Die URL-Normalisierung in `db.ts` schreibt Supabase-Pooler-Adressen jetzt automatisch auf den **Transaction-Pooler (Port 6543)** um (`pgbouncer=true`, `connection_limit=1`) — unlimitierte parallele Clients, keine blockierten Server-Sessions
+- 🔧 **Bootstrap-Rennerschutz**: 2-Phasen-Transaktionen (DDL/Saat) mit `pg_advisory_xact_lock` — mehrere parallele Kaltstarts können nicht mehr doppelt säen; Fast-Path ohne Lock für Warmstarts (0,2 s)
+- 🌍 **Vercel-Region dub1** (Dublin) — direkte Nähe zur Supabase-Datenbank (eu-west-1 Irland), ~10 ms statt ~90 ms Abfrage-Latenz
+- ⏱️ `vercel.json` mit `maxDuration 60` für alle API-Routen (Erste-Aufruf-Datenbank-Setup braucht ~20 s)
+- 🔎 **diag-Endpunkt** nutzt jetzt den geteilten Prisma-Client (keine zusätzliche Verbindungsquelle) und löst den Auto-Bootstrap aus
+- 🤖 **SEO**: `robots.txt` + `sitemap.xml` als Next.js Metadata Routes
+- 📖 APP-ANLEITUNG: Pooler-Empfehlung + Hinweis zu Supabase-Free-Tier-Pause nach 7 Tagen Inaktivität
 
 ### V5.0.0 CLOUD — «Kunden-Lieferung»
 - ⭐ **Vercel + Supabase ready**: dual Prisma-Schema (SQLite lokal / PostgreSQL Cloud) mit automatischer Auswahl; `postinstall` + Build-Hook generieren den passenden Client

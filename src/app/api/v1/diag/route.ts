@@ -1,7 +1,9 @@
 // DIAGNOSE-ENDPUNKT — Cloud-Datenbank-Status (nur für Einrichtung/Fehlersuche)
 // Gibt KEINE Geheimnisse preis: Protokoll + maskierter Host + Fehlerklasse/-meldung.
+// Nutzt den geteilten Client aus lib/db (inkl. URL-Normalisierung + Bootstrap) —
+// ein eigener PrismaClient pro Aufruf wäre eine zusätzliche Verbindungsquelle.
 
-import { PrismaClient } from "@prisma/client"
+import { db } from "@/lib/db"
 import { isPostgres } from "@/lib/db-bootstrap"
 
 export async function GET() {
@@ -23,10 +25,9 @@ export async function GET() {
     return Response.json(info)
   }
 
-  const prisma = new PrismaClient({ log: ["error"] })
   try {
     // 1) Tabellen-Check
-    const exists = await prisma.$queryRaw<{ exists: boolean }[]>`
+    const exists = await db.$queryRaw<{ exists: boolean }[]>`
       SELECT EXISTS (
         SELECT FROM information_schema.tables
         WHERE table_schema = 'public' AND table_name = 'Service'
@@ -34,9 +35,9 @@ export async function GET() {
     `
     info.tablesExist = exists[0]?.exists === true
 
-    // 2) Zählstände (löst bei fehlenden Tabellen den Fehler sichtbar aus)
+    // 2) Zählstände (löst bei fehlenden Tabellen den Auto-Bootstrap aus)
     try {
-      const c = await prisma.service.count()
+      const c = await db.service.count()
       info.serviceCount = c
     } catch (e) {
       info.serviceCountError = String((e as Error)?.message ?? e).slice(0, 300)
@@ -46,7 +47,5 @@ export async function GET() {
   } catch (e) {
     info.fatalError = String((e as Error)?.message ?? e).slice(0, 500)
     return Response.json(info, { status: 500 })
-  } finally {
-    await prisma.$disconnect().catch(() => {})
   }
 }

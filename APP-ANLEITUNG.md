@@ -26,6 +26,9 @@ und die Preise leer!**
    *(Alternativ funktioniert auch der Reiter **URI** mit `db.xxxxxxxxx.supabase.co` —
    dieser ist allerdings reines IPv6 und kann je nach Vercel-Region connection errors verursachen. 
    Der Pooler ist die sichere Wahl.)*
+   ℹ️ **Gut zu wissen:** Ob Session- (Port 5432) oder Transaction-Pooler (Port 6543) — die App
+   optimiert die Verbindung automatisch selbst (stellt immer auf Transaction-Mode um, damit
+   niemals das Client-Limit erreicht wird). Einfach die Adresse wie kopiert eintragen.
    ⚠️ `[YOUR-PASSWORD]` mit dem bei der Projekterstellung vergebenen Passwort ersetzen!
 3. **Vercel öffnen**: https://vercel.com → eigenes Projekt
    (`melek-guzellik-suite`) → oben **Settings** → **Environment Variables**.
@@ -46,6 +49,12 @@ und die Preise leer!**
 
 > 🔍 **Selbst prüfen:** `https://melek-guzellik-suite.vercel.app/api/v1/diag` öffnen —
 > dort muss `"dbProtocol": "postgresql"` stehen (statt `"none"`).
+
+> ⏸️ **Wichtig — kostenloses Supabase (Free-Tier):** Bleibt die Datenbank **7 Tage lang
+> ungenutzt** (kein einziger Seitenaufruf/Buchung), pausiert Supabase das Projekt
+> automatisch. Kein Problem: In Supabase einfach auf **«Restore project»** klicken —
+> alle Daten bleiben erhalten. Ein gelegentlicher Besuch der Internetseite reicht
+> bereits, um die Datenbank aktiv zu halten.
 
 ---
 
