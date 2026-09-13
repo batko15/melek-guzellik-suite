@@ -10,18 +10,19 @@ import { useEffect, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import {
   MapPin, Phone, LogOut, Menu, X,
-  Activity, Instagram, Home, CalendarCheck, Star,
+  Activity, Instagram, Home, CalendarCheck, Star, Sparkles,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { LandingPage } from "@/components/landing/landing-page"
 import { BookingFlow } from "@/components/public/booking-flow"
 import { ReviewsPage } from "@/components/public/reviews-page"
+import { NailArtPage } from "@/components/public/nail-art-page"
 import { LoginScreen, type StaffSession } from "@/components/auth/login-screen"
 import { BRANDING, BRAND_DISPLAY, MODULE_MAP } from "@/config/branding"
 import { REGISTERED_MODULES, NAV_SECTIONS, resolveDefaultView } from "@/lib/module-registry"
 
-type PublicView = "landing" | "randevu" | "yorumlar"
+type PublicView = "landing" | "randevu" | "yorumlar" | "nailart"
 type Stage = PublicView | "login"
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -30,6 +31,7 @@ type Stage = PublicView | "login"
 
 const PUBLIC_NAV: Array<{ id: PublicView; label: string; Icon: React.ElementType }> = [
   { id: "landing", label: "Ana Sayfa", Icon: Home },
+  { id: "nailart", label: "Nail Art", Icon: Sparkles },
   { id: "randevu", label: "Randevu", Icon: CalendarCheck },
   { id: "yorumlar", label: "Yorumlar", Icon: Star },
 ]
@@ -213,6 +215,7 @@ function viewForPath(p: string): PublicView {
   const clean = p.replace(/\/+$/, "")
   if (clean === "/randevu") return "randevu"
   if (clean === "/yorumlar") return "yorumlar"
+  if (clean === "/nailart") return "nailart"
   return "landing"
 }
 
@@ -260,7 +263,7 @@ export function AppShell({ initialStage }: { initialStage?: PublicView }) {
   useEffect(() => {
     const onHash = () => {
       const h = window.location.hash.replace("#", "")
-      if (h === "randevu" || h === "yorumlar" || h === "") {
+      if (h === "randevu" || h === "yorumlar" || h === "nailart" || h === "") {
         if (!session) setStage(h === "" ? viewForPath(window.location.pathname) : (h as PublicView))
       }
     }
@@ -274,7 +277,7 @@ export function AppShell({ initialStage }: { initialStage?: PublicView }) {
     const onPop = () => {
       if (session) return
       const h = window.location.hash.replace("#", "")
-      if (h === "randevu" || h === "yorumlar") {
+      if (h === "randevu" || h === "yorumlar" || h === "nailart") {
         setStage(h)
         return
       }
@@ -332,6 +335,21 @@ export function AppShell({ initialStage }: { initialStage?: PublicView }) {
           onStaffLogin={() => setStage("login")}
         />
         <MobileBottomNav view="yorumlar" setView={goPublic} />
+      </>
+    )
+  }
+
+  // ─── V5.6 Herkese açık: Tırnak Sanatı galerisi (girişsiz) ───
+  if (!session && stage === "nailart") {
+    return (
+      <>
+        <NailArtPage
+          onBack={() => goPublic("landing")}
+          onBook={() => goPublic("randevu")}
+          onReviews={() => goPublic("yorumlar")}
+          onStaffLogin={() => setStage("login")}
+        />
+        <MobileBottomNav view="nailart" setView={goPublic} />
       </>
     )
   }

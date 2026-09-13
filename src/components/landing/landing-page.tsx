@@ -131,6 +131,7 @@ export function LandingPage({
           <nav className="ml-auto hidden items-center gap-7 text-sm text-muted-foreground md:flex">
             <a href="#hizmetler" className="mk-focus rounded transition-colors hover:text-foreground">Hizmetler</a>
             <a href="#galeri" className="mk-focus rounded transition-colors hover:text-foreground">Galeri</a>
+            <a href="/nailart" className="mk-focus rounded font-semibold text-brand-text transition-colors hover:text-foreground">Nail Art ✨</a>
             <a href="#yorumlar" className="mk-focus rounded transition-colors hover:text-foreground">Yorumlar</a>
             <a href="#iletisim" className="mk-focus rounded transition-colors hover:text-foreground">İletişim</a>
           </nav>
@@ -405,7 +406,14 @@ export function LandingPage({
               </figure>
             ))}
           </div>
-          <div className="mt-8 text-center">
+          <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+            <a
+              href="/nailart"
+              className="mk-focus mk-gold-glow inline-flex h-11 items-center gap-2 rounded-full bg-primary px-6 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              <Sparkles className="h-4 w-4" /> Tüm tırnak sanatı galerisini gör
+              <ArrowRight className="h-4 w-4" />
+            </a>
             <a
               href={instagramUrl}
               target="_blank"

@@ -1,4 +1,4 @@
-# 💅 Melek'çe Güzellik Suite — V5.5 MOBİL & CANLI İZLEME
+# 💅 Melek'çe Güzellik Suite — V5.6 NAIL ART GALERİSİ
 
 **Die komplette Salon-Software für Nagelstudios & Beauty-Studios — öffentliche Webseite, Kundinnen-Buchungsportal und Team-Verwaltung in einer Anwendung.**
 
@@ -6,7 +6,7 @@
 
 ---
 
-## ✨ Feature-Highlights (V5.5 MOBİL & CANLI İZLEME)
+## ✨ Feature-Highlights (V5.6 NAIL ART GALERİSİ)
 
 ### 🌐 Öffentliche Webseite (ohne Login)
 - **Luxury-Design** «Black-Gold-Champagner» mit echtem Studio-Logo (Engelsflügel), Gold-Eck-Ornamenten und Rauten-Trennern — mobil, Tablet & Desktop optimiert
@@ -16,6 +16,7 @@
 - ⭐ **V5 ECHT-DATEN**: echte Adresse (Hoca Hamza Mah. 1023. Sk No: 2, Gelibolu), echte Telefon-/WhatsApp-Nummer in `branding.ts` gepflegt — **bewusst nicht als Klartext auf der Webseite sichtbar** (V5.5.1), Kontakt läuft über Buttons (Anruf/WhatsApp), exakte Karten-Koordinaten + Google-Maps-Ortslink
 - ⭐ **V5 GALERIE**: 22 echte Instagram-Fotos des Studios (die 6 neuesten Arbeiten direkt von @melekce_guzellik17 übernommen)
 - Leistungen & Preise im **Menü-Stil** (punktierte Preisführung), **Galerie mit Kategorie-Filter** (Tırnak / Güzellik / Kirpik / Stüdyo)
+- ⭐ **V5.6 Nail Art**: Eigene, teilbare **Tırnak-Sanatı-Galerie** unter `/nailart` — alle 14 Nagel-Designs groß im **Lightbox-Modus** (Pfeiltasten/ESC), pro Design **«Bu tasarımı WhatsApp'tan iste»** (Design-Name automatisch in der Nachricht), Preisliste der 8 Nageldienste, Teilen-Button (Web-Share/Panoya kopyala); verlinkt aus Navigation, Galerie-Sektion, mobiler Alt-Navigation und PWA-Shortcut
 - Live-**Wetter-Widget** mit türkischen Pflege-Tipps (Open-Meteo, schlüssellos), **interaktive Karte** (Leaflet, dunkle CARTO-Tiles)
 - ⭐ **V5.5 Mobil Uygulama**: App-Download-Bereich im Footer mit **QR-Code in Markenfarben** (Champagner-Gold auf Samt) — zeigt immer auf das neueste GitHub-Release; dazu PWA-Installationshinweis für iPhone
 - Gästebewertungen mit Sternen — jeder darf ohne Login bewerten (moderiert)
@@ -213,6 +214,15 @@ public/gallery/real/          # echte Studio-Fotos
 ---
 
 ## 📋 Changelog
+
+### V5.6 — «NAIL ART GALERİSİ» (teilbare Design-Galerie)
+- 💅 **Neue öffentliche Route `/nailart`** — die komplette Tırnak-Sanatı-Galerie als eigener, teilbarer Live-Link (SEO-Metadaten + Sitemap-Eintrag): alle Nagel-Designs aus der Datenbank in großer Grid-Ansicht
+- 🔍 **Lightbox-Modus**: Design anklicken → Vollbild mit Pfeiltasten-/Swipe-Navigation (←/→/ESC), Design-Zähler (x/14) und Gold-Rahmen
+- 💬 **«Bu tasarımı WhatsApp'tan iste»**: pro Design vorausgefüllte WhatsApp-Nachricht mit Design-Name (z. B. «Kedi Gözü») — die Kundin tippt nur noch senden; Nummer bleibt ausschließlich im Link (Klartext-Schutz V5.5.1 unverändert)
+- 💰 **Tırnak-Hizmetleri & Fiyatlar**: alle 8 Nageldienste im Menü-Stil mit Dauer + «Randevu Al»-Sprung, direkt auf der Galerie-Seite
+- 🔗 **Galeriyi paylaş**-Button (Web-Share-API mit Clipboard-Fallback) — perfekt für Instagram-Stories & WhatsApp-Status
+- 🧭 **Verlinkt überall**: Desktop-Navigation («Nail Art ✨»), Gold-Button unter der Haupt-Galerie, mobile Alt-Navigation (4. Tab) und PWA-Shortcut («Randevularım»-Duplikat ersetzt)
+- ✅ Vollständige Live-Prüfung aller Seiten/Endpunkte/Bilder (13 Routen + 23/23 Galerie-Fotos, 0 Console-Fehler); ESLint 0 / TSC 0 (src/) · Production-Build sauber
 
 ### V5.5.1 — «Nummer-Schutz» (Telefonnummer nicht mehr sichtbar)
 - 🔒 **Telefonnummer überall funktional korrigiert** (neue Nummer in `branding.ts` → alle `tel:`- und `wa.me`-Links, Buchungs-/Benachrichtigungs-Vorlagen automatisch aktualisiert) — **aber nicht mehr als Klartext auf öffentlichen Seiten sichtbar**: Kontaktbereich zeigt jetzt «Bizi arayın» (Anruf-Button) + «WhatsApp'tan yaz», Hediye-Kart-Hinweis und Fehler-Fallbacks ebenfalls verlinkt statt numeriert; Seiten-Footer zeigen Stadt statt Nummer
